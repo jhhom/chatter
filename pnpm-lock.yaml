@@ -53,6 +53,7 @@ specifiers:
   prettier: ^2.8.8
   prettier-plugin-tailwindcss: ^0.2.8
   rambda: ^8.1.0
+  ramda: ^0.29.0
   react: 18.2.0
   react-aria: ^3.26.0
   react-aria-components: 1.0.0-alpha.5
@@ -109,6 +110,7 @@ dependencies:
   next: 13.4.7_biqbaboplfbrettd7655fr4n2y
   pg: 8.11.1
   rambda: 8.1.0
+  ramda: 0.29.0
   react: 18.2.0
   react-aria: 3.26.0_biqbaboplfbrettd7655fr4n2y
   react-aria-components: 1.0.0-alpha.5_biqbaboplfbrettd7655fr4n2y
@@ -6672,6 +6674,10 @@ packages:
 
   /rambda/8.1.0:
     resolution: {integrity: sha512-S6+0BH0N7PQVmYT6kE37DL5hxmnD6fBh3rfYOZSNVFpLjL6NQRYvHBo27WR4derYOnrOIhoXIzXNsTBZU3oZLg==}
+    dev: false
+
+  /ramda/0.29.0:
+    resolution: {integrity: sha512-BBea6L67bYLtdbOqfp8f58fPMqEwx0doL+pAi8TZyp2YWz8R9G8z9x75CZI8W+ftqhFHCpEX2cRnUUXK130iKA==}
     dev: false
 
   /range-parser/1.2.1:

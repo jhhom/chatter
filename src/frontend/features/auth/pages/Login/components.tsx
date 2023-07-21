@@ -1,4 +1,5 @@
 import { clsx } from "clsx";
+import React from "react";
 
 function FormRememberMeCheckbox() {
   return (
@@ -83,7 +84,7 @@ function FormTitle() {
   );
 }
 
-function FormLayout(props: { children: JSX.Element }) {
+function FormLayout(props: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen min-h-full">
       <div className="flex basis-full flex-col justify-center py-12">
@@ -166,7 +167,7 @@ function TextInput(props: {
   id: string;
   label: string;
   error: string | undefined;
-  children: JSX.Element;
+  children: React.ReactNode;
 }) {
   return (
     <div>

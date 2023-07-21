@@ -5,6 +5,7 @@ import type {
   UserId,
 } from "~/api-contract/subscription/subscription";
 import { LastMessageOfTopic } from "~/backend/service/topics/common/get-user-topics/get-last-message-of-topic.repo";
+import { AuthStatusSlice } from "~/frontend/stores/auth-status.store";
 
 type P2PContactStatus =
   | {
@@ -93,7 +94,7 @@ export type ContactSlice = {
 };
 
 export const createContactSlice: StateCreator<
-  ContactSlice & ProfileSlice,
+  ContactSlice & ProfileSlice & AuthStatusSlice,
   [],
   [],
   ContactSlice
