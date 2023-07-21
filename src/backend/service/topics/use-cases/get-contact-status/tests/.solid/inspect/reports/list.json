@@ -1,0 +1,195 @@
+{
+  "root": "/Users/joohom/Documents/Projects/SideProjects/tinode/tinode-clone/tinode-clone-2/src/backend/service2/topics/use-cases/get-contact-status",
+  "modules": [
+    {
+      "id": "/Users/joohom/Documents/Projects/SideProjects/tinode/tinode-clone/tinode-clone-2/node_modules/.pnpm/vite@4.2.2_@types+node@18.15.12/node_modules/vite/dist/client/env.mjs",
+      "deps": [],
+      "plugins": [
+        {
+          "name": "__load__",
+          "transform": 0
+        },
+        {
+          "name": "vite:client-inject",
+          "transform": 2
+        },
+        {
+          "name": "vite:import-analysis",
+          "transform": 1
+        },
+        {
+          "name": "alias",
+          "resolveId": 1
+        },
+        {
+          "name": "alias",
+          "resolveId": 0
+        },
+        {
+          "name": "alias",
+          "resolveId": 0
+        }
+      ],
+      "virtual": false
+    }
+  ],
+  "ssrModules": [
+    {
+      "id": "/Users/joohom/Documents/Projects/SideProjects/tinode/tinode-clone/tinode-clone-2/node_modules/.pnpm/vite@4.2.2_@types+node@18.15.12/node_modules/vite/dist/client/env.mjs",
+      "deps": [],
+      "plugins": [
+        {
+          "name": "alias",
+          "resolveId": 1
+        },
+        {
+          "name": "alias",
+          "resolveId": 0
+        },
+        {
+          "name": "alias",
+          "resolveId": 0
+        }
+      ],
+      "virtual": true
+    },
+    {
+      "id": "/Users/joohom/Documents/Projects/SideProjects/tinode/tinode-clone/tinode-clone-2/src/backend/service/utils/online-registry.ts",
+      "deps": [],
+      "plugins": [
+        {
+          "name": "__load__",
+          "transform": 0
+        },
+        {
+          "name": "vite:esbuild",
+          "transform": 0
+        },
+        {
+          "name": "vite:define",
+          "transform": 0
+        },
+        {
+          "name": "vite:import-analysis",
+          "transform": 0
+        }
+      ],
+      "virtual": false
+    },
+    {
+      "id": "/Users/joohom/Documents/Projects/SideProjects/tinode/tinode-clone/tinode-clone-2/src/backend/service2/test-utils/seed.ts",
+      "deps": [],
+      "plugins": [
+        {
+          "name": "__load__",
+          "transform": 0
+        },
+        {
+          "name": "vite:esbuild",
+          "transform": 2
+        },
+        {
+          "name": "vite:define",
+          "transform": 1
+        },
+        {
+          "name": "vite:import-analysis",
+          "transform": 2
+        }
+      ],
+      "virtual": false
+    },
+    {
+      "id": "/Users/joohom/Documents/Projects/SideProjects/tinode/tinode-clone/tinode-clone-2/src/backend/service2/topics/use-cases/get-contact-status/get-contact-status.repo.ts",
+      "deps": [],
+      "plugins": [
+        {
+          "name": "__load__",
+          "transform": 0
+        },
+        {
+          "name": "vite:esbuild",
+          "transform": 1
+        },
+        {
+          "name": "vite:define",
+          "transform": 0
+        },
+        {
+          "name": "vite:import-analysis",
+          "transform": 1
+        }
+      ],
+      "virtual": false
+    },
+    {
+      "id": "/Users/joohom/Documents/Projects/SideProjects/tinode/tinode-clone/tinode-clone-2/src/backend/service2/topics/use-cases/get-contact-status/get-contact-status.spec.ts",
+      "deps": [],
+      "plugins": [
+        {
+          "name": "__load__",
+          "transform": 0
+        },
+        {
+          "name": "vite:esbuild",
+          "transform": 3
+        },
+        {
+          "name": "vite:define",
+          "transform": 0
+        },
+        {
+          "name": "vite:import-analysis",
+          "transform": 5
+        }
+      ],
+      "virtual": false
+    },
+    {
+      "id": "/Users/joohom/Documents/Projects/SideProjects/tinode/tinode-clone/tinode-clone-2/src/backend/service2/topics/use-cases/get-contact-status/get-contact-status.ts",
+      "deps": [],
+      "plugins": [
+        {
+          "name": "__load__",
+          "transform": 0
+        },
+        {
+          "name": "vite:esbuild",
+          "transform": 1
+        },
+        {
+          "name": "vite:define",
+          "transform": 0
+        },
+        {
+          "name": "vite:import-analysis",
+          "transform": 0
+        }
+      ],
+      "virtual": false
+    },
+    {
+      "id": "/Users/joohom/Documents/Projects/SideProjects/tinode/tinode-clone/tinode-clone-2/src/drizzle/schema.ts",
+      "deps": [],
+      "plugins": [
+        {
+          "name": "__load__",
+          "transform": 0
+        },
+        {
+          "name": "vite:esbuild",
+          "transform": 1
+        },
+        {
+          "name": "vite:define",
+          "transform": 0
+        },
+        {
+          "name": "vite:import-analysis",
+          "transform": 1
+        }
+      ],
+      "virtual": false
+    }
+  ]
+}
