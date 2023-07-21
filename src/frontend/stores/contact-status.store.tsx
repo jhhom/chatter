@@ -70,6 +70,9 @@ export type ContactSlice = {
   grp: Map<GroupTopicId, GrpContactProfile>;
   pastGrp: Map<GroupTopicId, PastGrpContactProfile>;
   newContacts: Map<UserId, ContactProfile>;
+  deleteNewContact: (userId: UserId) => void;
+  deleteGrp: (groupId: GroupTopicId) => void;
+  deletePastGrp: (groupId: GroupTopicId) => void;
   setP2PContact: (userId: UserId, profile: P2PContactProfile) => void;
   setGrpContact: (
     groupTopicId: GroupTopicId,
@@ -84,7 +87,9 @@ export type ContactSlice = {
     groupTopicId: GroupTopicId,
     profile: GrpContactProfile["profile"]
   ) => void;
-  clearContact: (contact: "p2p" | "grp" | "pastGrp" | "newContacts") => void;
+  clearContacts: (
+    contact: "p2p" | "grp" | "pastGrp" | "newContacts" | "all"
+  ) => void;
 };
 
 export const createContactSlice: StateCreator<
@@ -97,7 +102,9 @@ export const createContactSlice: StateCreator<
   grp: new Map(),
   pastGrp: new Map(),
   newContacts: new Map(),
-  clearContact: (contact: "p2p" | "grp" | "pastGrp" | "newContacts") => {
+  clearContacts: (
+    contact: "p2p" | "grp" | "pastGrp" | "newContacts" | "all"
+  ) => {
     if (contact === "p2p") {
       set(() => {
         return { p2p: new Map() };
@@ -110,11 +117,41 @@ export const createContactSlice: StateCreator<
       set(() => {
         return { pastGrp: new Map() };
       });
-    } else {
+    } else if (contact === "newContacts") {
       set(() => {
         return { newContacts: new Map() };
       });
+    } else {
+      set(() => {
+        return {
+          p2p: new Map(),
+          grp: new Map(),
+          pastGrp: new Map(),
+          newContacts: new Map(),
+        };
+      });
     }
+  },
+  deleteGrp: (groupId) => {
+    set((state) => {
+      const newMap = new Map(state.grp);
+      newMap.delete(groupId);
+      return { grp: newMap };
+    });
+  },
+  deleteNewContact: (userId: UserId) => {
+    set((state) => {
+      const newMap = new Map(state.newContacts);
+      newMap.delete(userId);
+      return { newContacts: newMap };
+    });
+  },
+  deletePastGrp: (groupId) => {
+    set((state) => {
+      const newMap = new Map(state.pastGrp);
+      newMap.delete(groupId);
+      return { pastGrp: newMap };
+    });
   },
   setP2PContact: (userId: UserId, profile: P2PContactProfile) => {
     set((state) => {

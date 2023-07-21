@@ -8,9 +8,7 @@ import {
   createProfileSlice,
 } from "~/frontend/stores/profile.store";
 
-export const useContactStore = create<ContactSlice & ProfileSlice>()(
-  (...a) => ({
-    ...createContactSlice(...a),
-    ...createProfileSlice(...a),
-  })
-);
+export const useAppStore = create<ContactSlice & ProfileSlice>()((...a) => ({
+  ...createContactSlice(...a),
+  ...createProfileSlice(...a),
+}));
