@@ -1,4 +1,7 @@
-import { UserId, GroupTopicId } from "~/backend/drizzle/schema";
+import type {
+  UserId,
+  GroupTopicId,
+} from "~/api-contract/subscription/subscription";
 import { z } from "zod";
 
 export const zUserId = z.custom<`usr${string}`>((val) => {

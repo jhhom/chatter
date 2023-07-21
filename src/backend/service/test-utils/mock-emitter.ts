@@ -1,5 +1,8 @@
-import { Socket, SubscriptionMessage } from "~/backend/router/socket";
-import { EventPayload } from "~/api-contract/subscription/subscription";
+import {
+  SubscriptionMessage,
+  EventPayload,
+} from "~/api-contract/subscription/subscription";
+import { Socket } from "~/backend/service/common/socket";
 
 export class MockEmitter {
   receivedMessages: SubscriptionMessage[];

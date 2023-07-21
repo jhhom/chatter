@@ -1,6 +1,9 @@
-import { Socket } from "~/backend/router/socket";
-import type { GroupTopicId, UserId } from "~/backend/drizzle/schema";
+import { type Socket } from "~/backend/service/common/socket";
 import { Sockets } from "./sockets";
+import type {
+  UserId,
+  GroupTopicId,
+} from "~/api-contract/subscription/subscription";
 
 type User = {
   sockets: Sockets;
@@ -184,11 +187,11 @@ class OnlineUsers {
       });
       return { change: false };
     }
-    let causesStatusChange =
+    const causesStatusChange =
       group.onlineMembers.size == 1 && !group.onlineMembers.has(userId);
     let toNotify: UserId | null = null;
     if (causesStatusChange) {
-      toNotify = group.onlineMembers.values().next().value;
+      toNotify = group.onlineMembers.values().next().value as UserId;
     }
     group.onlineMembers.add(userId);
     if (!causesStatusChange) {
@@ -234,7 +237,7 @@ class OnlineUsers {
       grp.onlineMembers.delete(userId);
       return {
         change: true,
-        toNotify: grp.onlineMembers.values().next().value,
+        toNotify: grp.onlineMembers.values().next().value as UserId,
       };
     }
     grp.onlineMembers.delete(userId);
@@ -284,14 +287,11 @@ class OnlineUsers {
         }
         if (v.onlineMembers.size == 2) {
           const onlineMembers = Array.from(v.onlineMembers.values());
-          const uid =
-            onlineMembers[0] == userId ? onlineMembers[1] : onlineMembers[0];
-          if (uid) {
-            toNotify.push({
-              userId: uid,
-              topicId: k,
-            });
-          }
+          toNotify.push({
+            userId:
+              onlineMembers[0] == userId ? onlineMembers[1] : onlineMembers[0],
+            topicId: k,
+          });
         }
 
         v.onlineMembers.delete(userId);

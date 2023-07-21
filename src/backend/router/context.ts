@@ -4,11 +4,11 @@ import { NodeHTTPCreateContextFnOptions } from "@trpc/server/adapters/node-http"
 import { IncomingMessage } from "http";
 import ws from "ws";
 
-import type { Socket } from "~/backend/router/socket";
+import type { Socket } from "~/backend/service/common/socket";
 import type { ConfigSchema } from "~/backend/config/config";
 
-import { UserId } from "~/backend/drizzle/schema";
-import { AppPgDatabase } from "~/backend/drizzle/db";
+import type { UserId } from "~/api-contract/subscription/subscription";
+import { KyselyDB } from "~/backend/schema";
 
 type Session = {
   auth?: {
@@ -23,9 +23,9 @@ type Session = {
 export class Context {
   readonly session: Session;
   readonly config: ConfigSchema;
-  readonly db: AppPgDatabase;
+  readonly db: KyselyDB;
 
-  constructor(config: ConfigSchema, db: AppPgDatabase) {
+  constructor(config: ConfigSchema, db: KyselyDB) {
     this.session = {};
     this.config = config;
     this.db = db;
@@ -62,7 +62,7 @@ export class Context {
 export const createContextInner = async (
   opts: NodeHTTPCreateContextFnOptions<IncomingMessage, ws>,
   config: ConfigSchema,
-  db: AppPgDatabase
+  db: KyselyDB
 ) => {
   return {
     opts,
@@ -71,10 +71,7 @@ export const createContextInner = async (
   };
 };
 
-export const createContextBuilder = (
-  config: ConfigSchema,
-  db: AppPgDatabase
-) => {
+export const createContextBuilder = (config: ConfigSchema, db: KyselyDB) => {
   const createContext = async (
     opts: NodeHTTPCreateContextFnOptions<IncomingMessage, ws>
   ) => {

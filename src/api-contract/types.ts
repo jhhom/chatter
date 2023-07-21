@@ -1,8 +1,8 @@
-import { z } from "zod";
-import { Result } from "neverthrow";
+import { type z } from "zod";
+import { type Result } from "neverthrow";
 
-import { AppErrorUnion } from "~/api-contract/errors/errors";
-import { Contract, contract } from "~/api-contract/endpoints";
+import { type AppErrorUnion } from "~/api-contract/errors/errors";
+import { type Contract } from "~/api-contract/endpoints";
 
 export type ServiceResult<T extends keyof Contract> = Promise<
   Result<z.infer<Contract[T]["output"]>, AppErrorUnion>

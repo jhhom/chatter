@@ -1,27 +1,23 @@
-import { InferModel } from "drizzle-orm";
+import { Insertable, Kysely, sql } from "kysely";
 import {
-  users,
-  topics,
-  messages,
-  subscriptions,
-  type UserId,
-  groupTopicMeta,
+  KyselyDB,
+  KyselyTransaction,
+  Messages,
+  Subscriptions,
+  Topics,
+  Users,
+} from "~/backend/schema";
+import { fromPromise, ok, err } from "neverthrow";
+import {
   GroupTopicId,
   P2PTopicId,
-  topicEventLogs,
-  TopicEventType,
-} from "~/backend/drizzle/schema";
-
-import { fromPromise, ok, err } from "neverthrow";
+  UserId,
+} from "~/api-contract/subscription/subscription";
+import * as bcrypt from "bcrypt";
 import { faker } from "@faker-js/faker";
 
-import { sql, eq } from "drizzle-orm";
-import { AppPgDatabase, AppPgTransaction } from "~/backend/drizzle/db";
-
-type User = InferModel<typeof users>;
-
 type SeedUser = Omit<
-  User,
+  Insertable<Users>,
   "id" | "passwordHash" | "updatedAt" | "createdAt" | "userAgent"
 >;
 
@@ -672,32 +668,32 @@ const seedMessagesData: {
   },
 };
 
-const truncateAllTables = async (db: AppPgDatabase | AppPgTransaction) =>
-  await db.execute(
-    sql`
-      TRUNCATE TABLE users RESTART IDENTITY CASCADE;
-    `
-  );
+const truncateAllTables = async (db: KyselyDB) =>
+  await sql`TRUNCATE TABLE users RESTART IDENTITY CASCADE;`.execute(db);
 
-const seed = async (db: AppPgDatabase | AppPgTransaction) => {
+const seed = async (db: KyselyDB | KyselyTransaction) => {
   await truncateAllTables(db);
 
   {
-    const result1 = await fromPromise(
-      db.insert(users).values(
-        seedUser.map((v) => ({
-          id: v.id,
-          username: v.username,
-          fullname: v.fullname,
-          email: v.email,
-          password: v.password,
-          defaultPermissions: "JRWP",
-        }))
-      ),
+    const result = await fromPromise(
+      db
+        .insertInto("users")
+        .values(
+          seedUser.map((v) => ({
+            id: v.id,
+            username: v.username,
+            fullname: v.fullname,
+            email: v.email,
+            password: v.password,
+            passwordHash: bcrypt.hashSync(v.password, 8),
+            defaultPermissions: "JRWP",
+          }))
+        )
+        .execute(),
       (e) => e
     );
-    if (result1.isErr()) {
-      return err(result1.error);
+    if (result.isErr()) {
+      return err(result.error);
     }
   }
 
@@ -711,13 +707,14 @@ const seed = async (db: AppPgDatabase | AppPgTransaction) => {
 
   let a = seedUser.reduce((acc, cur) => {
     return acc;
-  }, {} as { [k in (typeof seedUser)[number]["username"]]: InferModel<typeof users> });
+  }, {} as { [k in (typeof seedUser)[number]["username"]]: Insertable<Users> });
   for (const [k, v] of Object.entries(seedUser)) {
-    const result = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, v.email));
-    a[v.username] = result[0]!;
+    const r = await db
+      .selectFrom("users")
+      .selectAll()
+      .where("email", "=", v.email)
+      .executeTakeFirstOrThrow();
+    a[v.username] = r;
   }
 
   const group = await seedGroupTopic(db);
@@ -725,19 +722,19 @@ const seed = async (db: AppPgDatabase | AppPgTransaction) => {
   return ok([a, seedMessagesData, group] as const);
 };
 
-const seedGroupTopic = async (db: AppPgDatabase | AppPgTransaction) => {
-  const groupTopic: InferModel<typeof topics, "insert"> = {
+const seedGroupTopic = async (db: KyselyDB | KyselyTransaction) => {
+  const groupTopic: Insertable<Topics> = {
     id: `grp${faker.random.alphaNumeric(12)}`,
     topicType: "group",
   };
-  const subscriptionsToSeed: InferModel<typeof subscriptions, "insert">[] =
+  const subscriptionsToSeed: Insertable<Subscriptions>[] =
     groupTopicSeed.members.map((usrId) => ({
       topicId: groupTopic.id,
       userId: usrId,
       permissions: "JRWPSDA",
     }));
-  const messagesToSeed: InferModel<typeof messages, "insert">[] =
-    groupTopicSeed.messages.map((m) => ({
+  const messagesToSeed: Insertable<Messages>[] = groupTopicSeed.messages.map(
+    (m) => ({
       topicId: groupTopic.id,
       authorId: userIdFromUsername(m[0]),
       content: {
@@ -745,67 +742,67 @@ const seedGroupTopic = async (db: AppPgDatabase | AppPgTransaction) => {
         content: m[1],
         forwarded: false,
       },
-    }));
+    })
+  );
+  const createdTopic = await db
+    .insertInto("topics")
+    .values(groupTopic)
+    .returningAll()
+    .executeTakeFirstOrThrow();
 
-  const createdTopic = (
-    await db.insert(topics).values(groupTopic).returning()
-  )[0];
-  if (createdTopic === undefined) {
-    throw new Error("Topic created is not returned");
-  }
-
-  const createdTopicMeta = (
-    await db
-      .insert(groupTopicMeta)
-      .values({
-        groupName: groupTopicSeed.groupName,
-        topicId: groupTopic.id,
-        defaultPermissions: "JRWPSDA",
-        ownerId: userIdFromUsername("carol"),
-      })
-      .returning()
-  )[0];
+  const createdTopicMeta = await db
+    .insertInto("groupTopicMeta")
+    .values({
+      groupName: groupTopicSeed.groupName,
+      topicId: groupTopic.id as GroupTopicId,
+      defaultPermissions: "JRWPSDA",
+      ownerId: userIdFromUsername("carol"),
+    })
+    .returningAll()
+    .executeTakeFirstOrThrow();
 
   const createdSub = await db
-    .insert(subscriptions)
+    .insertInto("subscriptions")
     .values(subscriptionsToSeed)
-    .returning();
+    .returningAll()
+    .executeTakeFirstOrThrow();
 
   for (const s of subscriptionsToSeed) {
-    const createdMessage = (
-      await db
-        .insert(messages)
-        .values({
-          topicId: s.topicId,
-        })
-        .returning()
-    )[0];
-    if (createdMessage === undefined) {
-      throw new Error("Message created is not returned");
-    }
+    const createdMessage = await db
+      .insertInto("messages")
+      .values({ topicId: s.topicId })
+      .returningAll()
+      .executeTakeFirstOrThrow();
 
     if (s.userId == userIdFromUsername("carol")) {
-      await db.insert(topicEventLogs).values({
-        messageId: createdMessage.id,
-        topicEvent: "create_group",
-        topicId: createdTopic.id,
-        actorUserId: userIdFromUsername("carol"),
-      });
+      await db
+        .insertInto("topicEventLogs")
+        .values({
+          messageId: createdMessage.id,
+          topicEvent: "create_group",
+          topicId: createdTopic.id,
+          actorUserId: userIdFromUsername("carol"),
+        })
+        .execute();
     } else {
-      await db.insert(topicEventLogs).values({
-        messageId: createdMessage.id,
-        topicEvent: "add_member",
-        topicId: createdTopic.id,
-        actorUserId: userIdFromUsername("carol"),
-        affectedUserId: s.userId,
-      });
+      await db
+        .insertInto("topicEventLogs")
+        .values({
+          messageId: createdMessage.id,
+          topicEvent: "add_member",
+          topicId: createdTopic.id,
+          actorUserId: userIdFromUsername("carol"),
+          affectedUserId: s.userId,
+        })
+        .execute();
     }
   }
 
   const createdMessages = await db
-    .insert(messages)
+    .insertInto("messages")
     .values(messagesToSeed)
-    .returning();
+    .returningAll()
+    .execute();
 
   return {
     topic: {
@@ -819,75 +816,60 @@ const seedGroupTopic = async (db: AppPgDatabase | AppPgTransaction) => {
 };
 
 const seedP2PTopic = async (
-  db: AppPgDatabase | AppPgTransaction,
+  db: KyselyDB | KyselyTransaction,
   username1: string,
   username2: string
 ) => {
-  const result1 = await fromPromise(
-    db
-      .insert(topics)
-      .values({ id: `p2p${faker.random.alphaNumeric(12)}`, topicType: "p2p" })
-      .returning({ id: topics.id }),
-    (e) => e
-  );
-  if (result1.isErr()) {
-    throw result1.error;
-  }
+  const topicId = (
+    await db
+      .insertInto("topics")
+      .values({
+        id: `p2p${faker.random.alphaNumeric(12)}`,
+        topicType: "p2p",
+      })
+      .returning("topics.id")
+      .executeTakeFirstOrThrow()
+  ).id;
 
-  const topicId = result1.value[0]!.id;
-
-  const result2 = await fromPromise(
-    db.insert(subscriptions).values({
+  db.insertInto("subscriptions")
+    .values({
       topicId,
       userId: userIdFromUsername(username1),
       permissions: "JRWP",
-    }),
-    (e) => e
-  );
-  if (result2.isErr()) {
-    throw result2.error;
-  }
+    })
+    .execute();
 
-  const result3 = await fromPromise(
-    db.insert(subscriptions).values({
-      topicId,
-      userId: userIdFromUsername(username2),
-      permissions: "JRWP",
-    }),
-    (e) => e
-  );
-  if (result3.isErr()) {
-    throw result3.error;
-  }
-
+  db.insertInto("subscriptions").values({
+    topicId,
+    userId: userIdFromUsername(username2),
+    permissions: "JRWP",
+  });
   return topicId;
 };
 
 const seedMessages = async <T1 extends string, T2 extends string>(
-  db: AppPgDatabase | AppPgTransaction,
+  db: KyselyDB | KyselyTransaction,
   seed: SeedMessages<T1, T2>
 ) => {
   const topicId = await seedP2PTopic(db, seed.user1, seed.user2);
 
-  const messagesInsertResult = await fromPromise(
-    db.insert(messages).values(
-      seed.messages.map((m) => ({
-        content: {
-          type: "text" as const,
-          content: m[0],
-          forwarded: false,
-        },
-        authorId: userIdFromUsername(m[1]),
-        topicId,
-      }))
-    ),
+  return fromPromise(
+    db
+      .insertInto("messages")
+      .values(
+        seed.messages.map((m) => ({
+          content: {
+            type: "text" as const,
+            content: m[0],
+            forwarded: false,
+          },
+          authorId: userIdFromUsername(m[1]),
+          topicId,
+        }))
+      )
+      .execute(),
     (e) => e
-  );
-  if (messagesInsertResult.isErr()) {
-    return err(messagesInsertResult.error);
-  }
-
-  return ok(topicId);
+  ).map(() => topicId);
 };
 
 export { seed };

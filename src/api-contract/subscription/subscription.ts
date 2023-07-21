@@ -1,5 +1,35 @@
-import type { GroupTopicId, TopicId, UserId } from "~/backend/drizzle/schema";
-import { Message } from "~/backend/drizzle/message-type";
+export type GroupTopicId = `grp${string}`;
+export type P2PTopicId = `p2p${string}`;
+export type TopicId = P2PTopicId | GroupTopicId;
+export type UserId = `usr${string}`;
+export type UserTopicId = UserId | GroupTopicId;
+
+type MessagePayload = {
+  text: {
+    forwarded: boolean;
+    content: string;
+  };
+  picture: {
+    filename: string;
+    forwarded: boolean;
+    url: string;
+    caption: string;
+    /** size in number of bytes */
+    size: number;
+  };
+  file: {
+    filename: string;
+    forwarded: boolean;
+    url: string;
+    caption: string;
+    /** size in number of bytes */
+    size: number;
+  };
+};
+
+export type Message = {
+  [k in keyof MessagePayload]: { type: k } & MessagePayload[k];
+}[keyof MessagePayload];
 
 type GeneralOnlineNotification = {
   topicId: UserId | GroupTopicId;
@@ -25,9 +55,9 @@ type TopicEventPayload = {
     online: boolean;
     profilePhotoUrl: string | null;
   };
-  change_member_permission: {};
-  remove_member: {};
-  create_group: {};
+  change_member_permission: Record<string, never>;
+  remove_member: Record<string, never>;
+  create_group: Record<string, never>;
   leave_group: {
     newOwnerId?: UserId;
   };

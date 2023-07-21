@@ -1,10 +1,10 @@
-import type { IContext } from "./context";
+import type { IContext } from "~/backend/router/context";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { observable } from "@trpc/server/observable";
 import { SubscriptionMessage } from "~/api-contract/subscription/subscription";
 import superjson from "superjson";
 
-import { authUsecase } from "~/backend/service/auth/use-cases";
+import { authUsecase } from "~/backend/service/auth";
 import { userUsecase } from "~/backend/service/users";
 import { topicUsecase } from "~/backend/service/topics";
 
@@ -53,7 +53,7 @@ const mainRouter = router({
     .input(contract["users/create_user"].input)
     .output(contract["users/create_user"].output)
     .mutation(async ({ input, ctx }) => {
-      const result = await userUsecase.registerUser({ db: ctx.ctx.db }, input, {
+      const result = await userUsecase.registerUser(ctx.ctx.db, input, {
         projectRoot: ctx.config.PROJECT_ROOT,
       });
       if (result.isErr()) {
@@ -82,14 +82,11 @@ const mainRouter = router({
     .input(contract["group/find_new_members"].input)
     .output(contract["group/find_new_members"].output)
     .mutation(async ({ input, ctx }) => {
-      const result = await topicUsecase.findNewMembersForGroup(
-        { db: ctx.ctx.db },
-        {
-          requesterUserId: ctx.ctx.auth.userId,
-          groupTopicId: input.groupTopicId,
-          searchQueryUsername: input.searchQueryUsername,
-        }
-      );
+      const result = await topicUsecase.findNewMembersForGroup(ctx.ctx.db, {
+        requesterUserId: ctx.ctx.auth.userId,
+        groupTopicId: input.groupTopicId,
+        searchQueryUsername: input.searchQueryUsername,
+      });
       if (result.isErr()) {
         throw result.error;
       }
@@ -111,6 +108,8 @@ const mainRouter = router({
         }
       );
       if (result.isErr()) {
+        console.log("❌");
+        console.log(result.error);
         throw result.error;
       }
       return result.value;
@@ -119,9 +118,10 @@ const mainRouter = router({
     .input(contract["group/preview_info"].input)
     .output(contract["group/preview_info"].output)
     .query(async ({ input, ctx }) => {
-      const result = await topicUsecase.getGroupPreviewInfo(ctx.ctx.db, {
-        groupInviteLinkId: input.groupInviteLinkId,
-      });
+      const result = await topicUsecase.getGroupPreviewInfo(
+        ctx.ctx.db,
+        input.groupInviteLinkId
+      );
       if (result.isErr()) {
         throw result.error;
       }
@@ -170,9 +170,10 @@ const mainRouter = router({
     .input(contract["group/invite_link"].input)
     .output(contract["group/invite_link"].output)
     .query(async ({ input, ctx }) => {
-      const result = await topicUsecase.getGroupInviteLink(ctx.ctx.db, {
-        groupTopicId: input.groupTopicId,
-      });
+      const result = await topicUsecase.getGroupInviteLink(
+        ctx.ctx.db,
+        input.groupTopicId
+      );
       if (result.isErr()) {
         throw result.error;
       }
@@ -228,7 +229,6 @@ const mainRouter = router({
         { ...input, userCtx: ctx.ctx }
       );
       if (result.isErr()) {
-        console.log("LOGIN ERR ❌", result.error);
         throw result.error;
       }
       return result.value;
@@ -238,10 +238,8 @@ const mainRouter = router({
     .output(contract["users/find_users_to_add_as_contact"].output)
     .query(async ({ input, ctx }) => {
       const result = await userUsecase.findUsersToAddContact(
-        {
-          db: ctx.ctx.db,
-        },
-        { email: input.email }
+        ctx.ctx.db,
+        input.email
       );
       if (result.isErr()) {
         throw result.error;
@@ -312,6 +310,7 @@ const mainRouter = router({
         }
       );
       if (result.isErr()) {
+        console.log("boom", result.error);
         throw result.error;
       }
       return result.value;
@@ -331,9 +330,10 @@ const mainRouter = router({
         }
       );
       if (result.isErr()) {
+        console.log("boom", result.error);
         throw result.error;
       }
-      return result.value;
+      return {};
     }),
   ["topic/clear_messages"]: authProcedure
     .input(contract["topic/clear_messages"].input)
@@ -346,14 +346,14 @@ const mainRouter = router({
       if (result.isErr()) {
         throw result.error;
       }
-      return result.value;
+      return {};
     }),
   ["users/topics"]: authProcedure
     .output(contract["users/topics"].output)
     .query(async ({ ctx }) => {
-      const result = await topicUsecase.getTopicsOfUser(
-        { db: ctx.ctx.db },
-        { userId: ctx.ctx.auth.userId }
+      const result = await topicUsecase.getUserTopics(
+        ctx.ctx.db,
+        ctx.ctx.auth.userId
       );
       if (result.isErr()) {
         throw result.error;
@@ -441,7 +441,7 @@ const mainRouter = router({
     .input(contract["group/join_group_via_id"].input)
     .output(contract["group/join_group_via_id"].output)
     .mutation(async ({ ctx, input }) => {
-      const r = await topicUsecase.subscribeToGroupTopic(
+      const r = await topicUsecase.joinGroupViaId(
         {
           db: ctx.ctx.db,
           onlineUsers,
@@ -480,7 +480,7 @@ const mainRouter = router({
     .input(contract["group/join_group_via_invite_link"].input)
     .output(contract["group/join_group_via_invite_link"].output)
     .mutation(async ({ ctx, input }) => {
-      const r = await topicUsecase.subscribeToGroupTopicViaInviteLink(
+      const r = await topicUsecase.joinGroupViaInviteLink(
         {
           db: ctx.ctx.db,
           onlineUsers,
@@ -500,9 +500,10 @@ const mainRouter = router({
   ["topic/unread_messages"]: authProcedure
     .output(contract["topic/unread_messages"].output)
     .query(async ({ ctx }) => {
-      const result = await topicUsecase.getAllUnreadMessages(ctx.ctx, {
-        userId: ctx.ctx.auth.userId,
-      });
+      const result = await topicUsecase.getAllUnreadMessages(
+        ctx.ctx.db,
+        ctx.ctx.auth.userId
+      );
       if (result.isErr()) {
         throw result.error;
       }
@@ -543,8 +544,10 @@ const mainRouter = router({
     .output(contract["permissions/update_peer_permission"].output)
     .mutation(async ({ ctx, input }) => {
       const r = await topicUsecase.updatePeerPermission(
-        ctx.ctx.db,
-        onlineUsers,
+        {
+          db: ctx.ctx.db,
+          onlineUsers,
+        },
         {
           requesterUserId: ctx.ctx.auth.userId,
           peerId: input.peerId,
@@ -560,10 +563,13 @@ const mainRouter = router({
     .input(contract["permissions/block_peer"].input)
     .output(contract["permissions/block_peer"].output)
     .mutation(async ({ ctx, input }) => {
-      const r = await topicUsecase.blockPeer(ctx.ctx.db, onlineUsers, {
-        requesterUserId: ctx.ctx.auth.userId,
-        peerId: input.peerId,
-      });
+      const r = await topicUsecase.blockPeer(
+        { db: ctx.ctx.db, onlineUsers },
+        {
+          requesterUserId: ctx.ctx.auth.userId,
+          peerId: input.peerId,
+        }
+      );
       if (r.isErr()) {
         throw r.error;
       }
@@ -607,13 +613,10 @@ const mainRouter = router({
     .input(contract["permissions/get_group_member_permission"].input)
     .output(contract["permissions/get_group_member_permission"].output)
     .query(async ({ ctx, input }) => {
-      const r = await topicUsecase.getMemberPermissionInGroup(
-        { db: ctx.ctx.db },
-        {
-          memberUserId: input.memberUserId,
-          groupTopicId: input.groupTopicId,
-        }
-      );
+      const r = await topicUsecase.getMemberPermissionInGroup(ctx.ctx.db, {
+        memberUserId: input.memberUserId,
+        groupTopicId: input.groupTopicId,
+      });
       if (r.isErr()) {
         throw r.error;
       }
@@ -622,3 +625,5 @@ const mainRouter = router({
 });
 
 export { mainRouter };
+
+export type IAppRouter = typeof mainRouter;

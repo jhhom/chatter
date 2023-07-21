@@ -24,7 +24,7 @@ export const contract = {
       jwtToken: z.string().min(1),
     }),
     output: z.object({
-      userId: zUserId,
+      id: zUserId,
       username: z.string(),
       email: z.string(),
       fullname: z.string(),

@@ -1,17 +1,16 @@
 import superjson from "superjson";
-import { inferRouterError } from "@trpc/server";
 import { wsLink, createWSClient, createTRPCProxyClient } from "@trpc/client";
 import { loggerLink } from "@trpc/client/links/loggerLink";
 import { fromPromise, ok, err } from "neverthrow";
 
+import { config } from "~/config/config";
 import type { ServiceInput, ServiceSyncResult } from "~/api-contract/types";
-import { IAppRouter } from "~/backend/router";
 import { AppError, AppErrorUnion } from "~/api-contract/errors/errors";
 import { IApiClient } from "~/api-contract/client";
 import { Unsubscribable } from "@trpc/server/observable";
 import { EventPayload } from "~/api-contract/subscription/subscription";
-
-import { config } from "~/client/config/config";
+import type { IAppRouter } from "~/backend/router/router";
+import { inferRouterError } from "@trpc/server";
 
 type RouterError = inferRouterError<IAppRouter>;
 

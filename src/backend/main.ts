@@ -1,34 +1,44 @@
+// import type { DB } from "~/backend/schema";
 import pg from "pg";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { applyWSSHandler } from "@trpc/server/adapters/ws";
+import { CamelCasePlugin, Kysely, PostgresDialect } from "kysely";
+import { loadConfig } from "~/backend/config/config";
 import { WebSocketServer } from "ws";
+import { createContextBuilder } from "~/backend/router/context";
+import { applyWSSHandler } from "@trpc/server/adapters/ws";
+import { type DB } from "~/backend/schema";
+import { mainRouter } from "~/backend/router/router";
 
-import * as schema from "~/backend/drizzle/schema";
-
-import { appRouter } from "./router";
-import { createContextBuilder } from "./router/context";
-import { loadConfig } from "./config/config";
-
-const { Pool } = pg;
+const Pool = pg.Pool;
 
 const config = loadConfig();
 if (config.isErr()) {
   throw config.error;
 }
 
-const db = drizzle(
-  new Pool({
+const dialect = new PostgresDialect({
+  pool: new Pool({
     connectionString: config.value.DATABASE_URL,
+    max: 10,
   }),
-  { schema, logger: false }
-);
+});
+
+const db = new Kysely<DB>({
+  dialect,
+  log(event) {
+    if (event.level === "query") {
+      console.log(event.query.sql);
+      console.log(event.query.parameters);
+    }
+  },
+  plugins: [new CamelCasePlugin()],
+});
 
 const wss = new WebSocketServer({
   port: 4001,
 });
 const handler = applyWSSHandler({
   wss,
-  router: appRouter,
+  router: mainRouter,
   createContext: createContextBuilder(config.value, db),
 });
 

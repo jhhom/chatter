@@ -1,8 +1,9 @@
-import { registerUser } from "./use-cases/create-user/create-user";
-import { findUsersToAddContact } from "./use-cases/find-users/find-user";
+import { registerUser } from "~/backend/service/users/create-user.service";
+import { findUsersToAddContact } from "~/backend/service/users/find-user.service";
 
 const userUsecase = {
   registerUser,
   findUsersToAddContact,
 };
+
 export { userUsecase };

@@ -1,15 +1,15 @@
-import { err, ok } from "neverthrow";
+import { ok, err } from "neverthrow";
 
-import { AppPgDatabase } from "~/backend/drizzle/db";
-import { ConfigSchema } from "~/backend/config/config";
-import { Context, IServiceAuthContext } from "~/backend/router/context";
+import { MockEmitter } from "~/backend/service/test-utils/mock-emitter";
 import { OnlineUsers } from "~/backend/service/common/online-users";
-import { authUsecase } from "~/backend/service/auth/use-cases";
-
-import { MockEmitter } from "./mock-emitter";
+import { ConfigSchema } from "~/backend/config/config";
+import { KyselyDB } from "~/backend/schema";
+import { Context } from "~/backend/router/context";
+import { authUsecase } from "~/backend/service/auth";
+import { IServiceAuthContext } from "~/backend/router/context";
 
 export async function login(
-  ctx: { onlineUsers: OnlineUsers; config: ConfigSchema; db: AppPgDatabase },
+  ctx: { onlineUsers: OnlineUsers; config: ConfigSchema; db: KyselyDB },
   input: {
     username: string;
     password: string;

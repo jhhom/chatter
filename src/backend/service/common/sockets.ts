@@ -1,4 +1,4 @@
-import { Socket } from "~/backend/router/socket";
+import { type Socket } from "~/backend/service/common/socket";
 import { faker } from "@faker-js/faker";
 
 export class Sockets {
@@ -28,9 +28,9 @@ export class Sockets {
   }
 
   add(socket: Socket) {
-    let id = faker.string.alphanumeric(4);
+    let id = faker.random.alphaNumeric(4);
     while (this.#sockets.has(id)) {
-      id = faker.string.alphanumeric(4);
+      id = faker.random.alphaNumeric(4);
     }
     this.#sockets.set(id, socket);
     return id;

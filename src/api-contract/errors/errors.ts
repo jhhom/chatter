@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { type z } from "zod";
 
 export type ErrorPayload = {
   REQUEST_VALIDATION: {
@@ -46,6 +46,16 @@ export class AppError<T extends keyof ErrorPayload> extends Error {
     this.message = ErrorMessage[type];
   }
 }
+
+export const isAppError = (e: unknown): e is AppErrorUnion => {
+  const assertedE = e as AppErrorUnion;
+  return (
+    assertedE.details !== undefined &&
+    typeof assertedE.details === "object" &&
+    typeof assertedE.message === "string" &&
+    assertedE.details.type in Object.keys(ErrorMessage)
+  );
+};
 
 export type AppErrorUnion = {
   [K in keyof ErrorPayload]: AppError<K>;

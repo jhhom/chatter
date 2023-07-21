@@ -1,9 +1,9 @@
-import {
+import { type TopicEvent } from "~/backend/schema";
+import type {
   GroupTopicId,
   P2PTopicId,
-  TopicEventType,
   UserId,
-} from "~/backend/drizzle/schema";
+} from "~/api-contract/subscription/subscription";
 import { match } from "ts-pattern";
 
 export function IsUserId(id: string): id is UserId {
@@ -19,7 +19,7 @@ export function IsP2PTopicId(id: string): id is P2PTopicId {
 }
 
 export function formatTopicEventLogMessage(
-  topicEvent: TopicEventType,
+  topicEvent: TopicEvent,
   names: {
     actor: string;
     affected: string;
