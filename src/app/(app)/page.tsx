@@ -1,13 +1,7 @@
 "use client";
 
-import { err, ok } from "neverthrow";
-
-import { ServiceInput } from "~/api-contract/types";
+import { ContactListSidePanel } from "~/frontend/features/contact-list/pages/ContactListSidePanel/ContactListSidePanel.page";
 
 export default function Page() {
-  return (
-    <div className="h-screen w-screen text-center">
-      <p>Home page</p>
-    </div>
-  );
+  return <ContactListSidePanel />;
 }

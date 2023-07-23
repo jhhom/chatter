@@ -661,10 +661,11 @@ export const useLoginHandler = () => {
         }
       }
       {
-        const r = await updateTopicStatus();
-        if (r.isErr()) {
-          return err(r.error);
-        }
+        // THE RESULT HERE IS WRONG
+        // const r = await updateTopicStatus();
+        // if (r.isErr()) {
+        // return err(r.error);
+        // }
       }
       {
         const r = await retrieveUnreadMessages();
