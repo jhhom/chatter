@@ -26,6 +26,7 @@ export async function getContactStatus(
   //    3.2 If not, it will be set as offline (even if the contact is online)
 
   // 1. ⭐️ GET THE LIST OF CONTACTS OF THE USER
+
   const result = await getUserContact(ctx.db, input.userId);
   if (result.isErr()) {
     return err(new AppError("UNKNOWN", { cause: result.error }));

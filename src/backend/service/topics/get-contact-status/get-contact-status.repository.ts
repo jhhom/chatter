@@ -3,15 +3,28 @@ import { fromPromise, ok, err } from "neverthrow";
 import { UserId } from "~/api-contract/subscription/subscription";
 import { KyselyDB } from "~/backend/schema";
 
+// this is wrong
+// this is getting all p2p contacts that user is not part of
+// we want to get all p2p contacts that user is part of
+// but we want to not get the profile of the user
+// try with user james see
+// james user id: usrhagljd4igks8
 export async function getUserContact(db: KyselyDB, userId: UserId) {
   const p2pTopics = await fromPromise(
     db
       .selectFrom("topics")
-      .innerJoin("subscriptions", (join) =>
-        join.onRef("subscriptions.topicId", "=", "topics.id")
+      .innerJoin("subscriptions as peerSub", (join) =>
+        join
+          .onRef("peerSub.topicId", "=", "topics.id")
+          .on("peerSub.userId", "!=", userId)
+      )
+      .innerJoin("subscriptions as userSub", (join) =>
+        join
+          .onRef("userSub.topicId", "=", "topics.id")
+          .on("userSub.userId", "=", userId)
       )
       .innerJoin("users", (join) =>
-        join.onRef("subscriptions.userId", "=", "users.id")
+        join.onRef("peerSub.userId", "=", "users.id")
       )
       .select([
         "users.fullname as name",
@@ -19,8 +32,7 @@ export async function getUserContact(db: KyselyDB, userId: UserId) {
         "topics.touchedAt",
         "users.lastOnline",
       ])
-      .where("subscriptions.topicId", "like", "p2p%")
-      .where(({ eb, not }) => not(eb("subscriptions.userId", "=", userId)))
+      .where("topics.id", "like", "p2p%")
       .execute(),
     (e) => e
   );
