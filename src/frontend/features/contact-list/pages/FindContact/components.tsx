@@ -5,8 +5,8 @@ export function ByIdTab(props: {
 }) {
   const [topicId, setTopicId] = useState("");
 
-  const onSubscribe = async () => {
-    const r = await props.onSubscribeClick(topicId);
+  const onSubscribe = () => {
+    props.onSubscribeClick(topicId);
   };
 
   return (
@@ -23,8 +23,8 @@ export function ByIdTab(props: {
 
       <div className="mt-2.5 flex justify-end pr-2.5">
         <button
-          onClick={async () => {
-            await onSubscribe();
+          onClick={() => {
+            onSubscribe();
           }}
           className="cursor-pointer rounded-md bg-blue-500 px-4 py-1.5 text-sm uppercase text-white"
         >

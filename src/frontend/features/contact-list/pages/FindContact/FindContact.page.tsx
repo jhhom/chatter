@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ok } from "neverthrow";
@@ -104,7 +104,7 @@ export default function FindContactPanel() {
                   profilePhotoUrl: v.profilePhotoUrl,
                 })) || []
               }
-              onContactClick={async (u) => {
+              onContactClick={(u) => {
                 store.contact.addNewContact(u.userId, {
                   name: u.fullname,
                   description: u.username,
@@ -128,7 +128,7 @@ export default function FindContactPanel() {
                   photoBase64,
                 });
                 if (result.isErr()) {
-                  alert("Error creating group, error: " + result.error);
+                  alert("Error creating group, error: " + result.error.message);
                   return;
                 }
                 alert("Group created successfully");

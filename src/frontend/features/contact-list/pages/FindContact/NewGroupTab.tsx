@@ -1,6 +1,6 @@
 import { type default as React, useState, useRef, forwardRef } from "react";
 import { z } from "zod";
-import { UseFormRegisterReturn, useForm } from "react-hook-form";
+import { type UseFormRegisterReturn, useForm } from "react-hook-form";
 import clsx from "clsx";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -51,7 +51,7 @@ export default function NewGroupTab(props: {
               props.onSubmit(data);
             },
             (err) => {
-              console.error(`Form error ${err}`);
+              console.error(`Form error ${JSON.stringify(err)}`);
             }
           )}
         >
@@ -112,7 +112,7 @@ const ImageUpload = forwardRef<
       imgRef.current.src = URL.createObjectURL(files[0]);
       setShowImage(true);
     }
-    props.onChange(e);
+    void props.onChange(e);
   };
 
   return (
@@ -123,6 +123,7 @@ const ImageUpload = forwardRef<
         </p>
         <img
           ref={imgRef}
+          alt="group photo"
           className={clsx(
             { hidden: !showImage },
             "h-full w-full rounded-full object-cover"

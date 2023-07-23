@@ -88,15 +88,12 @@ export default function LoginPage() {
       </div>
 
       <form
-        onSubmit={handleSubmit(
-          (data) => {
-            loginMutation.mutate({
-              username: data.username,
-              password: data.password,
-            });
-          },
-          (err) => {}
-        )}
+        onSubmit={handleSubmit((data) => {
+          loginMutation.mutate({
+            username: data.username,
+            password: data.password,
+          });
+        })}
       >
         <Components.Form.TextInput
           id={"username"}

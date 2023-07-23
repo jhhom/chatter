@@ -1,4 +1,4 @@
-import Dexie, { Table } from "dexie";
+import Dexie, { type Table } from "dexie";
 
 import type { MessageContent } from "~/api-contract/subscription/subscription";
 import type { UserId } from "~/api-contract/subscription/subscription";

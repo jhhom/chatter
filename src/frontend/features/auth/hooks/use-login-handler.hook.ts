@@ -220,9 +220,7 @@ export const useLoginHandler = () => {
   };
 
   const listeners: ListenerToRegister = {
-    ["group-chat-notification.online-members"]: async (payload) => {},
-
-    ["notification.p2p-topic-permission-update"]: async (payload) => {
+    ["notification.p2p-topic-permission-update"]: (payload) => {
       const c = store.p2p.get(payload.topicId);
       if (c == undefined) {
         return;
@@ -333,7 +331,7 @@ export const useLoginHandler = () => {
         }
       }
     },
-    ["notification.added-to-group"]: async (payload) => {
+    ["notification.added-to-group"]: (payload) => {
       store.deletePastGrp(payload.groupId);
 
       store.setGrpContact(payload.groupId, {
@@ -362,7 +360,7 @@ export const useLoginHandler = () => {
             },
       });
     },
-    ["notification.grp-topic-permission-update"]: async (payload) => {
+    ["notification.grp-topic-permission-update"]: (payload) => {
       const c = store.grp.get(payload.topicId);
       if (c == undefined) {
         return;
@@ -385,7 +383,7 @@ export const useLoginHandler = () => {
         });
       }
     },
-    ["notification.on"]: async (payload) => {
+    ["notification.on"]: (payload) => {
       if (IsGroupTopicId(payload.topicId)) {
         const c = store.grp.get(payload.topicId);
         if (c == undefined) {
@@ -413,7 +411,7 @@ export const useLoginHandler = () => {
         });
       }
     },
-    ["notification.off"]: async (payload) => {
+    ["notification.off"]: (payload) => {
       if (IsGroupTopicId(payload.topicId)) {
         const c = store.grp.get(payload.topicId);
         if (c == undefined) {
@@ -531,7 +529,6 @@ export const useLoginHandler = () => {
         .below([payload.topicUserId, payload.lastReadSeqId])
         .and((x) => x.author == store.profile?.userId)
         .modify({ read: true })
-        .then(() => {})
         .catch((err: any) => {
           console.error("UPDATE READ STATUS ERROR", err);
         });
