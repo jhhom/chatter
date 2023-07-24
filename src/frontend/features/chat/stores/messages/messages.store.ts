@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { create, createStore } from "zustand";
 import { Result, ok, err } from "neverthrow";
 import { immer } from "zustand/middleware/immer";
 
@@ -73,17 +73,89 @@ type UseMessagesStoreProps = {
 type ZustandMessagesStore = {
   messages: ChatMessageType[];
   setMessages: (messages: ChatMessageType[]) => void;
+  setMessage: (idx: number, message: ChatMessageType) => void;
+  addMessage: (msg: ChatMessageType) => void;
+  deleteMessage: (idx: number, deleteFor: "self" | "everyone") => void;
+  clearMessages: () => void;
+  setLastMessageSeq: (seq: ChatMessageDisplaySeq) => void;
   hasEarlierMessages: boolean;
   setHasEarlierMessages: (hasEarlierMessages: boolean) => void;
   isLoadingMoreMessages: boolean;
   setIsLoadingMoreMessages: (isLoadingMoreMessages: boolean) => void;
 };
 
-const useZustandMessagesStore = create(
+const useZustandMessagesStore = createStore(
   immer<ZustandMessagesStore>((set) => ({
     messages: [],
     setMessages: (messages) => {
       return set((s) => (s.messages = messages));
+    },
+    setMessage: (idx, message) => {
+      return set((s) => (s.messages[idx] = message));
+    },
+    addMessage: (msg: ChatMessageType) => {
+      return set((s) => s.messages.push(msg));
+    },
+    deleteMessage: (idx, deleteFor) => {
+      return set((s) => {
+        if (deleteFor === "self") {
+          if (idx >= s.messages.length) {
+            return;
+          }
+
+          const deletedMessage = s.messages[idx];
+          if (deletedMessage.type === "event_log") {
+            return;
+          }
+          s.messages.splice(idx, 1);
+
+          if (s.messages.length > idx + 1) {
+            const nextMessage = s.messages[idx];
+            if (nextMessage.type === "message") {
+              if (nextMessage.authorId === deletedMessage.authorId) {
+                nextMessage.seq =
+                  nextMessage.seq === "middle" ? "first" : "single";
+              }
+
+              if (deletedMessage.isFirstOfDate) {
+                s.messages[idx] = {
+                  ...nextMessage,
+                  isFirstOfDate: true,
+                };
+              }
+            }
+          }
+        } else {
+          const msg = s.messages[idx];
+          if (msg.type === "message") {
+            s.messages[idx] = {
+              ...msg,
+              text: {
+                type: "text",
+                forwarded: false,
+                content: "",
+                replyTo: null,
+              },
+              deleted: true,
+            };
+          }
+        }
+      });
+    },
+    clearMessages: () => {
+      return set((s) => {
+        s.messages = [];
+        s.hasEarlierMessages = false;
+        s.isLoadingMoreMessages = false;
+      });
+    },
+    setLastMessageSeq: (seq) => {
+      return set((s) => {
+        const lastMsg = s.messages[s.messages.length - 1];
+        if (lastMsg.type === "message") {
+          lastMsg.seq = seq;
+        }
+      });
     },
     hasEarlierMessages: false,
     setHasEarlierMessages(hasEarlierMessages) {
@@ -96,7 +168,7 @@ const useZustandMessagesStore = create(
   }))
 );
 
-const useMessagesStore = (props: UseMessagesStoreProps) => {
+export const useMessagesStore = (props: UseMessagesStoreProps) => {
   const store = useAppStore((s) => ({
     contact: {
       p2p: s.p2p,
@@ -685,77 +757,16 @@ const useMessagesStore = (props: UseMessagesStoreProps) => {
       [messagesStore, _loadMessagesUntilReply]
     );
 
-  // add messages from the server to the view
-  // we don't add to IndexedDB because we already register a listener during login to add message from the server
-  // if we add to IndexedDB, then there would be repeated messages
-  // messages sent by us is added to the view and IndexedDB, because we don't have other listeners
-  // that will add message to IndexedDB
-  const addMessage = useCallback(
-    (msg: ChatMessageType) => {
-      messagesStore.setMessages([...messagesStore.messages, msg]);
-    },
-    [messagesStore]
-  );
-
-  const setMessage = (idx: number, message: ChatMessageType) => {
-    messagesStore.setMessages(idx, message);
-  };
-
-  const deleteMessage = (idx: number, deleteFor: "self" | "everyone") => {
-    if (deleteFor == "self") {
-      if (idx >= messagesStore.messages.length) {
-        return;
-      }
-      const deletedMessage = messagesStore.messages[idx];
-      if (deletedMessage.type == "event_log") {
-        return;
-      }
-      messagesStore.setMessages(
-        produce((m) => {
-          m.splice(idx, 1);
-        })
-      );
-
-      if (messagesStore.messages.length > idx + 1) {
-        const nextMessage = messagesStore.messages[idx];
-        if (nextMessage.type == "message") {
-          if (nextMessage.authorId == deletedMessage.authorId) {
-            setMessage(idx, {
-              ...nextMessage,
-              seq: nextMessage.seq == "middle" ? "first" : "single",
-            });
-          }
-
-          if (deletedMessage.isFirstOfDate) {
-            setMessage(idx, {
-              ...nextMessage,
-              isFirstOfDate: true,
-            });
-          }
-        }
-      }
-    } else {
-      const msg = messagesStore.messages[idx];
-      if (msg.type == "message") {
-        setMessage(idx, {
-          ...msg,
-          text: {
-            type: "text",
-            forwarded: false,
-            content: "",
-            replyTo: null,
-          },
-          deleted: true,
-        });
-      }
-    }
-  };
-
-  const setLastMessageSeq = (seq: ChatMessageDisplaySeq) => {
-    const lastMsg = messagesStore.messages[messagesStore.messages.length - 1];
-    messagesStore.setMessages(messagesStore.messages.length - 1, {
-      ...lastMsg,
-      seq,
-    });
+  return {
+    messages: messagesStore.messages,
+    hasEarlierMessages: messagesStore.hasEarlierMessages,
+    isLoadingMoreMessages: messagesStore.isLoadingMoreMessages,
+    loadMessagesUntilReply,
+    loadMessages,
+    addMessage: messagesStore.addMessage,
+    setMessage: messagesStore.setMessage,
+    deleteMessage: messagesStore.deleteMessage,
+    setLastMessageSeq: messagesStore.setLastMessageSeq,
+    clearMessages: messagesStore.clearMessages,
   };
 };
