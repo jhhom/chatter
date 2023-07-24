@@ -1,11 +1,11 @@
 import { EventPayload } from "~/api-contract/subscription/subscription";
 import { GroupTopicId, UserId } from "~/api-contract/subscription/subscription";
 
-import { IChatUI } from "~/frontend-2/features/chat/pages/Chat/subpages/P2PChat.subpage";
+import { dexie } from "~/frontend/external/browser/indexed-db";
+import { client } from "~/frontend/external/api-client/client";
+import { useMessagesStore } from "~/frontend/features/chat/pages/stores/messages/messages.store";
 
-import { dexie } from "~/frontend-2/external/browser/indexed-db";
-import { client } from "~/frontend-2/external/api-client/client";
-import { useMessagesStore } from "~/frontend-2/features/chat/pages/Chat/stores/messages/messages.store";
+import type { IChatUI } from "~/frontend/features/chat/pages/types";
 
 export function useEventLogListener(
   contactId: () => GroupTopicId
@@ -23,20 +23,17 @@ export function useEventLogListener(
       const isUserAtBottomOfScroll = chatUiControl.isUserAtTheBottomOfScroll();
 
       // 1. ADD EVENT LOG INTO UI
-      chat.addMessage(
-        {
-          type: "event_log",
-          text: {
-            type: "text",
-            content: e.message,
-            forwarded: false,
-          },
-          seqId: e.seqId,
-          isFirstOfDate: e.isFirstOfDate,
-          date: e.createdAt,
+      chat.addMessage({
+        type: "event_log",
+        text: {
+          type: "text",
+          content: e.message,
+          forwarded: false,
         },
-        false
-      );
+        seqId: e.seqId,
+        isFirstOfDate: e.isFirstOfDate,
+        date: e.createdAt,
+      });
 
       // 2. UPDATE READ STATUS
       setTimeout(async () => {
@@ -52,7 +49,6 @@ export function useEventLogListener(
           .where(["topicId", "seqId"])
           .equals([contactId(), e.seqId])
           .modify({ read: true })
-          .then((id) => {})
           .catch((error) => {
             console.error(error);
           });

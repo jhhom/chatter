@@ -1,5 +1,5 @@
 import { EventPayload } from "~/api-contract/subscription/subscription";
-import { useMessagesStore } from "~/frontend-2/features/chat/pages/Chat/stores/messages/messages.store";
+import { useMessagesStore } from "~/frontend/features/chat/pages/stores/messages/messages.store";
 import { UserTopicId as TopicId } from "~/api-contract/subscription/subscription";
 
 export function useReadListener(

@@ -1,7 +1,7 @@
 import type { EventPayload } from "~/api-contract/subscription/subscription";
 
 import type { UserTopicId as TopicId } from "~/api-contract/subscription/subscription";
-import { useMessagesStore } from "~/frontend/features/chat/stores/messages/messages.store";
+import { useMessagesStore } from "~/frontend/features/chat/pages/stores/messages/messages.store";
 
 export function useDeleteMessageListener(
   contactId: () => TopicId

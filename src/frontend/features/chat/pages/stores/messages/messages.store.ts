@@ -1,4 +1,4 @@
-import { create, createStore } from "zustand";
+import { createStore, StoreApi } from "zustand";
 import { Result, ok, err } from "neverthrow";
 import { immer } from "zustand/middleware/immer";
 
@@ -11,17 +11,17 @@ import { AppErrorUnion } from "~/api-contract/errors/errors";
 import {
   type ChatMessageType,
   ChatMessageDisplaySeq,
-} from "~/frontend/features/chat/stores/messages/get-messages-display-sequences";
+} from "~/frontend/features/chat/pages/stores/messages/get-messages-display-sequences";
 import type { MessagesResultEventLogs } from "~/backend/service/topics/common/repo/repo";
 import {
   getMessageDisplaySequences,
   getMessageDisplaySequencesArg,
-} from "~/frontend/features/chat/stores/messages/get-messages-display-sequences";
+} from "~/frontend/features/chat/pages/stores/messages/get-messages-display-sequences";
 
 import { client } from "~/frontend/external/api-client/client";
 import { dexie } from "~/frontend/external/browser/indexed-db";
 import { useAppStore } from "~/frontend/stores/stores";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useContext, createContext } from "react";
 
 type EventLogContent = {
   type: "text";
@@ -53,23 +53,6 @@ type MessagesStore = Pick<
   setLastMessageSeq: (seq: ChatMessageDisplaySeq) => void;
 };
 
-type UseMessagesStoreProps = {
-  topic: TopicId;
-} & (
-  | {
-      type: "p2p";
-    }
-  | {
-      type: "grp";
-      getTopicMember: (memberUserId: UserId) =>
-        | {
-            name: string;
-            online: boolean;
-          }
-        | undefined;
-    }
-);
-
 type ZustandMessagesStore = {
   messages: ChatMessageType[];
   setMessages: (messages: ChatMessageType[]) => void;
@@ -84,108 +67,138 @@ type ZustandMessagesStore = {
   setIsLoadingMoreMessages: (isLoadingMoreMessages: boolean) => void;
 };
 
-const useZustandMessagesStore = createStore(
-  immer<ZustandMessagesStore>((set) => ({
-    messages: [],
-    setMessages: (messages) => {
-      return set((s) => (s.messages = messages));
-    },
-    setMessage: (idx, message) => {
-      return set((s) => (s.messages[idx] = message));
-    },
-    addMessage: (msg: ChatMessageType) => {
-      return set((s) => s.messages.push(msg));
-    },
-    deleteMessage: (idx, deleteFor) => {
-      return set((s) => {
-        if (deleteFor === "self") {
-          if (idx >= s.messages.length) {
-            return;
-          }
+export const createMessagesStore = () => {
+  return createStore(
+    immer<ZustandMessagesStore>((set) => ({
+      messages: [],
+      setMessages: (messages) => {
+        return set((s) => (s.messages = messages));
+      },
+      setMessage: (idx, message) => {
+        return set((s) => (s.messages[idx] = message));
+      },
+      addMessage: (msg: ChatMessageType) => {
+        return set((s) => s.messages.push(msg));
+      },
+      deleteMessage: (idx, deleteFor) => {
+        return set((s) => {
+          if (deleteFor === "self") {
+            if (idx >= s.messages.length) {
+              return;
+            }
 
-          const deletedMessage = s.messages[idx];
-          if (deletedMessage.type === "event_log") {
-            return;
-          }
-          s.messages.splice(idx, 1);
+            const deletedMessage = s.messages[idx];
+            if (deletedMessage.type === "event_log") {
+              return;
+            }
+            s.messages.splice(idx, 1);
 
-          if (s.messages.length > idx + 1) {
-            const nextMessage = s.messages[idx];
-            if (nextMessage.type === "message") {
-              if (nextMessage.authorId === deletedMessage.authorId) {
-                nextMessage.seq =
-                  nextMessage.seq === "middle" ? "first" : "single";
-              }
+            if (s.messages.length > idx + 1) {
+              const nextMessage = s.messages[idx];
+              if (nextMessage.type === "message") {
+                if (nextMessage.authorId === deletedMessage.authorId) {
+                  nextMessage.seq =
+                    nextMessage.seq === "middle" ? "first" : "single";
+                }
 
-              if (deletedMessage.isFirstOfDate) {
-                s.messages[idx] = {
-                  ...nextMessage,
-                  isFirstOfDate: true,
-                };
+                if (deletedMessage.isFirstOfDate) {
+                  s.messages[idx] = {
+                    ...nextMessage,
+                    isFirstOfDate: true,
+                  };
+                }
               }
             }
+          } else {
+            const msg = s.messages[idx];
+            if (msg.type === "message") {
+              s.messages[idx] = {
+                ...msg,
+                text: {
+                  type: "text",
+                  forwarded: false,
+                  content: "",
+                  replyTo: null,
+                },
+                deleted: true,
+              };
+            }
           }
-        } else {
-          const msg = s.messages[idx];
-          if (msg.type === "message") {
-            s.messages[idx] = {
-              ...msg,
-              text: {
-                type: "text",
-                forwarded: false,
-                content: "",
-                replyTo: null,
-              },
-              deleted: true,
-            };
+        });
+      },
+      clearMessages: () => {
+        return set((s) => {
+          s.messages = [];
+          s.hasEarlierMessages = false;
+          s.isLoadingMoreMessages = false;
+        });
+      },
+      setLastMessageSeq: (seq) => {
+        return set((s) => {
+          const lastMsg = s.messages[s.messages.length - 1];
+          if (lastMsg.type === "message") {
+            lastMsg.seq = seq;
           }
-        }
-      });
-    },
-    clearMessages: () => {
-      return set((s) => {
-        s.messages = [];
-        s.hasEarlierMessages = false;
-        s.isLoadingMoreMessages = false;
-      });
-    },
-    setLastMessageSeq: (seq) => {
-      return set((s) => {
-        const lastMsg = s.messages[s.messages.length - 1];
-        if (lastMsg.type === "message") {
-          lastMsg.seq = seq;
-        }
-      });
-    },
-    hasEarlierMessages: false,
-    setHasEarlierMessages(hasEarlierMessages) {
-      return set((_) => ({ hasEarlierMessages }));
-    },
-    isLoadingMoreMessages: false,
-    setIsLoadingMoreMessages(isLoadingMoreMessages) {
-      return set((_) => ({ isLoadingMoreMessages }));
-    },
-  }))
-);
+        });
+      },
+      hasEarlierMessages: false,
+      setHasEarlierMessages(hasEarlierMessages) {
+        return set((_) => ({ hasEarlierMessages }));
+      },
+      isLoadingMoreMessages: false,
+      setIsLoadingMoreMessages(isLoadingMoreMessages) {
+        return set((_) => ({ isLoadingMoreMessages }));
+      },
+    }))
+  );
+};
 
-export const useMessagesStore = (props: UseMessagesStoreProps) => {
+type MessagesContext = {
+  store: ZustandMessagesStore;
+  contact: {
+    topic: TopicId;
+  } & (
+    | {
+        type: "p2p";
+      }
+    | {
+        type: "grp";
+        getTopicMember: (userId: UserId) =>
+          | {
+              name: string;
+              online: boolean;
+            }
+          | undefined;
+      }
+  );
+};
+
+const messagesContext = createContext<MessagesContext | null>(null);
+
+export const useMessagesStore = () => {
   const store = useAppStore((s) => ({
     contact: {
       p2p: s.p2p,
     },
     profile: s.profile,
   }));
-  const messagesStore = useZustandMessagesStore();
+  const ctx = useContext(messagesContext);
+  if (ctx === null) {
+    throw new Error(
+      `MessagesContext is null, did you forgot to wrap its usage under a MessagesProvider?`
+    );
+  }
+  const { store: messagesStore, contact } = ctx;
 
   useEffect(() => {
     messagesStore.setMessages([]);
     messagesStore.setHasEarlierMessages(false);
     messagesStore.setIsLoadingMoreMessages(false);
-  }, [props.topic, messagesStore]);
+  }, [contact.topic, messagesStore]);
 
   const getTopicMember = useCallback(
     (userId: UserId) => {
-      if (props.type === "p2p") {
+      if (contact.type === "p2p") {
         const c = store.contact.p2p.get(userId);
         if (c == undefined) {
           return undefined;
@@ -195,10 +208,10 @@ export const useMessagesStore = (props: UseMessagesStoreProps) => {
           online: c.status.online,
         };
       } else {
-        return props.getTopicMember(userId);
+        return contact.getTopicMember(userId);
       }
     },
-    [props, store.contact.p2p]
+    [contact, store.contact.p2p]
   );
 
   const getReplyMessageAuthor = useCallback(
@@ -237,7 +250,7 @@ export const useMessagesStore = (props: UseMessagesStoreProps) => {
           (m) =>
             m.seqId <
               (arg.beforeSequenceId < 0 ? Infinity : arg.beforeSequenceId) &&
-            m.topicId === props.topic
+            m.topicId === contact.topic
         )
         .reverse()
         .limit(arg.pageSize)
@@ -255,7 +268,7 @@ export const useMessagesStore = (props: UseMessagesStoreProps) => {
       // and check if there are more messages to be queried
       if (arg.pageSize > 0) {
         const result = await client["topic/messages"]({
-          topicId: props.topic,
+          topicId: contact.topic,
           numberOfMessages: arg.pageSize,
           beforeSequenceId: arg.beforeSequenceId,
         });
@@ -266,7 +279,7 @@ export const useMessagesStore = (props: UseMessagesStoreProps) => {
         const networkMessages = result.value.msgs.map((m) => {
           if (m.type == "message") {
             return {
-              topicId: props.topic,
+              topicId: contact.topic,
               content: m.content,
               seqId: m.sequenceId,
               author: m.author,
@@ -277,7 +290,7 @@ export const useMessagesStore = (props: UseMessagesStoreProps) => {
             };
           }
           return {
-            topicId: props.topic,
+            topicId: contact.topic,
             content: {
               ...m.content,
               replyTo: null,
@@ -300,7 +313,7 @@ export const useMessagesStore = (props: UseMessagesStoreProps) => {
         await dexie.topicEventLogs.bulkAdd(
           networkTopicEventLogs.map((l) => ({
             seqId: l.sequenceId,
-            topicId: props.topic,
+            topicId: contact.topic,
             topicEvent: l.event,
           }))
         );
@@ -358,14 +371,14 @@ export const useMessagesStore = (props: UseMessagesStoreProps) => {
             (m) =>
               m.seqId <
                 (arg.beforeSequenceId < 0 ? Infinity : arg.beforeSequenceId) &&
-              m.topicId === props.topic
+              m.topicId === contact.topic
           )
           .count();
 
         let hasEarlierMessages = earlierMessageCount > 0;
         if (!hasEarlierMessages) {
           const r = await client["topic/has_messages_earlier_than"]({
-            topicId: props.topic,
+            topicId: contact.topic,
             beforeSequenceId: arg.beforeSequenceId,
           });
           if (r.isErr()) {
@@ -425,7 +438,7 @@ export const useMessagesStore = (props: UseMessagesStoreProps) => {
     [
       getReplyMessageAuthor,
       getTopicMember,
-      props,
+      contact,
       store.profile?.fullname,
       store.profile?.userId,
     ]
@@ -462,7 +475,8 @@ export const useMessagesStore = (props: UseMessagesStoreProps) => {
         const r = await dexie.messages
           .filter(
             (x) =>
-              x.topicId == props.topic && x.seqId <= arg.replyMessageSequenceId
+              x.topicId == contact.topic &&
+              x.seqId <= arg.replyMessageSequenceId
           )
           .limit(1)
           .toArray();
@@ -480,7 +494,7 @@ export const useMessagesStore = (props: UseMessagesStoreProps) => {
           .orderBy("[topicId+seqId]")
           .filter(
             (m) =>
-              m.topicId === props.topic &&
+              m.topicId === contact.topic &&
               m.seqId > arg.replyMessageSequenceId &&
               m.seqId <
                 (arg.beforeSequenceId < 0 ? Infinity : arg.beforeSequenceId)
@@ -495,7 +509,7 @@ export const useMessagesStore = (props: UseMessagesStoreProps) => {
 
         // 2.1.2 Get messages from network
         const result = await client["topic/get_messages_until_reply"]({
-          topicId: props.topic,
+          topicId: contact.topic,
           beforeSequenceId: arg.beforeSequenceId,
           untilReplySequenceId: arg.replyMessageSequenceId,
         });
@@ -510,7 +524,7 @@ export const useMessagesStore = (props: UseMessagesStoreProps) => {
         const networkMessages = result.value.msgs.map((m) => {
           if (m.type == "message") {
             return {
-              topicId: props.topic,
+              topicId: contact.topic,
               content: m.content,
               seqId: m.sequenceId,
               author: m.author,
@@ -521,7 +535,7 @@ export const useMessagesStore = (props: UseMessagesStoreProps) => {
             };
           }
           return {
-            topicId: props.topic,
+            topicId: contact.topic,
             content: {
               ...m.content,
               replyTo: null,
@@ -544,7 +558,7 @@ export const useMessagesStore = (props: UseMessagesStoreProps) => {
         await dexie.topicEventLogs.bulkAdd(
           networkTopicEventLogs.map((l) => ({
             seqId: l.sequenceId,
-            topicId: props.topic,
+            topicId: contact.topic,
             topicEvent: l.event,
           }))
         );
@@ -603,13 +617,13 @@ export const useMessagesStore = (props: UseMessagesStoreProps) => {
             (m) =>
               m.seqId <
                 (arg.beforeSequenceId < 0 ? Infinity : arg.beforeSequenceId) &&
-              m.topicId === props.topic &&
+              m.topicId === contact.topic &&
               m.seqId > arg.replyMessageSequenceId
           )
           .toArray();
 
         const replyMessage = await dexie.messages.get([
-          props.topic,
+          contact.topic,
           arg.replyMessageSequenceId,
         ]);
         if (replyMessage === undefined) {
@@ -665,7 +679,7 @@ export const useMessagesStore = (props: UseMessagesStoreProps) => {
             await dexie.messages
               .filter(
                 (m) =>
-                  m.topicId === props.topic &&
+                  m.topicId === contact.topic &&
                   m.seqId < arg.replyMessageSequenceId
               )
               .limit(1)
@@ -673,7 +687,7 @@ export const useMessagesStore = (props: UseMessagesStoreProps) => {
           ).length != 0;
         if (!hasEarlierMessages) {
           const r = await client["topic/has_messages_earlier_than"]({
-            topicId: props.topic,
+            topicId: contact.topic,
             beforeSequenceId: arg.replyMessageSequenceId,
           });
           if (r.isErr()) {
@@ -688,7 +702,7 @@ export const useMessagesStore = (props: UseMessagesStoreProps) => {
     [
       getReplyMessageAuthor,
       getTopicMember,
-      props.topic,
+      contact.topic,
       store.profile?.fullname,
       store.profile?.userId,
     ]
