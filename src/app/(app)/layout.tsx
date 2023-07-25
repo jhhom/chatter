@@ -14,6 +14,7 @@ import storage from "~/frontend/external/browser/local-storage";
 import { client } from "~/frontend/external/api-client/client";
 import { match } from "ts-pattern";
 import LoginPage from "~/frontend/features/auth/pages/Login/Login.page";
+import ChatPage from "~/frontend/features/chat/pages/Chat.page";
 
 const queryClient = new QueryClient();
 
@@ -43,7 +44,7 @@ function Layout({ children }: { children: React.ReactNode }) {
   const { onLoginSuccess } = useLoginHandler();
 
   useEffect(() => {
-    (async () => {
+    void (async () => {
       await dexie.messages.clear();
       await dexie.topicEventLogs.clear();
 
@@ -71,7 +72,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         store.setAuthStatus("logged-in");
       }
     })();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return match(store.authStatus)
     .with("loading", () => {
@@ -86,7 +87,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         <div className="flex h-screen w-screen">
           <div className="w-[22rem]">{children}</div>
           <div className="w-[calc(100vw-22rem)]">
-            <div>Chat page</div>
+            <ChatPage />
           </div>
         </div>
       );

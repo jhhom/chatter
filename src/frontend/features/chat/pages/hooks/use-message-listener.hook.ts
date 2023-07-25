@@ -1,5 +1,10 @@
-import { EventPayload } from "~/api-contract/subscription/subscription";
-import { GroupTopicId, UserId } from "~/api-contract/subscription/subscription";
+import { useMemo, useCallback } from "react";
+
+import type { EventPayload } from "~/api-contract/subscription/subscription";
+import type {
+  GroupTopicId,
+  UserId,
+} from "~/api-contract/subscription/subscription";
 
 import type { IChatUI } from "~/frontend/features/chat/pages/types";
 import type { ChatMessageDisplaySeq } from "~/frontend/features/chat/pages/stores/messages/get-messages-display-sequences";
@@ -25,120 +30,127 @@ export function useMessageListener(
   const chat = useMessagesStore();
   const profile = useAppStore((s) => s.profile);
 
-  const getReplyMessageAuthor = (authorId: UserId) => {
-    if (authorId == profile?.userId) {
-      return "You";
-    }
-    return getTopicMember(authorId)?.name ?? "";
-  };
-
-  const makeListener = (chatUiControl: IChatUI) => {
-    const listener = (
-      e: EventPayload["message"] | EventPayload["message.from-new-topic"]
-    ) => {
-      if (e.topicId != contactId) {
-        return;
+  const getReplyMessageAuthor = useCallback(
+    (authorId: UserId) => {
+      if (authorId == profile?.userId) {
+        return "You";
       }
-      const isUserAtBottomOfScroll = chatUiControl.isUserAtTheBottomOfScroll();
+      return getTopicMember(authorId)?.name ?? "";
+    },
+    [profile?.userId, getTopicMember]
+  );
 
-      // 1. FIND OUT MESSAGE SEQ
-      let precedingMessage:
-        | {
-            type: "message";
-            authorId: UserId;
-            seq: ChatMessageDisplaySeq;
-            createdAt: Date;
-          }
-        | {
-            type: "event_log";
-          }
-        | undefined;
-      if (chat.messages.length > 0) {
-        const lastMsg = chat.messages[chat.messages.length - 1];
-        if (lastMsg.type == "message") {
-          precedingMessage = {
-            authorId: lastMsg.authorId,
-            seq: lastMsg.seq,
-            createdAt: lastMsg.date,
-            type: "message",
-          };
-        } else {
-          precedingMessage = {
-            type: "event_log",
-          };
-        }
-      }
-      const messageSeq = findMessageSeq(
-        { authorId: e.authorId, createdAt: e.createdAt },
-        precedingMessage
-      );
-
-      // 2. MODIFY LAST MESSAGE SEQ
-      //
-      // if undefined, means last message seq doesn't change
-      if (messageSeq.lastMessageSeq) {
-        chat.setLastMessageSeq(messageSeq.lastMessageSeq);
-      }
-
-      // 3. ADD NEW MESSAGE TO CHAT UI
-      chat.addMessage({
-        type: "message",
-        authorId: e.authorId,
-        authorName: getTopicMember(e.authorId)?.name ?? "",
-        seq: messageSeq.messageSeq,
-        date: e.createdAt,
-        text: {
-          ...e.content,
-          replyTo:
-            e.content.replyTo === null
-              ? null
-              : {
-                  ...e.content.replyTo,
-                  authorName:
-                    e.content.replyTo === null
-                      ? "Not found"
-                      : getReplyMessageAuthor(e.content.replyTo.authorId),
-                },
-        },
-        isFirstOfDate: e.isFirstOfDate,
-        read: false,
-        userIsAuthor: e.authorId == profile?.userId,
-        seqId: e.seqId,
-        deleted: false,
-      });
-
-      // 4. UPDATE READ STATUS
-      setTimeout(async () => {
-        const result = await client["topic/update_message_read_status"]({
-          sequenceId: e.seqId,
-          topicId: contactId,
-        });
-        if (result.isErr()) {
+  const makeListener = useMemo(
+    () => (chatUiControl: IChatUI) => {
+      const listener = (
+        e: EventPayload["message"] | EventPayload["message.from-new-topic"]
+      ) => {
+        if (e.topicId != contactId) {
           return;
         }
+        const isUserAtBottomOfScroll =
+          chatUiControl.isUserAtTheBottomOfScroll();
 
-        dexie.messages
-          .where(["topicId", "seqId"])
-          .equals([contactId, e.seqId])
-          .modify({ read: true })
-          .catch((error) => {
-            console.error(error);
-          });
-      }, 1500);
-
-      // 5. SCROLL TO THE BOTTOM IF USER IS AT THE BOTTOM BEFORE NEW MESSAGE ARRIVES
-      if (isUserAtBottomOfScroll || e.authorId == profile?.userId) {
-        if (e.content.type == "picture") {
-          // for picture, we need wait for slight delay before the DOM updates with the image before we scroll to the bottom
-          setTimeout(() => chatUiControl.scrollChatToTheBottom(), 300);
-        } else {
-          chatUiControl.scrollChatToTheBottom();
+        // 1. FIND OUT MESSAGE SEQ
+        let precedingMessage:
+          | {
+              type: "message";
+              authorId: UserId;
+              seq: ChatMessageDisplaySeq;
+              createdAt: Date;
+            }
+          | {
+              type: "event_log";
+            }
+          | undefined;
+        if (chat.messages.length > 0) {
+          const lastMsg = chat.messages[chat.messages.length - 1];
+          if (lastMsg.type == "message") {
+            precedingMessage = {
+              authorId: lastMsg.authorId,
+              seq: lastMsg.seq,
+              createdAt: lastMsg.date,
+              type: "message",
+            };
+          } else {
+            precedingMessage = {
+              type: "event_log",
+            };
+          }
         }
-      }
-    };
+        const messageSeq = findMessageSeq(
+          { authorId: e.authorId, createdAt: e.createdAt },
+          precedingMessage
+        );
 
-    return listener;
-  };
+        // 2. MODIFY LAST MESSAGE SEQ
+        //
+        // if undefined, means last message seq doesn't change
+        if (messageSeq.lastMessageSeq) {
+          chat.setLastMessageSeq(messageSeq.lastMessageSeq);
+        }
+
+        // 3. ADD NEW MESSAGE TO CHAT UI
+        chat.addMessage({
+          type: "message",
+          authorId: e.authorId,
+          authorName: getTopicMember(e.authorId)?.name ?? "",
+          seq: messageSeq.messageSeq,
+          date: e.createdAt,
+          text: {
+            ...e.content,
+            replyTo:
+              e.content.replyTo === null
+                ? null
+                : {
+                    ...e.content.replyTo,
+                    authorName:
+                      e.content.replyTo === null
+                        ? "Not found"
+                        : getReplyMessageAuthor(e.content.replyTo.authorId),
+                  },
+          },
+          isFirstOfDate: e.isFirstOfDate,
+          read: false,
+          userIsAuthor: e.authorId == profile?.userId,
+          seqId: e.seqId,
+          deleted: false,
+        });
+
+        // 4. UPDATE READ STATUS
+        setTimeout(async () => {
+          const result = await client["topic/update_message_read_status"]({
+            sequenceId: e.seqId,
+            topicId: contactId,
+          });
+          if (result.isErr()) {
+            return;
+          }
+
+          dexie.messages
+            .where(["topicId", "seqId"])
+            .equals([contactId, e.seqId])
+            .modify({ read: true })
+            .catch((error) => {
+              console.error(error);
+            });
+        }, 1500);
+
+        // 5. SCROLL TO THE BOTTOM IF USER IS AT THE BOTTOM BEFORE NEW MESSAGE ARRIVES
+        if (isUserAtBottomOfScroll || e.authorId == profile?.userId) {
+          if (e.content.type == "picture") {
+            // for picture, we need wait for slight delay before the DOM updates with the image before we scroll to the bottom
+            setTimeout(() => chatUiControl.scrollChatToTheBottom(), 300);
+          } else {
+            chatUiControl.scrollChatToTheBottom();
+          }
+        }
+      };
+
+      return listener;
+    },
+    [chat, contactId, getReplyMessageAuthor, getTopicMember, profile?.userId]
+  );
 
   return makeListener;
 }

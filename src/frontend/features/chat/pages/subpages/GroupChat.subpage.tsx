@@ -173,7 +173,13 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
         groupEventLogListenerId
       );
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [
+    makeMessageListener,
+    makeReadNotificationListener,
+    makeEventLogListener,
+    makeGroupEventLogListener,
+    makeDeleteMessageListener,
+  ]);
 
   useEffect(() => {
     const loadMessagesOfTopic = async () => {

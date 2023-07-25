@@ -5,6 +5,7 @@ import { immer } from "zustand/middleware/immer";
 import type {
   UserTopicId as TopicId,
   UserId,
+  UserTopicId,
 } from "~/api-contract/subscription/subscription";
 import { AppErrorUnion } from "~/api-contract/errors/errors";
 
@@ -21,7 +22,12 @@ import {
 import { client } from "~/frontend/external/api-client/client";
 import { dexie } from "~/frontend/external/browser/indexed-db";
 import { useAppStore } from "~/frontend/stores/stores";
-import { useEffect, useCallback, useContext, createContext } from "react";
+import React, {
+  useEffect,
+  useCallback,
+  useContext,
+  createContext,
+} from "react";
 
 type EventLogContent = {
   type: "text";
@@ -72,16 +78,22 @@ export const createMessagesStore = () => {
     immer<ZustandMessagesStore>((set) => ({
       messages: [],
       setMessages: (messages) => {
-        return set((s) => (s.messages = messages));
+        set((s) => {
+          s.messages = messages;
+        });
       },
       setMessage: (idx, message) => {
-        return set((s) => (s.messages[idx] = message));
+        set((s) => {
+          s.messages[idx] = message;
+        });
       },
       addMessage: (msg: ChatMessageType) => {
-        return set((s) => s.messages.push(msg));
+        set((s) => {
+          s.messages.push(msg);
+        });
       },
       deleteMessage: (idx, deleteFor) => {
-        return set((s) => {
+        set((s) => {
           if (deleteFor === "self") {
             if (idx >= s.messages.length) {
               return;
@@ -127,14 +139,14 @@ export const createMessagesStore = () => {
         });
       },
       clearMessages: () => {
-        return set((s) => {
+        set((s) => {
           s.messages = [];
           s.hasEarlierMessages = false;
           s.isLoadingMoreMessages = false;
         });
       },
       setLastMessageSeq: (seq) => {
-        return set((s) => {
+        set((s) => {
           const lastMsg = s.messages[s.messages.length - 1];
           if (lastMsg.type === "message") {
             lastMsg.seq = seq;
@@ -143,11 +155,15 @@ export const createMessagesStore = () => {
       },
       hasEarlierMessages: false,
       setHasEarlierMessages(hasEarlierMessages) {
-        return set((_) => ({ hasEarlierMessages }));
+        set((s) => {
+          s.hasEarlierMessages = hasEarlierMessages;
+        });
       },
       isLoadingMoreMessages: false,
       setIsLoadingMoreMessages(isLoadingMoreMessages) {
-        return set((_) => ({ isLoadingMoreMessages }));
+        set((s) => {
+          s.isLoadingMoreMessages = isLoadingMoreMessages;
+        });
       },
     }))
   );
@@ -173,7 +189,25 @@ type MessagesContext = {
   );
 };
 
-const messagesContext = createContext<MessagesContext | null>(null);
+export const MessagesContext = createContext<MessagesContext | null>(null);
+
+export function MessagesProvider(props: {
+  contact: MessagesContext["contact"];
+  children: React.ReactNode;
+}) {
+  const store = createMessagesStore();
+
+  return (
+    <MessagesContext.Provider
+      value={{
+        store: store.getState(),
+        contact: props.contact,
+      }}
+    >
+      {props.children}
+    </MessagesContext.Provider>
+  );
+}
 
 export const useMessagesStore = () => {
   const store = useAppStore((s) => ({
@@ -182,7 +216,7 @@ export const useMessagesStore = () => {
     },
     profile: s.profile,
   }));
-  const ctx = useContext(messagesContext);
+  const ctx = useContext(MessagesContext);
   if (ctx === null) {
     throw new Error(
       `MessagesContext is null, did you forgot to wrap its usage under a MessagesProvider?`
@@ -223,12 +257,6 @@ export const useMessagesStore = () => {
     },
     [store.profile?.userId, getTopicMember]
   );
-
-  const clearMessages = useCallback(() => {
-    messagesStore.setMessages([]);
-    messagesStore.setHasEarlierMessages(false);
-    messagesStore.setIsLoadingMoreMessages(false);
-  }, [messagesStore]);
 
   const _loadMessages = useCallback(
     async (arg: {

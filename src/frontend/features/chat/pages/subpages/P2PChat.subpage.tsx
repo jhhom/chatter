@@ -499,7 +499,7 @@ export function P2PChatPage(props: { contactId: UserId }) {
         deleteMessageListenerId
       );
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [makeMessageListener, makeReadListener, makeDeleteMessageListener]);
 
   useEffect(() => {
     const loadMessagesOfTopic = async () => {
