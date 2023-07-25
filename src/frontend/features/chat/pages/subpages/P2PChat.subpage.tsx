@@ -66,7 +66,12 @@ const PAGE_SIZE = 24;
 const INITIAL_PAGE_SIZE = 64;
 
 export function P2PChatPage(props: { contactId: UserId }) {
-  const store = useAppStore();
+  const store = useAppStore((s) => ({
+    profile: s.profile,
+    p2p: s.p2p,
+    grp: s.grp,
+    newContacts: s.newContacts,
+  }));
   const messagesStore = useMessagesStore();
 
   const conversationContainerRef = useRef<HTMLDivElement | null>(null);
@@ -494,7 +499,7 @@ export function P2PChatPage(props: { contactId: UserId }) {
         deleteMessageListenerId
       );
     };
-  });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const loadMessagesOfTopic = async () => {

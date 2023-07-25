@@ -7,9 +7,10 @@ export type MemberProfile = {
   profilePhotoUrl: string | null;
 };
 
-export const useMemberStore = create<{
+export const useMembersStore = create<{
   members: Map<UserId, MemberProfile>;
   setMember: (id: UserId, profile: MemberProfile) => void;
+  clear: () => void;
 }>((set) => ({
   members: new Map(),
   setMember: (id: UserId, profile: MemberProfile) =>
@@ -18,4 +19,9 @@ export const useMemberStore = create<{
       members.set(id, profile);
       return { members };
     }),
+  clear: () => {
+    set((s) => {
+      return { members: new Map() };
+    });
+  },
 }));
