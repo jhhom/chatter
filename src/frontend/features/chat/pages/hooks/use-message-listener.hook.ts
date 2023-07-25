@@ -10,7 +10,7 @@ import { client } from "~/frontend/external/api-client/client";
 import { dexie } from "~/frontend/external/browser/indexed-db";
 
 export function useMessageListener(
-  contactId: () => UserId | GroupTopicId,
+  contactId: UserId | GroupTopicId,
   getTopicMember: (userId: UserId) =>
     | {
         name: string;
@@ -36,7 +36,7 @@ export function useMessageListener(
     const listener = (
       e: EventPayload["message"] | EventPayload["message.from-new-topic"]
     ) => {
-      if (e.topicId != contactId()) {
+      if (e.topicId != contactId) {
         return;
       }
       const isUserAtBottomOfScroll = chatUiControl.isUserAtTheBottomOfScroll();
@@ -111,7 +111,7 @@ export function useMessageListener(
       setTimeout(async () => {
         const result = await client["topic/update_message_read_status"]({
           sequenceId: e.seqId,
-          topicId: contactId(),
+          topicId: contactId,
         });
         if (result.isErr()) {
           return;
@@ -119,7 +119,7 @@ export function useMessageListener(
 
         dexie.messages
           .where(["topicId", "seqId"])
-          .equals([contactId(), e.seqId])
+          .equals([contactId, e.seqId])
           .modify({ read: true })
           .catch((error) => {
             console.error(error);

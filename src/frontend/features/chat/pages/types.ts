@@ -21,7 +21,7 @@ export type ChatConversationProps = {
   >;
   onMessageImageClick: (messageUrl: string) => void;
   onMessageBubbleMenuClick: (
-    e: MouseEvent,
+    e: React.MouseEvent,
     message: ChatMessageTypeMessage
   ) => void;
   onReplyMessageClick: (messageSeqId: number) => void;

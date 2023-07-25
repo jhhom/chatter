@@ -188,7 +188,7 @@ const DeleteMessageOverlayButton = (props: {
 };
 
 export function ForwardMessageOverlay(props: {
-  contacts: () => {
+  contacts: {
     name: string;
     topicId: TopicId;
   }[];
@@ -198,11 +198,9 @@ export function ForwardMessageOverlay(props: {
   const [contactSearch, setContactSearch] = useState("");
 
   const filteredContacts = () =>
-    props
-      .contacts()
-      .filter((x) =>
-        x.name.toLowerCase().includes(contactSearch.toLowerCase())
-      );
+    props.contacts.filter((x) =>
+      x.name.toLowerCase().includes(contactSearch.toLowerCase())
+    );
 
   function SearchContactInput(props: {
     search: string;

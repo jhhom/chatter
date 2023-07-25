@@ -1,5 +1,8 @@
-import { EventPayload } from "~/api-contract/subscription/subscription";
-import { GroupTopicId, UserId } from "~/api-contract/subscription/subscription";
+import type { EventPayload } from "~/api-contract/subscription/subscription";
+import type {
+  GroupTopicId,
+  UserId,
+} from "~/api-contract/subscription/subscription";
 
 import { dexie } from "~/frontend/external/browser/indexed-db";
 import { client } from "~/frontend/external/api-client/client";
@@ -8,7 +11,7 @@ import { useMessagesStore } from "~/frontend/features/chat/pages/stores/messages
 import type { IChatUI } from "~/frontend/features/chat/pages/types";
 
 export function useEventLogListener(
-  contactId: () => GroupTopicId
+  contactId: GroupTopicId
 ): (
   chatUiControl: IChatUI
 ) => (payload: EventPayload["notification.topic-event"]) => void {
@@ -16,7 +19,7 @@ export function useEventLogListener(
 
   const makeListener = (chatUiControl: IChatUI) => {
     const listener = (e: EventPayload["notification.topic-event"]) => {
-      if (e.topicId != contactId()) {
+      if (e.topicId != contactId) {
         return;
       }
 
@@ -39,7 +42,7 @@ export function useEventLogListener(
       setTimeout(async () => {
         const result = await client["topic/update_message_read_status"]({
           sequenceId: e.seqId,
-          topicId: contactId(),
+          topicId: contactId,
         });
         if (result.isErr()) {
           return;
@@ -47,7 +50,7 @@ export function useEventLogListener(
 
         await dexie.messages
           .where(["topicId", "seqId"])
-          .equals([contactId(), e.seqId])
+          .equals([contactId, e.seqId])
           .modify({ read: true })
           .catch((error) => {
             console.error(error);
@@ -66,7 +69,7 @@ export function useEventLogListener(
 }
 
 export function useGroupEventLogListener(
-  contactId: () => GroupTopicId,
+  contactId: GroupTopicId,
   topicMembers: {
     remove: (userId: UserId) => void;
     add: (
@@ -77,7 +80,7 @@ export function useGroupEventLogListener(
 ) {
   const makeListener = () => {
     const listener = (e: EventPayload["notification.topic-event"]) => {
-      if (e.topicId != contactId()) {
+      if (e.topicId != contactId) {
         return;
       }
 

@@ -39,7 +39,7 @@ type ContactProfile = {
   lastMessage: LastMessageOfTopic | null;
 };
 
-type P2PContactProfile = {
+export type P2PContactProfile = {
   profile: ContactProfile & {
     peerPermissions: string;
   };
@@ -47,7 +47,7 @@ type P2PContactProfile = {
   status: P2PContactStatus;
 };
 
-type GrpContactProfile = {
+export type GrpContactProfile = {
   profile: ContactProfile & {
     defaultPermissions: string;
     ownerId: UserId;
@@ -56,7 +56,7 @@ type GrpContactProfile = {
   status: GrpContactStatus;
 };
 
-type PastGrpContactProfile = {
+export type PastGrpContactProfile = {
   profile: {
     name: string;
     description: string;
