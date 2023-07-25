@@ -1,23 +1,24 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { toast, Toaster } from "react-hot-toast";
-import { Result, ok, err, fromPromise } from "neverthrow";
-import { useRouter } from "next/router";
+import { ok, err, fromPromise } from "neverthrow";
+import { useRouter } from "next/navigation";
+import clsx from "clsx";
 
-import { UserId, GroupTopicId } from "~/api-contract/subscription/subscription";
+import type {
+  UserId,
+  GroupTopicId,
+} from "~/api-contract/subscription/subscription";
 import { permission } from "~/backend/service/common/permissions";
 
-import {
+import type {
   ChatConversationProps,
   IChatConversationUI,
 } from "~/frontend/features/chat/pages/types";
-import {
-  ChatMessageType,
-  ChatMessageTypeMessage,
-} from "~/frontend/features/chat/pages/stores/messages/get-messages-display-sequences";
+import type { ChatMessageTypeMessage } from "~/frontend/features/chat/pages/stores/messages/get-messages-display-sequences";
 import { ChatConversation } from "~/frontend/features/chat/pages/components/ChatConversation/ChatConversation";
 import {
   ChatHeader,
-  ChatHeaderProps,
+  type ChatHeaderProps,
 } from "~/frontend/features/chat/pages/components/ChatHeader";
 import { ChatTextInput } from "~/frontend/features/chat/pages/components/ChatTextInput/ChatTextInput";
 import { GroupInfoDrawer } from "~/frontend/features/chat/pages/components/ChatInfoDrawer";
@@ -26,7 +27,7 @@ import { GroupAddMember } from "~/frontend/features/chat/pages/components/ChatIn
 import { GroupSecurityContent } from "~/frontend/features/chat/pages/components/ChatInfoDrawer";
 import {
   ChatReplyPreview,
-  ChatReplyPreviewProps,
+  type ChatReplyPreviewProps,
 } from "~/frontend/features/chat/pages/components/ChatReplyPreview";
 import {
   ChatMessageBubbleMenu,
@@ -50,7 +51,6 @@ import { useAppStore } from "~/frontend/stores/stores";
 import { client } from "~/frontend/external/api-client/client";
 import { dexie } from "~/frontend/external/browser/indexed-db";
 
-import { GrpContactProfile } from "~/frontend/stores/contact-status.store";
 import { useMessagesStore } from "~/frontend/features/chat/pages/stores/messages/messages.store";
 import { useMembersStore } from "~/frontend/features/chat/pages/stores/members/members.store";
 import {
@@ -60,6 +60,7 @@ import {
   useMessageListener,
   useReadListener,
 } from "~/frontend/features/chat/pages/hooks";
+import { match } from "ts-pattern";
 
 const PAGE_SIZE = 24;
 const INITIAL_PAGE_SIZE = 64;
@@ -100,6 +101,10 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
 
   if (grp === undefined) {
     throw new Error("Group not found");
+  }
+
+  if (store.profile === undefined) {
+    throw new Error("User profile is undefined");
   }
 
   const conversationDisplayMode: Parameters<
@@ -462,10 +467,10 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
           onClearMessages={onClearMessages}
         />
 
-        <div class="relative h-[calc(100vh-3rem-3.5rem)] overflow-hidden">
+        <div className="relative h-[calc(100vh-3rem-3.5rem)] overflow-hidden">
           <div
             ref={conversationContainerRef}
-            class="absolute top-0 h-full w-full transition-transform duration-200"
+            className="absolute top-0 h-full w-full transition-transform duration-200"
           >
             <ChatConversation
               ref={conversationUIControl}
@@ -481,7 +486,7 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
             />
             <div
               ref={chatReplyPreviewRef}
-              class="w-full items-center bg-blue-500 text-white"
+              className="w-full items-center bg-blue-500 text-white"
             >
               {messageSelected !== null && toReplyMessage && (
                 <ChatReplyPreview
@@ -503,11 +508,380 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
         />
       </div>
 
-      {
-        showDrawer && (
-          
-        )
-      }
+      {showDrawer && (
+        <div className="h-full basis-2/5">
+          <GroupInfoDrawer onClose={() => setShowDrawer(false)}>
+            {(p) => {
+              return match(p.content)
+                .with("member-security", () => (
+                  <GroupMemberSecurityContent
+                    username={
+                      p.checkingOutMember
+                        ? membersStore.members.get(p.checkingOutMember)?.name ??
+                          ""
+                        : ""
+                    }
+                    editable={p.memberSecurityContentEditable}
+                    onCancel={() => p.setContent("display-info")}
+                    getMemberPermission={async () => {
+                      if (p.checkingOutMember === null) {
+                        return "";
+                      }
+                      const r = await client[
+                        "permissions/get_group_member_permission"
+                      ]({
+                        groupTopicId: props.contactId,
+                        memberUserId: p.checkingOutMember,
+                      });
+                      if (r.isErr()) {
+                        console.error(
+                          `Failed to get member permission in group`,
+                          r.error
+                        );
+                        return "";
+                      }
+
+                      return r.value;
+                    }}
+                    onSubmitPermissionChange={async (permission) => {
+                      if (p.checkingOutMember === null) {
+                        return "";
+                      }
+                      const updatedPermission = await client[
+                        "permissions/update_group_member_permission"
+                      ]({
+                        groupTopicId: props.contactId,
+                        memberUserId: p.checkingOutMember,
+                        newPermission: permission,
+                      });
+                      p.setContent("display-info");
+                      if (updatedPermission.isErr()) {
+                        console.error(
+                          `Failed to update member permission in group`,
+                          updatedPermission.error
+                        );
+                        return "";
+                      }
+                      return updatedPermission.value;
+                    }}
+                  />
+                ))
+                .with("invite-link", () => (
+                  <GroupInviteLinkInfo
+                    groupId={props.contactId}
+                    groupName={grp.profile.name}
+                    getInviteLink={async () => {
+                      const r = await client["group/invite_link"]({
+                        groupTopicId: props.contactId,
+                      });
+                      if (r.isErr()) {
+                        console.error(
+                          `Failed to get group invite link: ` + r.error.message
+                        );
+                        return "";
+                      }
+                      return r.value.inviteLink;
+                    }}
+                    resetInviteLink={() => {
+                      //
+                    }}
+                    onCopyInviteLink={() => {
+                      toast("Link copied to clipboard");
+                    }}
+                  />
+                ))
+                .with("display-info", () => {
+                  if (store.profile === undefined) {
+                    throw new Error("User profile is undefined");
+                  }
+                  return (
+                    <GroupInfo
+                      profile={{
+                        name: grp.profile.name,
+                        id: props.contactId,
+                        ownerId: grp.profile.ownerId,
+                        userId: store.profile.userId,
+                      }}
+                      permissions={grp.profile.userPermissions}
+                      canInvite={permission(
+                        grp.profile.userPermissions
+                      ).canShare()}
+                      memberList={Array.from(
+                        membersStore.members.entries()
+                      ).map(([uId, uProfile]) => {
+                        return {
+                          userId: uId,
+                          name: uProfile.name,
+                          online: uProfile.online,
+                          profilePhotoUrl: uProfile.profilePhotoUrl,
+                        };
+                      })}
+                      onContactRemove={async (removedUserId) => {
+                        const r = await client["group/remove_member"]({
+                          groupTopicId: props.contactId,
+                          memberId: removedUserId,
+                        });
+                        if (r.isErr()) {
+                          alert(
+                            "error removing from group: " + r.error.message
+                          );
+                          return;
+                        }
+                      }}
+                      onLeaveGroup={async () => {
+                        const r = await client["group/leave_group"]({
+                          groupTopicId: props.contactId,
+                        });
+                        if (r.isErr()) {
+                          alert(`Failed to leave group: ${r.error.message}`);
+                          return;
+                        }
+                      }}
+                      onEditPermissions={(userId) => {
+                        p.setCheckingOutMember(userId);
+                        p.setContent("member-security");
+                        p.setMemberSecurityContentEditable(true);
+                      }}
+                      onViewPermissions={(userId) => {
+                        p.setCheckingOutMember(userId);
+                        p.setContent("member-security");
+                        p.setMemberSecurityContentEditable(false);
+                      }}
+                      onInviteToGroupClick={() => p.setContent("invite-link")}
+                      onAddMemberClick={() => p.setContent("add-member")}
+                      onSecurityClick={() => p.setContent("security")}
+                    />
+                  );
+                })
+                .with("add-member", () => (
+                  <div className="h-full">
+                    <GroupAddMember
+                      groupTopicId={props.contactId}
+                      onCancelClick={() => setShowDrawer(false)}
+                      onAfterMembersAdded={() => p.setContent("display-info")}
+                      onAddMembers={async (membersToAdd) => {
+                        const r = await client["group/add_members"]({
+                          groupTopicId: props.contactId,
+                          membersToAdd: membersToAdd,
+                        });
+                        if (r.isErr()) {
+                          return err(r.error);
+                        }
+                        return ok(r.value);
+                      }}
+                      searchNewMembersByName={async (query) => {
+                        const result = await client["group/find_new_members"]({
+                          searchQueryUsername: query,
+                          groupTopicId: props.contactId,
+                        });
+                        if (result.isErr()) {
+                          alert(result.error);
+                          return [];
+                        }
+                        return result.value;
+                      }}
+                    />
+                  </div>
+                ))
+                .with("security", () => (
+                  <div className="h-full">
+                    <GroupSecurityContent
+                      userPermission={grp.profile.userPermissions}
+                      groupDefaultPermission={grp.profile.defaultPermissions}
+                      editable={permission(
+                        grp.profile.userPermissions
+                      ).canAdminister()}
+                      onCancel={() => p.setContent("display-info")}
+                      onSubmitPermissionChange={async (permission) => {
+                        const r = await client[
+                          "permissions/update_group_default_permission"
+                        ]({
+                          groupTopicId: props.contactId,
+                          newDefaultPermission: permission,
+                        });
+                        if (r.isErr()) {
+                          alert(
+                            "Failed to update group default permission: " +
+                              r.error.message
+                          );
+                          return;
+                        }
+                        p.setContent("display-info");
+                      }}
+                    />
+                  </div>
+                ))
+                .run();
+            }}
+          </GroupInfoDrawer>
+        </div>
+      )}
+
+      <div
+        className={clsx(
+          "absolute left-0 top-0 h-[calc(100%-3rem)] w-full bg-white",
+          {
+            hidden: inputMode.type != "photo",
+          }
+        )}
+      >
+        <ChatImageUploadPreviewOverlay
+          ref={imgUploadPreviewRef}
+          filename={inputMode.type === "photo" ? inputMode.filename : ""}
+          onCloseOverlay={() => setInputMode({ type: "message" })}
+        />
+      </div>
+
+      <div
+        className={clsx(
+          "absolute left-0 top-0 h-[calc(100%-3rem)] w-full bg-white",
+          {
+            hidden: inputMode.type != "file",
+          }
+        )}
+      >
+        <ChatFileUploadPreviewOverlay
+          filename={inputMode.type == "file" ? inputMode.filename : ""}
+          contentType={inputMode.type == "file" ? inputMode.contentType : ""}
+          size={inputMode.type == "file" ? inputMode.size : 0}
+          onCloseOverlay={() => {
+            setInputMode({ type: "message" });
+          }}
+        />
+      </div>
+
+      <div
+        className={clsx(
+          "absolute left-0 top-0 h-[calc(100%)] w-full bg-white",
+          {
+            hidden: !showMessageImageOverlay,
+          }
+        )}
+      >
+        <ChatImageOverlay
+          ref={chatImgViewRef}
+          onCloseOverlay={() => setShowMessageImageOverlay(false)}
+        />
+      </div>
+
+      {showForwardMessageOverlay && (
+        <ForwardMessageOverlay
+          contacts={[
+            ...Array.from(store.p2p.entries()).map(([id, p]) => ({
+              topicId: id,
+              name: p.profile.name,
+            })),
+            ...Array.from(store.grp.entries()).map(([id, g]) => ({
+              topicId: id,
+              name: g.profile.name,
+            })),
+          ]}
+          onForwardMessage={async (forwardTo) => {
+            const msgSelected = messageSelected;
+            if (msgSelected == null) {
+              setShowForwardMessageOverlay(false);
+              return;
+            }
+            const result = await client["topic/forward_message"]({
+              message: {
+                seqId: msgSelected.seqId,
+                topicId: props.contactId,
+              },
+              forwardTo,
+            });
+            if (result.isErr()) {
+              alert("Error forward message " + result.error.message);
+              return;
+            }
+
+            router.push(location.pathname + `?topic=${forwardTo}`);
+            setShowForwardMessageOverlay(false);
+          }}
+          onClose={() => {
+            setShowForwardMessageOverlay(false);
+          }}
+        />
+      )}
+
+      <ChatMessageBubbleMenu
+        showMenu={showMessageBubbleMenu}
+        onClose={() => setShowMessageBubbleMenu(false)}
+        ref={messageBubbleMenuRef}
+      >
+        <ChatMessageBubbleMenuItem
+          onClick={() => {
+            setShowForwardMessageOverlay(true);
+            setShowMessageBubbleMenu(false);
+          }}
+          content="Forward"
+        />
+        <ChatMessageBubbleMenuItem
+          onClick={() => {
+            setToReplyMessage(true);
+            setShowMessageBubbleMenu(false);
+            // await animations to finish
+            // before we completely hide the preview
+            if (
+              conversationContainerRef.current &&
+              chatReplyPreviewRef.current
+            ) {
+              conversationContainerRef.current.style.transform = `translateY(-${chatReplyPreviewRef.current.clientHeight}px)`;
+            }
+          }}
+          content="Reply"
+        />
+        <ChatMessageBubbleMenuItem
+          onClick={() => {
+            setShowDeleteMessageOverlay(true);
+            setShowMessageBubbleMenu(false);
+          }}
+          content="Delete"
+        />
+      </ChatMessageBubbleMenu>
+
+      {showDeleteMessageOverlay && (
+        <DeleteMessageOverlay
+          onDeleteForEveryone={
+            messageSelected?.userIsAuthor ||
+            permission(grp.profile.userPermissions).canDelete()
+              ? async () => {
+                  setShowDeleteMessageOverlay(false);
+                  if (messageSelected === null) {
+                    throw new Error("No message is selected for deletion");
+                  }
+                  const r = await client["topic/delete_message"]({
+                    topicId: props.contactId,
+                    messageSeqId: messageSelected.seqId,
+                    deleteFor: "everyone",
+                  });
+                  if (r.isErr()) {
+                    alert(`Failed to delete message: ${r.error.message}`);
+                    return;
+                  }
+                }
+              : undefined
+          }
+          onDeleteForMe={async () => {
+            setShowDeleteMessageOverlay(false);
+            const message = messageSelected;
+            if (message === null) {
+              throw new Error("No message is selected for deletion");
+            }
+            const r = await client["topic/delete_message"]({
+              topicId: props.contactId,
+              messageSeqId: message.seqId,
+              deleteFor: "self",
+            });
+            if (r.isErr()) {
+              alert(`Failed to delete message: ${r.error.message}`);
+              return;
+            }
+          }}
+          onCancel={() => setShowDeleteMessageOverlay(false)}
+        />
+      )}
+
+      <Toaster position="bottom-left" />
     </div>
   );
 }
