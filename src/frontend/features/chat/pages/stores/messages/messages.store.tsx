@@ -794,6 +794,7 @@ export const useMessagesStore = () => {
       messagesStore.setIsLoadingMoreMessages,
       messagesStore.setHasEarlierMessages,
       messagesStore.setMessages,
+      messagesStore.messages,
       _loadMessages,
     ]
   );
@@ -830,6 +831,7 @@ export const useMessagesStore = () => {
         return ok({});
       },
       [
+        messagesStore.messages,
         messagesStore.setMessages,
         messagesStore.setHasEarlierMessages,
         messagesStore.setIsLoadingMoreMessages,

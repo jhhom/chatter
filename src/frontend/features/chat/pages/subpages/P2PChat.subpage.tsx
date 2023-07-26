@@ -189,12 +189,10 @@ export function P2PChatPage(props: { contactId: UserId }) {
 
   const onChatScrollToTop: ChatConversationProps["onChatScrollToTop"] =
     useCallback(async () => {
-      console.log("ON CHAT SCROLL TO TOP!!");
       if (
         messagesStore.hasEarlierMessages &&
         !messagesStore.isLoadingMoreMessages
       ) {
-        console.log("LOAD MESSAGES!!");
         await messagesStore.loadMessages(
           PAGE_SIZE,
           messagesStore.messages[0].seqId
@@ -536,7 +534,6 @@ export function P2PChatPage(props: { contactId: UserId }) {
             (e) => e
           );
           if (idbUpdateResult.isErr()) {
-            console.log("BOOM", idbUpdateResult.error);
             console.error(idbUpdateResult.error);
           }
         }
@@ -554,21 +551,13 @@ export function P2PChatPage(props: { contactId: UserId }) {
     };
 
     void loadMessagesOfTopic();
-  }, [props.contactId, messagesStore.loadMessages, store.profile?.userId]);
+  }, [props.contactId, store.profile?.userId]);
 
   const peer = store.p2p.get(props.contactId);
 
   if (peer === undefined) {
     throw new Error("Contact not found");
   }
-
-  useEffect(() => {
-    console.log("EFFECT 1", messagesStore.loadMessages);
-  }, [messagesStore.loadMessages]);
-
-  useEffect(() => {
-    console.log("EFFECT 2");
-  }, [props.contactId, store.profile?.userId]);
 
   return (
     <div className="relative flex h-screen">

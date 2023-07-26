@@ -63,8 +63,7 @@ export const ChatConversation = forwardRef<
     if (r === null) {
       return;
     }
-    r.addEventListener("scroll", async (e) => {
-      console.log("ON SCROLL");
+    const onScroll = async (e: Event) => {
       if (r.scrollTop <= 0) {
         console.log("ON REACHING TOP");
         const messageMarginTop = 4 + 1.75;
@@ -83,8 +82,14 @@ export const ChatConversation = forwardRef<
         firstMessageRef.current = conversationContainerRef.current
           ?.firstChild as HTMLDivElement;
       }
-    });
-  }, []);
+    };
+
+    r.addEventListener("scroll", onScroll);
+
+    return () => {
+      r.removeEventListener("scroll", onScroll);
+    };
+  }, [props.onChatScrollToTop]);
 
   useImperativeHandle(
     ref,
