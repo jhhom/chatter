@@ -103,9 +103,11 @@ export const useLoginHandler = () => {
     for (const s of topicStatus.value.p2pContactStatus) {
       const c = store.p2p.get(s.topicId);
       if (c == undefined) {
+        console.log("UNDEFFINED!!", s.topicId);
         continue;
       }
       if (s.online) {
+        console.log("USER UPDATED AS ONLINE");
         store.setP2PContact(s.topicId, {
           ...c,
           status: {
@@ -384,6 +386,7 @@ export const useLoginHandler = () => {
       }
     },
     ["notification.on"]: (payload) => {
+      console.log("NOTIFICATION.ON");
       if (IsGroupTopicId(payload.topicId)) {
         const c = store.grp.get(payload.topicId);
         if (c == undefined) {
@@ -398,10 +401,12 @@ export const useLoginHandler = () => {
           },
         });
       } else {
+        console.log("UPDATE CONTACT TO ONLINE STATUS", payload.topicId);
         const c = store.p2p.get(payload.topicId);
         if (c == undefined) {
           return;
         }
+        console.log("UPDATE CONTACT TO ONLINE STATUS", payload.topicId);
         store.setP2PContact(payload.topicId, {
           ...c,
           status: {
@@ -529,7 +534,7 @@ export const useLoginHandler = () => {
         .below([payload.topicUserId, payload.lastReadSeqId])
         .and((x) => x.author == store.profile?.userId)
         .modify({ read: true })
-        .catch((err: any) => {
+        .catch((err: unknown) => {
           console.error("UPDATE READ STATUS ERROR", err);
         });
     },
@@ -644,7 +649,7 @@ export const useLoginHandler = () => {
   };
 
   return {
-    onLoginSuccess: async (response: {
+    onLoginSuccess: async (_response: {
       username: string;
       email: string;
       fullname: string;

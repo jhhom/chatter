@@ -558,6 +558,14 @@ export function P2PChatPage(props: { contactId: UserId }) {
     throw new Error("Contact not found");
   }
 
+  useEffect(() => {
+    console.log("PEER!!!", peer);
+  }, [peer]);
+
+  useEffect(() => {
+    console.log(store.p2p);
+  }, [store.p2p]);
+
   return (
     <div className="relative flex h-screen">
       <div className="h-full flex-grow">
