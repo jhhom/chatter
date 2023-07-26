@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { fromPromise } from "neverthrow";
 import { toast, Toaster } from "react-hot-toast";
@@ -33,8 +33,8 @@ import {
   ChatMessageBubbleMenuItem,
 } from "~/frontend/features/chat/pages/components/ChatConversation/ChatMessageBubbleMenu";
 import {
-  ChatTextInput,
   type ChatInputMode,
+  ChatTextInput as ChatTextInputComponent,
 } from "~/frontend/features/chat/pages/components/ChatTextInput/ChatTextInput";
 import {
   ChatReplyPreview,
@@ -64,6 +64,8 @@ export type IChatUI = Pick<
 
 const PAGE_SIZE = 24;
 const INITIAL_PAGE_SIZE = 64;
+
+const ChatTextInput = React.memo(ChatTextInputComponent);
 
 export function P2PChatPage(props: { contactId: UserId }) {
   const store = useAppStore((s) => ({
@@ -187,10 +189,12 @@ export function P2PChatPage(props: { contactId: UserId }) {
 
   const onChatScrollToTop: ChatConversationProps["onChatScrollToTop"] =
     useCallback(async () => {
+      console.log("ON CHAT SCROLL TO TOP!!");
       if (
         messagesStore.hasEarlierMessages &&
         !messagesStore.isLoadingMoreMessages
       ) {
+        console.log("LOAD MESSAGES!!");
         await messagesStore.loadMessages(
           PAGE_SIZE,
           messagesStore.messages[0].seqId
@@ -198,7 +202,11 @@ export function P2PChatPage(props: { contactId: UserId }) {
         return "new messages loaded";
       }
       return "no new messages loaded";
-    }, [messagesStore]);
+    }, [
+      messagesStore.hasEarlierMessages,
+      messagesStore.isLoadingMoreMessages,
+      messagesStore.loadMessages,
+    ]);
 
   const onReplyMessageClick: ChatConversationProps["onReplyMessageClick"] =
     useCallback(
@@ -329,6 +337,7 @@ export function P2PChatPage(props: { contactId: UserId }) {
   );
 
   const onTyping: ChatTextInputProps["onTyping"] = (isTyping) => {
+    console.log("ON TYPING");
     void client["topic/notify_typing"]({
       action: isTyping ? "typing" : "stop-typing",
       contactUserId: props.contactId,
@@ -554,8 +563,12 @@ export function P2PChatPage(props: { contactId: UserId }) {
   }
 
   useEffect(() => {
-    console.log("MESSAGES", messagesStore.messages);
-  }, [messagesStore.messages]);
+    console.log("EFFECT 1", messagesStore.loadMessages);
+  }, [messagesStore.loadMessages]);
+
+  useEffect(() => {
+    console.log("EFFECT 2");
+  }, [props.contactId, store.profile?.userId]);
 
   return (
     <div className="relative flex h-screen">

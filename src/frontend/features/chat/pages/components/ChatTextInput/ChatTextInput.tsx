@@ -45,8 +45,9 @@ export function ChatTextInput(props: ChatTextInputProps) {
   const [isTyping, register] = useIsTyping({ timeout: 1500 });
 
   useEffect(() => {
+    return;
     props.onTyping(isTyping);
-  }, [isTyping, props]);
+  }, [isTyping, props.onTyping]);
 
   const loadPhoto: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const files = (e.target as HTMLInputElement).files;

@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 
 import ChatMessage from "~/frontend/features/chat/pages/components/ChatConversation/ChatMessage";
 import type { UserId } from "~/api-contract/subscription/subscription";
@@ -58,6 +58,34 @@ export const ChatConversation = forwardRef<
   const firstMessageRef = useRef<HTMLDivElement | null>(null);
   const conversationContainerRef = useRef<HTMLDivElement | null>(null);
 
+  useEffect(() => {
+    const r = conversationContainerRef.current;
+    if (r === null) {
+      return;
+    }
+    r.addEventListener("scroll", async (e) => {
+      console.log("ON SCROLL");
+      if (r.scrollTop <= 0) {
+        console.log("ON REACHING TOP");
+        const messageMarginTop = 4 + 1.75;
+        const result = await props.onChatScrollToTop();
+        if (result == "no new messages loaded") {
+          return;
+        }
+
+        if (firstMessageRef.current) {
+          r.scrollTo(
+            0,
+            firstMessageRef.current.offsetTop - r.offsetTop - messageMarginTop
+          );
+        }
+
+        firstMessageRef.current = conversationContainerRef.current
+          ?.firstChild as HTMLDivElement;
+      }
+    });
+  }, []);
+
   useImperativeHandle(
     ref,
     (): IChatConversationUI => {
@@ -106,6 +134,7 @@ export const ChatConversation = forwardRef<
           {props.messages.map((msg) =>
             msg.type === "message" ? (
               <ChatMessage
+                key={msg.seqId}
                 type="message"
                 userIsAuthor={msg.authorId == props.userId}
                 authorId={msg.authorId}
@@ -127,6 +156,7 @@ export const ChatConversation = forwardRef<
               />
             ) : (
               <ChatMessage
+                key={msg.seqId}
                 type="event_log"
                 content={msg.text}
                 seqId={msg.seqId}

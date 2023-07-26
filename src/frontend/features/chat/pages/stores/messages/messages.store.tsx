@@ -1,4 +1,4 @@
-import { createStore, StoreApi } from "zustand";
+import { createStore, StoreApi, useStore } from "zustand";
 import { Result, ok, err } from "neverthrow";
 import { immer } from "zustand/middleware/immer";
 
@@ -170,7 +170,7 @@ export const createMessagesStore = () => {
 };
 
 type MessagesContext = {
-  store: ZustandMessagesStore;
+  store: StoreApi<ZustandMessagesStore>;
   contact: {
     topic: TopicId;
   } & (
@@ -200,7 +200,7 @@ export function MessagesProvider(props: {
   return (
     <MessagesContext.Provider
       value={{
-        store: store.getState(),
+        store: store,
         contact: props.contact,
       }}
     >
@@ -222,13 +222,19 @@ export const useMessagesStore = () => {
       `MessagesContext is null, did you forgot to wrap its usage under a MessagesProvider?`
     );
   }
-  const { store: messagesStore, contact } = ctx;
+  const { store: zustandMessagesStore, contact } = ctx;
+  const messagesStore = useStore(zustandMessagesStore);
 
   useEffect(() => {
     messagesStore.setMessages([]);
     messagesStore.setHasEarlierMessages(false);
     messagesStore.setIsLoadingMoreMessages(false);
-  }, [contact.topic, messagesStore]);
+  }, [
+    contact.topic,
+    messagesStore.setMessages,
+    messagesStore.setHasEarlierMessages,
+    messagesStore.setIsLoadingMoreMessages,
+  ]);
 
   const getTopicMember = useCallback(
     (userId: UserId) => {
@@ -784,7 +790,12 @@ export const useMessagesStore = () => {
       messagesStore.setIsLoadingMoreMessages(false);
       return ok({});
     },
-    [messagesStore, _loadMessages]
+    [
+      messagesStore.setIsLoadingMoreMessages,
+      messagesStore.setHasEarlierMessages,
+      messagesStore.setMessages,
+      _loadMessages,
+    ]
   );
 
   const loadMessagesUntilReply: MessagesStore["loadMessagesUntilReply"] =
@@ -818,7 +829,12 @@ export const useMessagesStore = () => {
         messagesStore.setIsLoadingMoreMessages(false);
         return ok({});
       },
-      [messagesStore, _loadMessagesUntilReply]
+      [
+        messagesStore.setMessages,
+        messagesStore.setHasEarlierMessages,
+        messagesStore.setIsLoadingMoreMessages,
+        _loadMessagesUntilReply,
+      ]
     );
 
   return {
