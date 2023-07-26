@@ -335,7 +335,6 @@ export function P2PChatPage(props: { contactId: UserId }) {
   );
 
   const onTyping: ChatTextInputProps["onTyping"] = (isTyping) => {
-    console.log("ON TYPING");
     void client["topic/notify_typing"]({
       action: isTyping ? "typing" : "stop-typing",
       contactUserId: props.contactId,

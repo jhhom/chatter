@@ -142,7 +142,7 @@ export function useMessageListener(
             // for picture, we need wait for slight delay before the DOM updates with the image before we scroll to the bottom
             setTimeout(() => chatUiControl.scrollChatToTheBottom(), 300);
           } else {
-            chatUiControl.scrollChatToTheBottom();
+            setTimeout(() => chatUiControl.scrollChatToTheBottom(), 0);
           }
         }
       };

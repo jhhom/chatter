@@ -156,7 +156,6 @@ export const createContactSlice: StateCreator<
   },
   setP2PContact: (userId: UserId, profile: P2PContactProfile) => {
     set((state) => {
-      console.log("STATE", state.p2p);
       const newMap = new Map(state.p2p);
       newMap.set(userId, profile);
       return { p2p: newMap };

@@ -25,8 +25,6 @@ export async function updateMessageReadStatusForP2PTopic(
   }
   const topicId = topic.value.topicId;
 
-  console.log("TOPIC VALUE", topic.value);
-
   const updateResult = await updateReadSeqId(db, {
     topicId,
     subscriber: arg.updaterUserId,
@@ -105,8 +103,6 @@ function getP2PTopicOf(
     userId2: UserId;
   }
 ) {
-  console.log("USER 1", arg.userId1);
-  console.log("USER 2", arg.userId2);
   return fromPromise(
     db
       .selectFrom("topics")

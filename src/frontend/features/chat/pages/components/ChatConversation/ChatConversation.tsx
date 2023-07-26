@@ -65,7 +65,6 @@ export const ChatConversation = forwardRef<
     }
     const onScroll = async (e: Event) => {
       if (r.scrollTop <= 0) {
-        console.log("ON REACHING TOP");
         const messageMarginTop = 4 + 1.75;
         const result = await props.onChatScrollToTop();
         if (result == "no new messages loaded") {

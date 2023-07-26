@@ -534,8 +534,6 @@ export const useLoginHandler = () => {
         });
     },
     message: async (payload) => {
-      console.log("RUN MESSAGE LISTENER");
-      console.log(`KEYS ${payload.seqId}, ${payload.topicId}`);
       await dexie.messages.add({
         seqId: payload.seqId,
         topicId: payload.topicId,
