@@ -332,19 +332,30 @@ export const useMessagesStore = () => {
           };
         });
 
-        await dexie.messages.bulkAdd(networkMessages);
+        for (const m of networkMessages) {
+          const existing = await dexie.messages.get([m.topicId, m.seqId]);
+          if (existing === undefined) {
+            await dexie.messages.add(m);
+          }
+        }
 
         const networkTopicEventLogs = result.value.msgs.filter(
           (m) => m.type == "event_log"
         ) as MessagesResultEventLogs[];
 
-        await dexie.topicEventLogs.bulkAdd(
-          networkTopicEventLogs.map((l) => ({
-            seqId: l.sequenceId,
-            topicId: contact.topic,
-            topicEvent: l.event,
-          }))
-        );
+        for (const l of networkTopicEventLogs) {
+          const existing = await dexie.topicEventLogs.get([
+            contact.topic,
+            l.sequenceId,
+          ]);
+          if (existing === undefined) {
+            await dexie.topicEventLogs.add({
+              seqId: l.sequenceId,
+              topicId: contact.topic,
+              topicEvent: l.event,
+            });
+          }
+        }
 
         const messages: getMessageDisplaySequencesArg[] = cacheMessages
           .concat(networkMessages)
@@ -577,19 +588,30 @@ export const useMessagesStore = () => {
           };
         });
 
-        await dexie.messages.bulkAdd(networkMessages);
+        for (const m of networkMessages) {
+          const existing = await dexie.messages.get([m.topicId, m.seqId]);
+          if (existing === undefined) {
+            await dexie.messages.add(m);
+          }
+        }
 
         const networkTopicEventLogs = result.value.msgs.filter(
           (m) => m.type == "event_log"
         ) as MessagesResultEventLogs[];
 
-        await dexie.topicEventLogs.bulkAdd(
-          networkTopicEventLogs.map((l) => ({
-            seqId: l.sequenceId,
-            topicId: contact.topic,
-            topicEvent: l.event,
-          }))
-        );
+        for (const l of networkTopicEventLogs) {
+          const existing = await dexie.topicEventLogs.get([
+            contact.topic,
+            l.sequenceId,
+          ]);
+          if (existing === undefined) {
+            await dexie.topicEventLogs.add({
+              seqId: l.sequenceId,
+              topicId: contact.topic,
+              topicEvent: l.event,
+            });
+          }
+        }
 
         const messages: getMessageDisplaySequencesArg[] = cacheMessages
           .concat(networkMessages)

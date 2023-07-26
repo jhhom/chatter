@@ -527,6 +527,7 @@ export function P2PChatPage(props: { contactId: UserId }) {
             (e) => e
           );
           if (idbUpdateResult.isErr()) {
+            console.log("BOOM", idbUpdateResult.error);
             console.error(idbUpdateResult.error);
           }
         }
@@ -544,13 +545,17 @@ export function P2PChatPage(props: { contactId: UserId }) {
     };
 
     void loadMessagesOfTopic();
-  }, [props.contactId, messagesStore, store.profile?.userId]);
+  }, [props.contactId, messagesStore.loadMessages, store.profile?.userId]);
 
   const peer = store.p2p.get(props.contactId);
 
   if (peer === undefined) {
     throw new Error("Contact not found");
   }
+
+  useEffect(() => {
+    console.log("MESSAGES", messagesStore.messages);
+  }, [messagesStore.messages]);
 
   return (
     <div className="relative flex h-screen">

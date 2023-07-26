@@ -112,13 +112,13 @@ export function IconTick(props: { className?: string; fill?: string }) {
       xmlns="http://www.w3.org/2000/svg"
       fill={"none"}
       viewBox="0 0 24 24"
-      stroke-width="2.5"
+      strokeWidth="2.5"
       stroke={props.fill ?? "currentColor"}
       className={props.className ?? ""}
     >
       <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         d="M4.5 12.75l6 6 9-13.5"
       />
     </svg>
@@ -134,13 +134,13 @@ export function IconEllipsisVertical(props: {
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
-      stroke-width="1.5"
+      strokeWidth="1.5"
       stroke={props.fill ?? "currentColor"}
       className={props.className ?? ""}
     >
       <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
       />
     </svg>
@@ -185,13 +185,13 @@ export function IconX(props: { className?: string; strokeWidth?: string }) {
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
-      stroke-width={props.strokeWidth ? props.strokeWidth : "1.5"}
+      strokeWidth={props.strokeWidth ? props.strokeWidth : "1.5"}
       stroke="currentColor"
       className={props.className}
     >
       <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         d="M6 18L18 6M6 6l12 12"
       />
     </svg>
@@ -207,13 +207,13 @@ export function IconChevronDown(props: {
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
-      stroke-width={props.strokeWidth ? props.strokeWidth : "1.5"}
+      strokeWidth={props.strokeWidth ? props.strokeWidth : "1.5"}
       stroke="currentColor"
       className={props.className}
     >
       <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         d="M19.5 8.25l-7.5 7.5-7.5-7.5"
       />
     </svg>
