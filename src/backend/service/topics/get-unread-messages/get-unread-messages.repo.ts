@@ -124,7 +124,7 @@ export async function getMessagesOfTopic(
     return err(p.error);
   }
 
-  const msgsWithFirstOfDate = await getIsFirstOfDateForMessages(
+  const msgsWithFirstOfDate = getIsFirstOfDateForMessages(
     topicItemsResult.value,
     p.value
   );
@@ -338,7 +338,7 @@ export async function getPastGroupTopicsOfUser(db: KyselyDB, userId: UserId) {
     topicName: string;
   };
 
-  let removedTopicsInfo: RemovedGroupTopic[] = [];
+  const removedTopicsInfo: RemovedGroupTopic[] = [];
 
   // for every topic
   // there could be possibly many `topic_event_log_meta_remove_member` (if user has been removed multiple times)

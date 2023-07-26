@@ -66,6 +66,7 @@ export async function getGroupTopicMessages(
 
         return eb.and(filters);
       })
+      .limit(arg.numberOfMessages)
       .execute(),
     (e) => e
   )

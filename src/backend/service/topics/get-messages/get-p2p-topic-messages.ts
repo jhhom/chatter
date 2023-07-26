@@ -56,6 +56,7 @@ export async function getP2PTopicMessages(
 
         return eb.and(filters);
       })
+      .limit(arg.numberOfMessages)
       .execute(),
     (e) => e
   )
