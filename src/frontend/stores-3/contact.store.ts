@@ -3,8 +3,8 @@ import type {
   UserId,
 } from "~/api-contract/subscription/subscription";
 import type { LastMessageOfTopic } from "~/backend/service/topics/common/get-user-topics/get-last-message-of-topic.repo";
-import type { ProfileSlice } from "~/frontend/stores/profile.store";
-import type { AuthStatusSlice } from "~/frontend/stores/auth-status.store";
+import type { ProfileSlice } from "~/frontend/stores-3/profile.store";
+import type { AuthStatusSlice } from "~/frontend/stores-3/auth-status.store";
 import { type StateCreator, create } from "zustand";
 import { produce } from "immer";
 import { ImmerStateCreator } from "~/frontend/stores-3/types";

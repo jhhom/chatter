@@ -2,13 +2,13 @@ import { useRouter } from "next/navigation";
 import { match } from "ts-pattern";
 import { ok, err } from "neverthrow";
 
-import { EventPayload } from "~/api-contract/subscription/subscription";
+import type { EventPayload } from "~/api-contract/subscription/subscription";
 import { IsGroupTopicId, IsUserId } from "~/backend/service/common/topics";
 import { permission } from "~/backend/service/common/permissions";
 
 import { client } from "~/frontend/external/api-client/client";
 import { dexie } from "~/frontend/external/browser/indexed-db";
-import { useAppStore } from "~/frontend/stores/stores";
+import { useAppStore } from "~/frontend/stores-3/stores";
 
 type ListenerToRegister = Partial<{
   [k in keyof EventPayload]: (payload: EventPayload[k]) => void;
@@ -23,50 +23,61 @@ export const useLoginHandler = () => {
     if (topicResult.isErr()) {
       return err(topicResult.error);
     }
-    store.clearContacts("all");
+    store.setContact((s) => {
+      s.p2p = new Map();
+      s.grp = new Map();
+      s.newContacts = new Map();
+      s.pastGrp = new Map();
+    });
 
     for (const t of topicResult.value) {
       if (t.type == "p2p") {
-        store.setP2PContact(t.topicId, {
-          profile: {
-            name: t.topicName,
-            description: "",
-            touchedAt: t.touchedAt,
-            peerPermissions: t.peerPermissions,
-            userPermissions: t.userPermissions,
-            profilePhotoUrl: t.profilePhotoUrl,
-            lastMessage: t.lastMessage,
-          },
-          status: {
-            lastOnline: t.lastOnline,
-            online: false,
-          },
+        store.setContact((s) => {
+          s.p2p.set(t.topicId, {
+            profile: {
+              name: t.topicName,
+              description: "",
+              touchedAt: t.touchedAt,
+              peerPermissions: t.peerPermissions,
+              userPermissions: t.userPermissions,
+              profilePhotoUrl: t.profilePhotoUrl,
+              lastMessage: t.lastMessage,
+            },
+            status: {
+              lastOnline: t.lastOnline,
+              online: false,
+            },
+          });
         });
       } else if (t.type == "grp") {
-        store.setGrpContact(t.topicId, {
-          profile: {
-            defaultPermissions: t.defaultPermissions,
-            name: t.topicName,
-            description: "",
-            touchedAt: t.touchedAt,
-            userPermissions: t.userPermissions,
-            profilePhotoUrl: t.profilePhotoUrl,
-            lastMessage: t.lastMessage,
-            ownerId: t.ownerId,
-          },
-          status: {
-            online: false,
-          },
+        store.setContact((s) => {
+          s.grp.set(t.topicId, {
+            profile: {
+              defaultPermissions: t.defaultPermissions,
+              name: t.topicName,
+              description: "",
+              touchedAt: t.touchedAt,
+              userPermissions: t.userPermissions,
+              profilePhotoUrl: t.profilePhotoUrl,
+              lastMessage: t.lastMessage,
+              ownerId: t.ownerId,
+            },
+            status: {
+              online: false,
+            },
+          });
         });
       } else {
-        store.setPastGrpContact(t.topicId, {
-          profile: {
-            name: t.topicName,
-            description: "",
-            touchedAt: t.touchedAt,
-            profilePhotoUrl: t.profilePhotoUrl,
-            lastMessage: t.lastMessage,
-          },
+        store.setContact((s) => {
+          s.pastGrp.set(t.topicId, {
+            profile: {
+              name: t.topicName,
+              description: "",
+              touchedAt: t.touchedAt,
+              profilePhotoUrl: t.profilePhotoUrl,
+              lastMessage: t.lastMessage,
+            },
+          });
         });
       }
     }
