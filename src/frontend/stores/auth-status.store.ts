@@ -1,6 +1,6 @@
-import { StateCreator } from "zustand";
-import { ContactSlice } from "~/frontend/stores/contact-status.store";
-import { ProfileSlice } from "~/frontend/stores/profile.store";
+import { ContactSlice } from "./contact.store";
+import { ProfileSlice } from "./profile.store";
+import { ImmerStateCreator } from "./types";
 
 type AuthStatus = "loading" | "logged-out" | "logged-in";
 
@@ -9,12 +9,10 @@ export type AuthStatusSlice = {
   setAuthStatus: (s: AuthStatus) => void;
 };
 
-export const createAuthStatusSlice: StateCreator<
+export const createAuthStatusSlice: ImmerStateCreator<
   ContactSlice & ProfileSlice & AuthStatusSlice,
-  [],
-  [],
   AuthStatusSlice
 > = (set) => ({
   authStatus: "loading",
-  setAuthStatus: (s) => set({ authStatus: s }),
+  setAuthStatus: (status) => set((s) => (s.authStatus = status)),
 });

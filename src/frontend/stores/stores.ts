@@ -3,15 +3,15 @@ import { immer } from "zustand/middleware/immer";
 import {
   type AuthStatusSlice,
   createAuthStatusSlice,
-} from "~/frontend/stores-3/auth-status.store";
+} from "~/frontend/stores/auth-status.store";
 import {
   type ContactSlice,
   createContactSlice,
-} from "~/frontend/stores-3/contact.store";
+} from "~/frontend/stores/contact.store";
 import {
   type ProfileSlice,
   createProfileSlice,
-} from "~/frontend/stores-3/profile.store";
+} from "~/frontend/stores/profile.store";
 
 export const useAppStore = create(
   immer<ContactSlice & ProfileSlice & AuthStatusSlice>((...a) => ({

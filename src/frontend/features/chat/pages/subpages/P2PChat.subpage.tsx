@@ -55,8 +55,6 @@ import { client } from "~/frontend/external/api-client/client";
 import { useAppStore } from "~/frontend/stores/stores";
 import { useMessagesStore } from "~/frontend/features/chat/pages/stores/messages/messages.store";
 
-import type { P2PContactProfile } from "~/frontend/stores/contact-status.store";
-
 export type IChatUI = Pick<
   IChatConversationUI,
   "isUserAtTheBottomOfScroll" | "scrollChatToTheBottom"

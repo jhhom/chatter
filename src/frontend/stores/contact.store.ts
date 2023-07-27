@@ -5,8 +5,7 @@ import type {
 import type { LastMessageOfTopic } from "~/backend/service/topics/common/get-user-topics/get-last-message-of-topic.repo";
 import type { ProfileSlice } from "~/frontend/stores/profile.store";
 import type { AuthStatusSlice } from "~/frontend/stores/auth-status.store";
-import { type StateCreator, create } from "zustand";
-import { produce } from "immer";
+import { ImmerStateCreator } from "~/frontend/stores/types";
 
 type P2PContactStatus =
   | {
@@ -72,25 +71,29 @@ export type ContactSlice = {
   grp: Map<GroupTopicId, GrpContactProfile>;
   pastGrp: Map<GroupTopicId, PastGrpContactProfile>;
   newContacts: Map<UserId, ContactProfile>;
-  set: (
-    setter: (state: ContactSlice & ProfileSlice & AuthStatusSlice) => void
+  setContact: (
+    setter: (
+      state: Omit<ContactSlice, "setContact"> & ProfileSlice["profile"]
+    ) => void
   ) => void;
 };
 
-export const createContactSlice: StateCreator<
+export const createContactSlice: ImmerStateCreator<
   ContactSlice & ProfileSlice & AuthStatusSlice,
-  [],
-  [],
   ContactSlice
 > = (set) => ({
   p2p: new Map(),
   grp: new Map(),
   pastGrp: new Map(),
   newContacts: new Map(),
-  set: (setter) => {
-    set(
-      produce((state: ContactSlice & ProfileSlice & AuthStatusSlice) => {
-        setter(state);
+  setContact: (setter) => {
+    set((s) =>
+      setter({
+        p2p: s.p2p,
+        grp: s.grp,
+        pastGrp: s.pastGrp,
+        newContacts: s.newContacts,
+        profile: s.profile.profile,
       })
     );
   },

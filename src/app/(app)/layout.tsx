@@ -59,7 +59,10 @@ function Layout({ children }: { children: React.ReactNode }) {
           store.setAuthStatus("logged-out");
           return;
         }
-        const loginHandlingResult = await onLoginSuccess(r.value);
+        const loginHandlingResult = await onLoginSuccess({
+          ...r.value,
+          userId: r.value.id,
+        });
         if (loginHandlingResult.isErr()) {
           storage.clearToken();
           store.setProfile(undefined);
