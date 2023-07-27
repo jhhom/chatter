@@ -1,11 +1,9 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect } from "react";
 import "~/styles/globals.css";
 
-import { IsGroupTopicId, IsUserId } from "~/backend/service/common/topics";
 import { useLoginHandler } from "~/frontend/features/auth/hooks/use-login-handler.hook";
 
 import { useAppStore } from "~/frontend/stores/stores";
