@@ -19,6 +19,7 @@ export const useLoginHandler = () => {
   const store = useAppStore();
   const router = useRouter();
 
+  // add useCallback to these functions
   const updateTopics = async () => {
     const topicResult = await client["users/topics"]();
     if (topicResult.isErr()) {
@@ -26,10 +27,10 @@ export const useLoginHandler = () => {
     }
 
     store.setContact((s) => {
-      s.p2p = new Map();
-      s.grp = new Map();
-      s.newContacts = new Map();
-      s.pastGrp = new Map();
+      s.p2p.clear();
+      s.grp.clear();
+      s.newContacts.clear();
+      s.pastGrp.clear();
 
       for (const t of topicResult.value) {
         if (t.type == "p2p") {
@@ -76,7 +77,24 @@ export const useLoginHandler = () => {
           });
         }
       }
+
+      console.log(s);
     });
+
+    store.setContact((s) => {
+      s.pastGrp = new Map();
+      s.pastGrp.set("grpBOOM", {
+        profile: {
+          name: "past",
+          touchedAt: new Date(),
+          profilePhotoUrl: "james.jpg",
+          description: "past grp",
+          lastMessage: null,
+        },
+      });
+    });
+
+    console.log(store.get());
 
     return ok({});
   };
@@ -608,7 +626,6 @@ export const useLoginHandler = () => {
                 payload.authorId === state.profile?.userId
                   ? "You"
                   : peer.profile.name;
-
               state.p2p.set(payload.topicId, {
                 ...peer,
                 profile: {
@@ -686,6 +703,17 @@ export const useLoginHandler = () => {
   };
 
   return {
+    // QUESTION: How to clean up registered listeners?
+    // I think we need to return the list of listener id from `onLoginSuccess`
+    // then in the effect that calls the onLoginSuccess,
+    // we need to de-register the listener in the returned cleanup function based on this list
+    // but problem is this function is async...
+    // it's easier to manage cleanup in sync function
+    // we can get the cleanup list, and use the cleanup list directly in the returned clean up function
+    // otherwise we need to figure out how to store the cleanup list to be updated in AWAIT-ed
+    // means we need to split this function in 2
+    // one synchronous - only for registering listeners
+    // another one asynchronous - it will call API and update topic list
     onLoginSuccess: async (response: {
       userId: UserId;
       username: string;

@@ -73,28 +73,30 @@ export type ContactSlice = {
   newContacts: Map<UserId, ContactProfile>;
   setContact: (
     setter: (
-      state: Omit<ContactSlice, "setContact"> & ProfileSlice["profile"]
+      state: Omit<ContactSlice, "setContact" | "get"> & ProfileSlice["profile"]
     ) => void
   ) => void;
+  get: () => ContactSlice & ProfileSlice & AuthStatusSlice;
 };
 
 export const createContactSlice: ImmerStateCreator<
   ContactSlice & ProfileSlice & AuthStatusSlice,
   ContactSlice
-> = (set) => ({
+> = (set, get) => ({
   p2p: new Map(),
   grp: new Map(),
   pastGrp: new Map(),
   newContacts: new Map(),
   setContact: (setter) => {
-    set((s) =>
+    set((s) => {
       setter({
         p2p: s.p2p,
         grp: s.grp,
         pastGrp: s.pastGrp,
         newContacts: s.newContacts,
         profile: s.profile.profile,
-      })
-    );
+      });
+    });
   },
+  get: () => get(),
 });

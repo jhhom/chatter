@@ -11,7 +11,7 @@ import { dexie } from "~/frontend/external/browser/indexed-db";
 export default function AccountSettingsPanel() {
   const router = useRouter();
   const { profile, setAuthStatus } = useAppStore((s) => ({
-    profile: s.profile,
+    profile: s.profile.profile,
     setAuthStatus: s.setAuthStatus,
   }));
 

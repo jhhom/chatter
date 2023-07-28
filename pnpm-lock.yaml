@@ -80,6 +80,7 @@ specifiers:
   tsx: ^3.12.7
   type-fest: ^3.12.0
   typescript: ^5.0.4
+  use-async-effect: ^2.2.7
   utility-types: ^3.10.0
   ws: ^8.13.0
   zod: ^3.21.4
@@ -146,6 +147,7 @@ dependencies:
   superjson: 1.12.2
   ts-pattern: 5.0.1
   type-fest: 3.12.0
+  use-async-effect: 2.2.7_react@18.2.0
   utility-types: 3.10.0
   ws: 8.13.0
   zod: 3.21.4
@@ -7829,6 +7831,14 @@ packages:
     dependencies:
       punycode: 2.3.0
     dev: true
+
+  /use-async-effect/2.2.7_react@18.2.0:
+    resolution: {integrity: sha512-Vq94tKPyo/9Nok4LOapV0GoGgZPhbeDW/bP6bulLPV4+lIoftaBRBBbGjTbM+j5W1Bm2EkUHJgapeu5YnQvKEA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      react: 18.2.0
+    dev: false
 
   /use-sync-external-store/1.2.0_react@18.2.0:
     resolution: {integrity: sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==}

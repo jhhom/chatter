@@ -14,7 +14,7 @@ export type PermissionId = "J" | "R" | "W" | "P" | "S" | "D" | "A";
 export default function SecuritySettingsPanel() {
   const router = useRouter();
 
-  const profile = useAppStore((s) => s.profile);
+  const profile = useAppStore((s) => s.profile.profile);
 
   const [permissionStr, setPermissionStr] = useState(
     profile?.defaultPermissions ?? ""

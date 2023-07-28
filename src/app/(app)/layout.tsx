@@ -13,8 +13,11 @@ import { client } from "~/frontend/external/api-client/client";
 import { match } from "ts-pattern";
 import LoginPage from "~/frontend/features/auth/pages/Login/Login.page";
 import ChatPage from "~/frontend/features/chat/pages/Chat.page";
+import { enableMapSet } from "immer";
 
 const queryClient = new QueryClient();
+
+enableMapSet();
 
 export default function RootLayout({
   children,
@@ -29,6 +32,37 @@ export default function RootLayout({
         </body>
       </html>
     </QueryClientProvider>
+  );
+}
+
+function Layout2({ children }: { children: React.ReactNode }) {
+  const store = useAppStore((s) => ({
+    p2p: s.p2p,
+    setContact: s.setContact,
+    get: s.get,
+  }));
+
+  useEffect(() => {
+    store.setContact((s) => {
+      s.pastGrp = new Map();
+      s.pastGrp.set("grp123", {
+        profile: {
+          name: "PAST GRp",
+          description: "ex grp",
+          touchedAt: null,
+          profilePhotoUrl: null,
+          lastMessage: null,
+        },
+      });
+    });
+
+    console.log(store.get().pastGrp);
+  }, []);
+
+  return (
+    <div>
+      <p>Layout2</p>
+    </div>
   );
 }
 
@@ -55,7 +89,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         const r = await client["auth/login_with_token"]({ jwtToken: token });
         if (r.isErr()) {
           storage.clearToken();
-          store.setProfile(undefined);
+          store.setProfile(null);
           store.setAuthStatus("logged-out");
           return;
         }
@@ -65,7 +99,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         });
         if (loginHandlingResult.isErr()) {
           storage.clearToken();
-          store.setProfile(undefined);
+          store.setProfile(null);
           store.setAuthStatus("logged-out");
           return;
         }

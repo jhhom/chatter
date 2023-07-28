@@ -9,11 +9,13 @@ export type MemberProfile = {
 
 export const useMembersStore = create<{
   members: Map<UserId, MemberProfile>;
+  getMembers: () => Map<UserId, MemberProfile>;
   setMember: (id: UserId, profile: MemberProfile) => void;
   deleteMember: (id: UserId) => void;
   clear: () => void;
-}>((set) => ({
+}>((set, get) => ({
   members: new Map(),
+  getMembers: () => get().members,
   setMember: (id: UserId, profile: MemberProfile) =>
     set((s) => {
       const members = new Map(s.members);

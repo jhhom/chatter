@@ -1,3 +1,4 @@
+import React from "react";
 import { useSearchParams } from "next/navigation";
 import { IsGroupTopicId, IsUserId } from "~/backend/service/common/topics";
 
@@ -6,9 +7,63 @@ import { MessagesProvider } from "~/frontend/features/chat/pages/stores/messages
 import { P2PChatPage } from "~/frontend/features/chat/pages/subpages/P2PChat.subpage";
 import { GroupChatPage } from "~/frontend/features/chat/pages/subpages/GroupChat.subpage";
 import { PastGroupChatPage } from "~/frontend/features/chat/pages/subpages/PastGroupChat.subpage";
-import { useMembersStore } from "~/frontend/features/chat/pages/stores/members/members.store";
+import {
+  type MemberProfile,
+  useMembersStore,
+} from "~/frontend/features/chat/pages/stores/members/members.store";
 
 import { useAppStore } from "~/frontend/stores/stores";
+import type {
+  UserId,
+  GroupTopicId,
+} from "~/api-contract/subscription/subscription";
+
+const P2PTopic = React.memo(function P2PTopic(props: { topic: UserId }) {
+  return (
+    <MessagesProvider
+      contact={{
+        type: "p2p",
+        topic: props.topic,
+      }}
+    >
+      <P2PChatPage contactId={props.topic} />
+    </MessagesProvider>
+  );
+});
+
+const GroupTopic = React.memo(function GroupTopic(props: {
+  topic: GroupTopicId;
+  getTopicMember: (userId: UserId) => MemberProfile | undefined;
+}) {
+  return (
+    <MessagesProvider
+      contact={{
+        type: "grp",
+        topic: props.topic,
+        getTopicMember: props.getTopicMember,
+      }}
+    >
+      <GroupChatPage contactId={props.topic} />
+    </MessagesProvider>
+  );
+});
+
+const PastGroupTopic = React.memo(function PastGroupTopic(props: {
+  topic: GroupTopicId;
+  getTopicMember: (userId: UserId) => MemberProfile | undefined;
+}) {
+  return (
+    <MessagesProvider
+      contact={{
+        type: "grp",
+        topic: props.topic,
+        getTopicMember: props.getTopicMember,
+      }}
+    >
+      <PastGroupChatPage contactId={props.topic} />
+    </MessagesProvider>
+  );
+});
 
 export default function ChatPage() {
   const store = useAppStore((s) => ({
@@ -16,6 +71,7 @@ export default function ChatPage() {
     newContacts: s.newContacts,
     grp: s.grp,
     pastGrp: s.pastGrp,
+    get: s.get,
   }));
 
   const searchParams = useSearchParams();
@@ -37,46 +93,25 @@ export default function ChatPage() {
     return null;
   })();
 
-  const members = useMembersStore();
+  const getMembers = useMembersStore((s) => s.getMembers);
 
   return topic !== null && (IsUserId(topic) || IsGroupTopicId(topic)) ? (
     <>
       {IsUserId(topic) &&
         (store.p2p.has(topic) || store.newContacts.has(topic)) && (
-          <MessagesProvider
-            contact={{
-              type: "p2p",
-              topic,
-            }}
-          >
-            <P2PChatPage contactId={topic} />
-          </MessagesProvider>
+          <P2PTopic topic={topic} />
         )}
       {IsGroupTopicId(topic) && groupMemberStatus === "current-member" && (
-        <MessagesProvider
-          contact={{
-            type: "grp",
-            topic,
-            getTopicMember(userId) {
-              return members.members.get(userId);
-            },
-          }}
-        >
-          <GroupChatPage contactId={topic} />
-        </MessagesProvider>
+        <GroupTopic
+          topic={topic}
+          getTopicMember={(userId) => getMembers().get(userId)}
+        />
       )}
       {IsGroupTopicId(topic) && groupMemberStatus === "past-member" && (
-        <MessagesProvider
-          contact={{
-            type: "grp",
-            topic,
-            getTopicMember(userId) {
-              return members.members.get(userId);
-            },
-          }}
-        >
-          <PastGroupChatPage contactId={topic} />
-        </MessagesProvider>
+        <PastGroupTopic
+          topic={topic}
+          getTopicMember={(userId) => getMembers().get(userId)}
+        />
       )}
     </>
   ) : (

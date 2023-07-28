@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ok } from "neverthrow";
@@ -29,11 +29,15 @@ export default function FindContactPanel() {
       grp: s.grp,
       p2p: s.p2p,
       newContacts: s.newContacts,
-      addNewContact: s.addNewContact,
-      addCreatedGroupContact: s.addCreatedGroupContact,
+      set: s.setContact,
     },
     profile: s.profile,
+    get: s.get,
   }));
+
+  if (store.profile.profile === null) {
+    throw new Error("User profile is null");
+  }
 
   const query = useQuery({
     queryKey: ["contacts", searchQuery],
@@ -57,7 +61,7 @@ export default function FindContactPanel() {
     return query.data?.filter((u) => {
       return (
         topics.find((t) => t === u.id) === undefined &&
-        u.id !== store.profile?.userId
+        u.id !== store.profile.profile?.userId
       );
     });
   })();
@@ -105,13 +109,15 @@ export default function FindContactPanel() {
                 })) || []
               }
               onContactClick={(u) => {
-                store.contact.addNewContact(u.userId, {
-                  name: u.fullname,
-                  description: u.username,
-                  touchedAt: new Date(),
-                  userPermissions: u.userPermission,
-                  profilePhotoUrl: u.profilePhotoUrl,
-                  lastMessage: null,
+                store.contact.set((s) => {
+                  s.newContacts.set(u.userId, {
+                    name: u.fullname,
+                    description: u.username,
+                    touchedAt: new Date(),
+                    userPermissions: u.userPermission,
+                    profilePhotoUrl: u.profilePhotoUrl,
+                    lastMessage: null,
+                  });
                 });
               }}
             />
@@ -133,18 +139,25 @@ export default function FindContactPanel() {
                 }
                 alert("Group created successfully");
                 // 1. add the topic into cache
-                if (store.profile) {
-                  store.contact.addCreatedGroupContact(result.value.topicId, {
-                    name: result.value.groupName,
-                    description: "",
-                    touchedAt: null,
-                    userPermissions: "JRWP",
-                    defaultPermissions: "JRWP",
-                    profilePhotoUrl: result.value.profilePhotoUrl,
-                    lastMessage: null,
-                    ownerId: store.profile?.userId,
-                  });
-                }
+                store.contact.set((s) => {
+                  if (s.profile !== null) {
+                    s.grp.set(result.value.topicId, {
+                      profile: {
+                        name: result.value.groupName,
+                        description: "",
+                        touchedAt: null,
+                        userPermissions: "JRWP",
+                        defaultPermissions: "JRWP",
+                        profilePhotoUrl: result.value.profilePhotoUrl,
+                        lastMessage: null,
+                        ownerId: s.profile.userId,
+                      },
+                      status: {
+                        online: false,
+                      },
+                    });
+                  }
+                });
 
                 // 2. return to the contact list
                 router.push(`/?topic=${result.value.topicId}`);
@@ -155,10 +168,15 @@ export default function FindContactPanel() {
             <ByIdTab
               onSubscribeClick={async (topicId) => {
                 // check if user already has the topic
-                if (topicId === store.profile?.userId) {
+                const userProfile = store.get().profile?.profile;
+                if (userProfile === undefined) {
+                  return;
+                }
+
+                if (userProfile !== null && topicId === userProfile.userId) {
                   router.push("/");
                 } else if (IsGroupTopicId(topicId)) {
-                  const groupContact = store.contact.grp.get(topicId);
+                  const groupContact = store.get().grp.get(topicId);
                   if (groupContact !== undefined) {
                     router.push(`/?topic=${topicId}`);
                     return;
@@ -192,35 +210,37 @@ export default function FindContactPanel() {
                     return;
                   }
 
-                  store.contact.grp.delete(topicId);
+                  store.contact.set((s) => {
+                    s.grp.delete(topicId);
 
-                  store.contact.grp.set(topicId, {
-                    profile: {
-                      name: r.value.topicName,
-                      userPermissions: r.value.userPermissions,
-                      defaultPermissions: r.value.defaultPermissions,
-                      description: "",
-                      touchedAt: null,
-                      profilePhotoUrl: r.value.profilePhotoUrl,
-                      ownerId: r.value.ownerId,
-                      lastMessage: {
-                        type: "message",
-                        content: "You joined the group",
-                        sequenceId: 0,
+                    s.grp.set(topicId, {
+                      profile: {
+                        name: r.value.topicName,
+                        userPermissions: r.value.userPermissions,
+                        defaultPermissions: r.value.defaultPermissions,
+                        description: "",
+                        touchedAt: null,
+                        profilePhotoUrl: r.value.profilePhotoUrl,
+                        ownerId: r.value.ownerId,
+                        lastMessage: {
+                          type: "message",
+                          content: "You joined the group",
+                          sequenceId: 0,
+                        },
                       },
-                    },
-                    status: {
-                      online: r.value.online,
-                      typing: [],
-                      latestTyping: null,
-                    },
+                      status: {
+                        online: r.value.online,
+                        typing: [],
+                        latestTyping: null,
+                      },
+                    });
                   });
 
                   router.push(`/?topic=${topicId}`);
                 } else if (IsUserId(topicId)) {
                   if (
-                    store.contact.newContacts.has(topicId) ||
-                    store.contact.p2p.has(topicId)
+                    store.get().newContacts.has(topicId) ||
+                    store.get().p2p.has(topicId)
                   ) {
                     router.push(`/?topic=${topicId}`);
                     return ok({});
@@ -251,13 +271,15 @@ export default function FindContactPanel() {
                     contactPreviewInfoResult.value.type == "new p2p contact"
                   ) {
                     const peer = contactPreviewInfoResult.value;
-                    store.contact.newContacts.set(topicId, {
-                      name: peer.value.name,
-                      profilePhotoUrl: peer.value.profilePhotoUrl,
-                      userPermissions: peer.value.defaultPermissions,
-                      touchedAt: null,
-                      description: "",
-                      lastMessage: null,
+                    store.contact.set((s) => {
+                      s.newContacts.set(topicId, {
+                        name: peer.value.name,
+                        profilePhotoUrl: peer.value.profilePhotoUrl,
+                        userPermissions: peer.value.defaultPermissions,
+                        touchedAt: null,
+                        description: "",
+                        lastMessage: null,
+                      });
                     });
                     router.push(`/?topic=${topicId}`);
                   }

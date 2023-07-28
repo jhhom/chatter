@@ -14,5 +14,8 @@ export const createAuthStatusSlice: ImmerStateCreator<
   AuthStatusSlice
 > = (set) => ({
   authStatus: "loading",
-  setAuthStatus: (status) => set((s) => (s.authStatus = status)),
+  setAuthStatus: (status) =>
+    set((s) => {
+      s.authStatus = status;
+    }),
 });

@@ -18,19 +18,30 @@ type Profile = {
 
 export type ProfileSlice = {
   profile: Profile;
+  setProfile: (p: Profile["profile"]) => void;
 };
 
 export const useProfileStore = create<ProfileSlice>(() => ({
   profile: {
     profile: null,
   },
+  setProfile: () => {
+    //
+  },
 }));
 
 export const createProfileSlice: ImmerStateCreator<
   ProfileSlice & ContactSlice & AuthStatusSlice,
   ProfileSlice
-> = () => ({
+> = (set) => ({
   profile: {
     profile: null,
+  },
+  setProfile(profile) {
+    set({
+      profile: {
+        profile,
+      },
+    });
   },
 });

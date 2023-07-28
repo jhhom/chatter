@@ -28,16 +28,16 @@ export function useMessageListener(
   payload: EventPayload["message"] | EventPayload["message.from-new-topic"]
 ) => void {
   const chat = useMessagesStore();
-  const profile = useAppStore((s) => s.profile);
+  const getStore = useAppStore((s) => s.get);
 
   const getReplyMessageAuthor = useCallback(
     (authorId: UserId) => {
-      if (authorId == profile?.userId) {
+      if (authorId == getStore().profile.profile?.userId) {
         return "You";
       }
       return getTopicMember(authorId)?.name ?? "";
     },
-    [profile?.userId, getTopicMember]
+    [getStore, getTopicMember]
   );
 
   const makeListener = useMemo(
@@ -63,8 +63,8 @@ export function useMessageListener(
               type: "event_log";
             }
           | undefined;
-        if (chat.messages.length > 0) {
-          const lastMsg = chat.messages[chat.messages.length - 1];
+        if (chat.get().messages.length > 0) {
+          const lastMsg = chat.get().messages[chat.get().messages.length - 1];
           if (lastMsg.type == "message") {
             precedingMessage = {
               authorId: lastMsg.authorId,
@@ -112,7 +112,7 @@ export function useMessageListener(
           },
           isFirstOfDate: e.isFirstOfDate,
           read: false,
-          userIsAuthor: e.authorId == profile?.userId,
+          userIsAuthor: e.authorId == getStore().profile.profile?.userId,
           seqId: e.seqId,
           deleted: false,
         });
@@ -137,7 +137,10 @@ export function useMessageListener(
         }, 1500);
 
         // 5. SCROLL TO THE BOTTOM IF USER IS AT THE BOTTOM BEFORE NEW MESSAGE ARRIVES
-        if (isUserAtBottomOfScroll || e.authorId == profile?.userId) {
+        if (
+          isUserAtBottomOfScroll ||
+          e.authorId == getStore().profile.profile?.userId
+        ) {
           if (e.content.type == "picture") {
             // for picture, we need wait for slight delay before the DOM updates with the image before we scroll to the bottom
             setTimeout(() => chatUiControl.scrollChatToTheBottom(), 300);
@@ -149,7 +152,15 @@ export function useMessageListener(
 
       return listener;
     },
-    [chat, contactId, getReplyMessageAuthor, getTopicMember, profile?.userId]
+    [
+      chat.setLastMessageSeq,
+      chat.addMessage,
+      chat.get,
+      contactId,
+      getReplyMessageAuthor,
+      getTopicMember,
+      getStore,
+    ]
   );
 
   return makeListener;

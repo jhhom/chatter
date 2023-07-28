@@ -55,6 +55,8 @@ import { client } from "~/frontend/external/api-client/client";
 import { useAppStore } from "~/frontend/stores/stores";
 import { useMessagesStore } from "~/frontend/features/chat/pages/stores/messages/messages.store";
 
+import useAsyncEffect from "use-async-effect";
+
 export type IChatUI = Pick<
   IChatConversationUI,
   "isUserAtTheBottomOfScroll" | "scrollChatToTheBottom"
@@ -66,11 +68,15 @@ const INITIAL_PAGE_SIZE = 64;
 const ChatTextInput = React.memo(ChatTextInputComponent);
 
 export function P2PChatPage(props: { contactId: UserId }) {
+  console.log("RE-RENDER!!!");
+
   const store = useAppStore((s) => ({
     profile: s.profile,
     p2p: s.p2p,
     grp: s.grp,
     newContacts: s.newContacts,
+    get: s.get,
+    setContact: s.setContact,
   }));
   const messagesStore = useMessagesStore();
 
@@ -114,7 +120,7 @@ export function P2PChatPage(props: { contactId: UserId }) {
 
   const makeMessageListener = useMessageListener(props.contactId, (userId) => {
     if (userId === props.contactId) {
-      const profile = store.p2p.get(props.contactId);
+      const profile = store.get().p2p.get(props.contactId);
       if (profile === undefined) {
         return undefined;
       }
@@ -123,11 +129,12 @@ export function P2PChatPage(props: { contactId: UserId }) {
         online: profile.status.online,
       };
     }
-    if (store.profile === undefined) {
+    const userProfile = store.get().profile.profile;
+    if (userProfile === null) {
       return undefined;
     }
     return {
-      name: store.profile.fullname,
+      name: userProfile.fullname,
       online: true,
     };
   });
@@ -173,42 +180,47 @@ export function P2PChatPage(props: { contactId: UserId }) {
     } catch {}
     // TODO: chat.clearMessages();
 
-    const c = store.p2p.get(props.contactId);
+    const c = store.get().p2p.get(props.contactId);
     if (c) {
-      store.p2p.set(props.contactId, {
-        profile: {
-          ...c.profile,
-          lastMessage: null,
-        },
-        status: c.status,
+      store.setContact((s) => {
+        s.p2p.set(props.contactId, {
+          profile: {
+            ...c.profile,
+            lastMessage: null,
+          },
+          status: c.status,
+        });
       });
     }
-  }, [store.p2p, props.contactId]);
+  }, [store.get, store.setContact, props.contactId]);
 
   const onChatScrollToTop: ChatConversationProps["onChatScrollToTop"] =
     useCallback(async () => {
       if (
-        messagesStore.hasEarlierMessages &&
-        !messagesStore.isLoadingMoreMessages
+        messagesStore.get().hasEarlierMessages &&
+        !messagesStore.get().isLoadingMoreMessages
       ) {
-        await messagesStore.loadMessages(
+        const result = await messagesStore.loadMessages(
           PAGE_SIZE,
-          messagesStore.messages[0].seqId
+          messagesStore.get().messages[0].seqId
         );
+        if (result.isOk()) {
+          messagesStore.setMessages(
+            result.value.earlierMessages.concat(messagesStore.get().messages)
+          );
+        }
+
         return "new messages loaded";
       }
       return "no new messages loaded";
-    }, [
-      messagesStore.hasEarlierMessages,
-      messagesStore.isLoadingMoreMessages,
-      messagesStore.loadMessages,
-    ]);
+    }, [messagesStore.get, messagesStore.loadMessages]);
 
   const onReplyMessageClick: ChatConversationProps["onReplyMessageClick"] =
     useCallback(
       async (seqId) => {
         const hasMessageInDisplay =
-          messagesStore.messages.findIndex((x) => x.seqId === seqId) != -1;
+          messagesStore.get().messages.findIndex((x) => x.seqId === seqId) !=
+          -1;
 
         if (hasMessageInDisplay) {
           conversationUIControl.current.scrollToMessage(seqId);
@@ -216,7 +228,7 @@ export function P2PChatPage(props: { contactId: UserId }) {
         }
 
         const hasMessagesBeforeReplyInDisplay =
-          messagesStore.messages.findIndex((x) => x.seqId < seqId) != -1;
+          messagesStore.get().messages.findIndex((x) => x.seqId < seqId) != -1;
         if (hasMessagesBeforeReplyInDisplay) {
           // if in our display, we have messages earlier than the reply message
           // but it's not found in our store
@@ -226,7 +238,7 @@ export function P2PChatPage(props: { contactId: UserId }) {
         }
 
         const result = await messagesStore.loadMessagesUntilReply(
-          messagesStore.messages[0].seqId,
+          messagesStore.get().messages[0].seqId,
           seqId
         );
         if (result.isErr()) {
@@ -245,7 +257,7 @@ export function P2PChatPage(props: { contactId: UserId }) {
           return;
         }
       },
-      [messagesStore]
+      [messagesStore.get, messagesStore.loadMessagesUntilReply]
     );
 
   const onMessageBubbleMenuClick: ChatConversationProps["onMessageBubbleMenuClick"] =
@@ -505,14 +517,26 @@ export function P2PChatPage(props: { contactId: UserId }) {
     };
   }, [makeMessageListener, makeReadListener, makeDeleteMessageListener]);
 
-  useEffect(() => {
-    const loadMessagesOfTopic = async () => {
-      await messagesStore.loadMessages(INITIAL_PAGE_SIZE, -1);
+  useAsyncEffect(
+    async (isMounted) => {
+      const result = await messagesStore.loadMessages(INITIAL_PAGE_SIZE, -1);
 
-      if (messagesStore.messages.length != 0) {
+      if (!isMounted) {
+        return;
+      }
+
+      if (result.isErr()) {
+        return;
+      }
+
+      messagesStore.setMessages(result.value.earlierMessages);
+
+      if (messagesStore.get().messages.length != 0) {
         const updateResult = await client["topic/update_message_read_status"]({
           sequenceId:
-            messagesStore.messages[messagesStore.messages.length - 1].seqId,
+            messagesStore.get().messages[
+              messagesStore.get().messages.length - 1
+            ].seqId,
           topicId: props.contactId,
         });
         if (updateResult.isErr()) {
@@ -521,12 +545,19 @@ export function P2PChatPage(props: { contactId: UserId }) {
           );
         }
 
+        if (!isMounted) {
+          return;
+        }
+
         {
           const idbUpdateResult = await fromPromise(
             dexie.messages
               .where("topicId")
               .equals(props.contactId)
-              .and((x) => !(x.author == store.profile?.userId) && !x.read)
+              .and(
+                (x) =>
+                  !(x.author == store.get().profile.profile?.userId) && !x.read
+              )
               .modify({ read: true }),
             (e) => e
           );
@@ -534,6 +565,14 @@ export function P2PChatPage(props: { contactId: UserId }) {
             console.error(idbUpdateResult.error);
           }
         }
+
+        if (!isMounted) {
+          return;
+        }
+      }
+
+      if (!isMounted) {
+        return;
       }
 
       conversationUIControl.current.scrollChatToTheBottom();
@@ -545,10 +584,12 @@ export function P2PChatPage(props: { contactId: UserId }) {
       await new Promise((r) => setTimeout(() => r(undefined), 250));
       setToReplyMessage(false);
       setMessageSelected(null);
-    };
-
-    void loadMessagesOfTopic();
-  }, [props.contactId, store.profile?.userId]);
+    },
+    () => {
+      // cleanup
+    },
+    [props.contactId, store.get]
+  );
 
   const peer = store.p2p.get(props.contactId);
 
@@ -557,12 +598,20 @@ export function P2PChatPage(props: { contactId: UserId }) {
   }
 
   useEffect(() => {
-    console.log("PEER!!!", peer);
-  }, [peer]);
+    console.log("CHANGE: MESSAGES STORE", messagesStore.messages);
+  }, [messagesStore.messages]);
 
   useEffect(() => {
-    console.log(store.p2p);
+    console.log("CHANGE: P2P", store.p2p);
   }, [store.p2p]);
+
+  useEffect(() => {
+    console.log("CHANGE: CONCAT ID", props.contactId);
+  }, [props.contactId]);
+
+  useEffect(() => {
+    console.log("CHANGE: STORE.GET", store.get);
+  }, [store.get]);
 
   return (
     <div className="relative flex h-screen">

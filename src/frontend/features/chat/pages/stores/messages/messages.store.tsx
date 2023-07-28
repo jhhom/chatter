@@ -42,7 +42,14 @@ type MessagesStore = Pick<
   loadMessages: (
     pageSize: number,
     beforeSequenceId: number
-  ) => Promise<Result<unknown, AppErrorUnion>>;
+  ) => Promise<
+    Result<
+      {
+        earlierMessages: ChatMessageType[];
+      },
+      AppErrorUnion
+    >
+  >;
   loadMessagesUntilReply: (
     beforeSequenceId: number,
     replyMessageSequenceId: number
@@ -54,6 +61,7 @@ type MessagesStore = Pick<
   >;
   clearMessages: () => void;
   addMessage: (m: ChatMessageType, authored: boolean) => void;
+  setMessages: (messages: ChatMessageType[]) => void;
   setMessage: (idx: number, m: ChatMessageType) => void;
   deleteMessage: (idx: number, deleteFor: "self" | "everyone") => void;
   setLastMessageSeq: (seq: ChatMessageDisplaySeq) => void;
@@ -61,6 +69,10 @@ type MessagesStore = Pick<
 
 type ZustandMessagesStore = {
   messages: ChatMessageType[];
+  get: () => Pick<
+    ZustandMessagesStore,
+    "messages" | "hasEarlierMessages" | "isLoadingMoreMessages"
+  >;
   setMessages: (messages: ChatMessageType[]) => void;
   setMessage: (idx: number, message: ChatMessageType) => void;
   addMessage: (msg: ChatMessageType) => void;
@@ -75,8 +87,16 @@ type ZustandMessagesStore = {
 
 export const createMessagesStore = () => {
   return createStore(
-    immer<ZustandMessagesStore>((set) => ({
+    immer<ZustandMessagesStore>((set, get) => ({
       messages: [],
+      get: () => {
+        const s = get();
+        return {
+          messages: s.messages,
+          hasEarlierMessages: s.hasEarlierMessages,
+          isLoadingMoreMessages: s.isLoadingMoreMessages,
+        };
+      },
       setMessages: (messages) => {
         set((s) => {
           s.messages = messages;
@@ -197,6 +217,8 @@ export function MessagesProvider(props: {
 }) {
   const store = createMessagesStore();
 
+  console.log("MESSAGES PROVIDER RERENDER!!!");
+
   return (
     <MessagesContext.Provider
       value={{
@@ -215,6 +237,7 @@ export const useMessagesStore = () => {
       p2p: s.p2p,
     },
     profile: s.profile,
+    get: s.get,
   }));
   const ctx = useContext(MessagesContext);
   if (ctx === null) {
@@ -239,7 +262,7 @@ export const useMessagesStore = () => {
   const getTopicMember = useCallback(
     (userId: UserId) => {
       if (contact.type === "p2p") {
-        const c = store.contact.p2p.get(userId);
+        const c = store.get().p2p.get(userId);
         if (c == undefined) {
           return undefined;
         }
@@ -251,17 +274,24 @@ export const useMessagesStore = () => {
         return contact.getTopicMember(userId);
       }
     },
-    [contact, store.contact.p2p]
+    [contact, store.get]
   );
 
   const getReplyMessageAuthor = useCallback(
     (authorId: UserId) => {
-      if (authorId == store.profile?.userId) {
+      if (authorId == store.get().profile.profile?.userId) {
         return "You";
       }
       return getTopicMember(authorId)?.name ?? "";
     },
-    [store.profile?.userId, getTopicMember]
+    [store.get, getTopicMember]
+  );
+
+  const setMessages = useCallback(
+    (messages: ChatMessageType[]) => {
+      messagesStore.setMessages(messages);
+    },
+    [messagesStore.setMessages]
   );
 
   const _loadMessages = useCallback(
@@ -365,7 +395,8 @@ export const useMessagesStore = () => {
                 isFirstOfDate: m.isFirstOfDate,
               };
             }
-            const userIsAuthor = m.author == store.profile?.userId;
+            const userIsAuthor =
+              m.author == store.get().profile.profile?.userId;
 
             return {
               type: "message" as const,
@@ -389,7 +420,7 @@ export const useMessagesStore = () => {
               isFirstOfDate: m.isFirstOfDate,
               deleted: m.deleted === undefined ? false : m.deleted,
               authorName: userIsAuthor
-                ? store.profile?.fullname ?? ""
+                ? store.get().profile.profile?.fullname ?? ""
                 : getTopicMember(m.author)?.name ?? "User not found",
             };
           })
@@ -432,7 +463,8 @@ export const useMessagesStore = () => {
                 isFirstOfDate: m.isFirstOfDate,
               };
             }
-            const userIsAuthor = m.author == store.profile?.userId;
+            const userIsAuthor =
+              m.author == store.get().profile.profile?.userId;
 
             return {
               type: "message" as const,
@@ -456,7 +488,7 @@ export const useMessagesStore = () => {
               isFirstOfDate: m.isFirstOfDate,
               deleted: m.deleted === undefined ? false : m.deleted,
               authorName: userIsAuthor
-                ? store.profile?.fullname ?? ""
+                ? store.get().profile.profile?.fullname ?? ""
                 : getTopicMember(m.author)?.name ?? "User not found",
             };
           })
@@ -468,13 +500,7 @@ export const useMessagesStore = () => {
         });
       }
     },
-    [
-      getReplyMessageAuthor,
-      getTopicMember,
-      contact,
-      store.profile?.fullname,
-      store.profile?.userId,
-    ]
+    [getReplyMessageAuthor, getTopicMember, contact, store.get]
   );
 
   const _loadMessagesUntilReply = useCallback(
@@ -609,7 +635,8 @@ export const useMessagesStore = () => {
                 isFirstOfDate: m.isFirstOfDate,
               };
             }
-            const userIsAuthor = m.author == store.profile?.userId;
+            const userIsAuthor =
+              m.author == store.get().profile.profile?.userId;
 
             return {
               type: "message" as const,
@@ -633,7 +660,7 @@ export const useMessagesStore = () => {
               isFirstOfDate: m.isFirstOfDate,
               deleted: m.deleted === undefined ? false : m.deleted,
               authorName: userIsAuthor
-                ? store.profile?.fullname ?? ""
+                ? store.get().profile.profile?.fullname ?? ""
                 : getTopicMember(m.author)?.name ?? "User not found",
             };
           })
@@ -676,7 +703,8 @@ export const useMessagesStore = () => {
                 isFirstOfDate: m.isFirstOfDate,
               };
             }
-            const userIsAuthor = m.author == store.profile?.userId;
+            const userIsAuthor =
+              m.author == store.get().profile.profile?.userId;
 
             return {
               type: "message" as const,
@@ -700,7 +728,7 @@ export const useMessagesStore = () => {
               isFirstOfDate: m.isFirstOfDate,
               deleted: m.deleted === undefined ? false : m.deleted,
               authorName: userIsAuthor
-                ? store.profile?.fullname ?? ""
+                ? store.get().profile.profile?.fullname ?? ""
                 : getTopicMember(m.author)?.name ?? "User not found",
             };
           })
@@ -732,13 +760,7 @@ export const useMessagesStore = () => {
         return ok({ messages: resultMessages, hasEarlierMessages });
       }
     },
-    [
-      getReplyMessageAuthor,
-      getTopicMember,
-      contact.topic,
-      store.profile?.fullname,
-      store.profile?.userId,
-    ]
+    [getReplyMessageAuthor, getTopicMember, contact.topic, store.get]
   );
 
   const loadMessages: MessagesStore["loadMessages"] = useCallback(
@@ -761,17 +783,16 @@ export const useMessagesStore = () => {
       messagesStore.setHasEarlierMessages(
         messagesResult.value.hasEarlierMessages
       );
-      messagesStore.setMessages(
-        earlierConvertedMsg.concat(messagesStore.messages)
-      );
       messagesStore.setIsLoadingMoreMessages(false);
-      return ok({});
+      return ok({
+        earlierMessages: earlierConvertedMsg,
+      });
     },
     [
       messagesStore.setIsLoadingMoreMessages,
       messagesStore.setHasEarlierMessages,
       messagesStore.setMessages,
-      messagesStore.messages,
+      messagesStore.get,
       _loadMessages,
     ]
   );
@@ -799,7 +820,7 @@ export const useMessagesStore = () => {
         );
 
         messagesStore.setMessages(
-          earlierConvertedMsg.concat(messagesStore.messages)
+          earlierConvertedMsg.concat(messagesStore.get().messages)
         );
         messagesStore.setHasEarlierMessages(
           messagesResult.value.hasEarlierMessages
@@ -808,7 +829,7 @@ export const useMessagesStore = () => {
         return ok({});
       },
       [
-        messagesStore.messages,
+        messagesStore.get,
         messagesStore.setMessages,
         messagesStore.setHasEarlierMessages,
         messagesStore.setIsLoadingMoreMessages,
@@ -818,12 +839,14 @@ export const useMessagesStore = () => {
 
   return {
     messages: messagesStore.messages,
+    get: messagesStore.get,
     hasEarlierMessages: messagesStore.hasEarlierMessages,
     isLoadingMoreMessages: messagesStore.isLoadingMoreMessages,
     loadMessagesUntilReply,
     loadMessages,
     addMessage: messagesStore.addMessage,
     setMessage: messagesStore.setMessage,
+    setMessages: messagesStore.setMessages,
     deleteMessage: messagesStore.deleteMessage,
     setLastMessageSeq: messagesStore.setLastMessageSeq,
     clearMessages: messagesStore.clearMessages,

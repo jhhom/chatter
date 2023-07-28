@@ -9,7 +9,6 @@ import {
   ContactListNewContact,
   SettingBtn,
 } from "~/frontend/features/contact-list/pages/ContactListSidePanel/components";
-import { useEffect } from "react";
 
 type TopicListItem = {
   name: string;
@@ -53,7 +52,7 @@ export function ContactListSidePanel() {
       p2p: s.p2p,
       grp: s.grp,
       pastGrp: s.pastGrp,
-      clearContacts: s.clearContacts,
+      set: s.setContact,
     },
     profile: s.profile,
   }));
@@ -133,12 +132,12 @@ export function ContactListSidePanel() {
               <img
                 className="h-10 w-10 rounded-full object-cover"
                 src={
-                  store.profile?.profilePhotoUrl ??
+                  store.profile.profile?.profilePhotoUrl ??
                   "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Google_Images_2015_logo.svg/2880px-Google_Images_2015_logo.svg.png"
                 }
               />
             </div>
-            <p className="ml-2">{store.profile.fullname}</p>
+            <p className="ml-2">{store.profile.profile?.fullname}</p>
           </div>
           <div className="mr-2 flex">
             <div>
@@ -161,7 +160,7 @@ export function ContactListSidePanel() {
 
       <div>
         {topicListItems.map((t, i) => {
-          if (store.profile === undefined) {
+          if (store.profile.profile === null) {
             throw new Error("User profile is not defined");
           }
 
@@ -170,7 +169,7 @@ export function ContactListSidePanel() {
               <ContactListContact
                 key={t.topicId}
                 type={t.type}
-                userId={store.profile.userId}
+                userId={store.profile.profile?.userId}
                 onClick={() => {
                   router.push(location.pathname + `?topic=${t.topicId}`);
                 }}
@@ -191,7 +190,7 @@ export function ContactListSidePanel() {
               <ContactListContact
                 key={t.topicId}
                 type={t.type}
-                userId={store.profile.userId}
+                userId={store.profile.profile.userId}
                 onClick={() => {
                   router.push(location.pathname + `?topic=${t.topicId}`);
                 }}
@@ -212,7 +211,7 @@ export function ContactListSidePanel() {
               <ContactListContact
                 key={t.topicId}
                 type={t.type}
-                userId={store.profile.userId}
+                userId={store.profile.profile.userId}
                 onClick={() => {
                   router.push(location.pathname + `?topic=${t.topicId}`);
                 }}
