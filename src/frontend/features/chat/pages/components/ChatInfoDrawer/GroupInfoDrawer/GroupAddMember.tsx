@@ -43,6 +43,7 @@ export function GroupAddMember(props: {
             <div className="flex flex-wrap items-start justify-start gap-x-1 gap-y-1">
               {addedMembers.map((m) => (
                 <ContactPill
+                  key={m.userId}
                   userId={m.userId}
                   name={m.userFullname}
                   removable={true}
@@ -83,6 +84,7 @@ export function GroupAddMember(props: {
         <div className="h-[calc(100%-12rem-10rem-3rem)] flex-grow overflow-y-auto">
           {newMemberSearchList.map((m) => (
             <Contact
+              key={m.userId}
               name={m.userFullname}
               profilePhotoUrl={m.profilePhotoUrl}
               onClick={() => {

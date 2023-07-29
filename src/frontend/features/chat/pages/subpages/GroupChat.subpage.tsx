@@ -69,8 +69,9 @@ const INITIAL_PAGE_SIZE = 64;
 export function GroupChatPage(props: { contactId: GroupTopicId }) {
   const store = useAppStore((s) => ({
     profile: s.profile,
-    grp: s.grp,
-    p2p: s.p2p,
+    grp: s.grp.get(props.contactId),
+    groupList: s.grp.entries(),
+    p2pList: s.p2p.entries(),
     get: s.get,
     setContact: s.setContact,
   }));
@@ -100,9 +101,7 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
   const conversationContainerRef = useRef<HTMLDivElement | null>(null);
   const chatReplyPreviewRef = useRef<HTMLDivElement | null>(null);
 
-  const grp = store.grp.get(props.contactId);
-
-  if (grp === undefined) {
+  if (store.grp === undefined) {
     throw new Error("Group not found");
   }
 
@@ -113,7 +112,7 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
   const conversationDisplayMode: Parameters<
     typeof ChatConversation
   >[0]["mode"] = (() => {
-    const user = permission(grp.profile.userPermissions);
+    const user = permission(store.grp.profile.userPermissions);
 
     if (!user.canRead()) {
       return { type: "read disabled" };
@@ -123,6 +122,14 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
       return { type: "normal" };
     }
   })();
+
+  useEffect(() => {
+    console.log("GROUP PROFILE CHANGE", store.grp);
+  }, [store.grp]);
+
+  useEffect(() => {
+    console.log("USER PERMISSION CHANGE", store.grp?.profile.userPermissions);
+  }, [store.grp.profile.userPermissions]);
 
   const makeMessageListener = useMessageListener(
     props.contactId,
@@ -184,10 +191,6 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
     makeDeleteMessageListener,
   ]);
 
-  useEffect(() => {
-    console.log("CURRENT MESSAGES", messagesStore.messages);
-  }, [messagesStore.messages]);
-
   useAsyncEffect(
     async (isMounted) => {
       const memberRetrievalResult = await client["group/members"]({
@@ -219,8 +222,6 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
       }
 
       messagesStore.setMessages(result.value.earlierMessages);
-
-      console.log("LOADED MESSAGES", messagesStore.get().messages);
 
       if (messagesStore.get().messages.length !== 0) {
         const messageStatusUpdateResult = await client[
@@ -268,8 +269,6 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
 
       conversationUIControl.current?.scrollChatToTheBottom();
       conversationUIControl.current?.updateFirstMessageRef();
-
-      console.log("LOADED MESSAGES 2", messagesStore.get().messages);
     },
     () => {
       // cleanup
@@ -508,15 +507,15 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
       <div className="h-full flex-grow">
         <ChatHeader
           type="group"
-          name={grp.profile.name}
-          online={grp.status.online}
+          name={store.grp.profile.name}
+          online={store.grp.status.online}
           lastSeen={null}
           typing={
-            grp.status.online && grp.status.latestTyping !== null
-              ? grp.status.latestTyping.fullname
+            store.grp.status.online && store.grp.status.latestTyping !== null
+              ? store.grp.status.latestTyping.fullname
               : null
           }
-          profilePhotoUrl={grp.profile.profilePhotoUrl}
+          profilePhotoUrl={store.grp.profile.profilePhotoUrl}
           onInfoClick={() => setShowDrawer(true)}
           onClearMessages={onClearMessages}
         />
@@ -529,8 +528,8 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
             <ChatConversation
               ref={conversationUIControl}
               isNewContact={false}
-              peerName={grp.profile.name}
-              userId={grp.profile.ownerId}
+              peerName={store.grp.profile.name}
+              userId={store.grp.profile.ownerId}
               mode={conversationDisplayMode}
               messages={messagesStore.messages}
               onChatScrollToTop={onChatScrollToTop}
@@ -623,7 +622,7 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
                 .with("invite-link", () => (
                   <GroupInviteLinkInfo
                     groupId={props.contactId}
-                    groupName={grp.profile.name}
+                    groupName={store.grp?.profile.name ?? ""}
                     getInviteLink={async () => {
                       const r = await client["group/invite_link"]({
                         groupTopicId: props.contactId,
@@ -648,17 +647,20 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
                   if (store.profile.profile === null) {
                     throw new Error("User profile is null");
                   }
+                  if (store.grp === undefined) {
+                    throw new Error("Group is undefined");
+                  }
                   return (
                     <GroupInfo
                       profile={{
-                        name: grp.profile.name,
+                        name: store.grp.profile.name,
                         id: props.contactId,
-                        ownerId: grp.profile.ownerId,
+                        ownerId: store.grp.profile.ownerId,
                         userId: store.profile.profile.userId,
                       }}
-                      permissions={grp.profile.userPermissions}
+                      permissions={store.grp.profile.userPermissions}
                       canInvite={permission(
-                        grp.profile.userPermissions
+                        store.grp.profile.userPermissions
                       ).canShare()}
                       memberList={Array.from(
                         membersStore.members.entries()
@@ -737,34 +739,42 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
                     />
                   </div>
                 ))
-                .with("security", () => (
-                  <div className="h-full">
-                    <GroupSecurityContent
-                      userPermission={grp.profile.userPermissions}
-                      groupDefaultPermission={grp.profile.defaultPermissions}
-                      editable={permission(
-                        grp.profile.userPermissions
-                      ).canAdminister()}
-                      onCancel={() => p.setContent("display-info")}
-                      onSubmitPermissionChange={async (permission) => {
-                        const r = await client[
-                          "permissions/update_group_default_permission"
-                        ]({
-                          groupTopicId: props.contactId,
-                          newDefaultPermission: permission,
-                        });
-                        if (r.isErr()) {
-                          alert(
-                            "Failed to update group default permission: " +
-                              r.error.message
-                          );
-                          return;
+                .with("security", () => {
+                  if (store.grp === undefined) {
+                    throw new Error("Group is undefined");
+                  }
+
+                  return (
+                    <div className="h-full">
+                      <GroupSecurityContent
+                        userPermission={store.grp.profile.userPermissions}
+                        groupDefaultPermission={
+                          store.grp.profile.defaultPermissions
                         }
-                        p.setContent("display-info");
-                      }}
-                    />
-                  </div>
-                ))
+                        editable={permission(
+                          store.grp.profile.userPermissions
+                        ).canAdminister()}
+                        onCancel={() => p.setContent("display-info")}
+                        onSubmitPermissionChange={async (permission) => {
+                          const r = await client[
+                            "permissions/update_group_default_permission"
+                          ]({
+                            groupTopicId: props.contactId,
+                            newDefaultPermission: permission,
+                          });
+                          if (r.isErr()) {
+                            alert(
+                              "Failed to update group default permission: " +
+                                r.error.message
+                            );
+                            return;
+                          }
+                          p.setContent("display-info");
+                        }}
+                      />
+                    </div>
+                  );
+                })
                 .run();
             }}
           </GroupInfoDrawer>
@@ -821,11 +831,11 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
       {showForwardMessageOverlay && (
         <ForwardMessageOverlay
           contacts={[
-            ...Array.from(store.p2p.entries()).map(([id, p]) => ({
+            ...Array.from(store.p2pList).map(([id, p]) => ({
               topicId: id,
               name: p.profile.name,
             })),
-            ...Array.from(store.grp.entries()).map(([id, g]) => ({
+            ...Array.from(store.groupList).map(([id, g]) => ({
               topicId: id,
               name: g.profile.name,
             })),
@@ -897,7 +907,7 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
         <DeleteMessageOverlay
           onDeleteForEveryone={
             messageSelected?.userIsAuthor ||
-            permission(grp.profile.userPermissions).canDelete()
+            permission(store.grp.profile.userPermissions).canDelete()
               ? async () => {
                   setShowDeleteMessageOverlay(false);
                   if (messageSelected === null) {

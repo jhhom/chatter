@@ -427,7 +427,8 @@ export const useLoginHandler = () => {
             status: c.status,
           });
         } else {
-          store.grp.set(payload.topicId, {
+          console.log("UPDATE WITH NEW PERMISSION", payload.updatedPermission);
+          state.grp.set(payload.topicId, {
             profile: {
               ...c.profile,
               userPermissions: payload.updatedPermission,

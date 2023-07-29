@@ -98,7 +98,6 @@ export const createMessagesStore = () => {
         };
       },
       setMessages: (messages) => {
-        console.log("SET MESSAGES!!!", messages);
         set((s) => {
           s.messages = messages;
         });
@@ -218,8 +217,6 @@ export function MessagesProvider(props: {
 }) {
   const store = createMessagesStore();
 
-  console.log("MESSAGES PROVIDER RERENDER!!!");
-
   return (
     <MessagesContext.Provider
       value={{
@@ -263,11 +260,7 @@ export const useMessagesStore = () => {
         seqId: 2,
       },
     ]);
-  }, []);
-
-  useEffect(() => {
-    console.log("MESSAGES STORE MESSAGES", messagesStore.messages);
-  }, [messagesStore.messages]);
+  }, [messagesStore.setMessages]);
 
   useEffect(() => {
     messagesStore.setMessages([]);

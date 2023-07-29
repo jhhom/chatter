@@ -7,6 +7,7 @@ import { MessagesProvider } from "~/frontend/features/chat/pages/stores/messages
 import { P2PChatPage } from "~/frontend/features/chat/pages/subpages/P2PChat.subpage";
 import { GroupChatPage } from "~/frontend/features/chat/pages/subpages/GroupChat.subpage";
 import { GroupChatPage2 } from "~/frontend/features/chat/pages/subpages/GroupChat2.subpage";
+import { GroupChatPage3 } from "~/frontend/features/chat/pages/subpages/GroupChat3.subpage";
 import { PastGroupChatPage } from "~/frontend/features/chat/pages/subpages/PastGroupChat.subpage";
 import {
   type MemberProfile,
@@ -67,6 +68,24 @@ const GroupTopic2 = React.memo(function GroupTopic(props: {
   );
 });
 
+const GroupTopic3 = React.memo(function GroupTopic(props: {
+  topic: GroupTopicId;
+  getTopicMember: (userId: UserId) => MemberProfile | undefined;
+}) {
+  console.log("GROUP TOPIC RE-RENDER");
+  return (
+    <MessagesProvider
+      contact={{
+        type: "grp",
+        topic: props.topic,
+        getTopicMember: props.getTopicMember,
+      }}
+    >
+      <GroupChatPage3 contactId={props.topic} />
+    </MessagesProvider>
+  );
+});
+
 const PastGroupTopic = React.memo(function PastGroupTopic(props: {
   topic: GroupTopicId;
   getTopicMember: (userId: UserId) => MemberProfile | undefined;
@@ -94,7 +113,12 @@ export default function ChatPage() {
   }));
 
   const searchParams = useSearchParams();
-  const topic = searchParams.get("topic");
+  const topic1 = searchParams.get("topic");
+
+  const topic2 = searchParams.get("topic-2");
+
+  const topic = topic2 === null ? topic1 : topic2;
+  const isDebugPage = topic2 !== null;
 
   const groupMemberStatus = (() => {
     if (topic === null) {
@@ -127,15 +151,24 @@ export default function ChatPage() {
         (store.p2p.has(topic) || store.newContacts.has(topic)) && (
           <P2PTopic topic={topic} />
         )}
-      {IsGroupTopicId(topic) && groupMemberStatus === "current-member" && (
-        <GroupTopic topic={topic} getTopicMember={getTopicMember} />
-      )}
-      {IsGroupTopicId(topic) && groupMemberStatus === "past-member" && (
-        <PastGroupTopic
-          topic={topic}
-          getTopicMember={(userId) => getMembers().get(userId)}
-        />
-      )}
+      {IsGroupTopicId(topic) &&
+        groupMemberStatus === "current-member" &&
+        !isDebugPage && (
+          <GroupTopic topic={topic} getTopicMember={getTopicMember} />
+        )}
+      {IsGroupTopicId(topic) &&
+        groupMemberStatus === "current-member" &&
+        isDebugPage && (
+          <GroupTopic3 topic={topic} getTopicMember={getTopicMember} />
+        )}
+      {IsGroupTopicId(topic) &&
+        groupMemberStatus === "past-member" &&
+        false && (
+          <PastGroupTopic
+            topic={topic}
+            getTopicMember={(userId) => getMembers().get(userId)}
+          />
+        )}
     </>
   ) : (
     <div>Fallback</div>

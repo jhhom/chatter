@@ -114,6 +114,7 @@ export function GroupInfo(props: GroupInfoProps) {
         <div className="mt-3">
           {props.memberList.map((m) => (
             <InfoMemberListContact
+              key={m.userId}
               name={m.name}
               profilePhotoUrl={m.profilePhotoUrl}
               permissions={props.permissions}

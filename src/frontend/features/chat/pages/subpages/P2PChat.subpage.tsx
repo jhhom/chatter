@@ -116,10 +116,6 @@ export function P2PChatPage(props: { contactId: UserId }) {
     type: "message",
   });
 
-  useEffect(() => {
-    console.log("STORE MESSAGES", messagesStore.messages);
-  }, [messagesStore.messages]);
-
   const makeMessageListener = useMessageListener(props.contactId, (userId) => {
     if (userId === props.contactId) {
       const profile = store.get().p2p.get(props.contactId);
@@ -604,10 +600,24 @@ export function P2PChatPage(props: { contactId: UserId }) {
     [props.contactId, store.get]
   );
 
-  const peer = store.p2p.get(props.contactId);
+  const peer = store.p2p.has(props.contactId)
+    ? {
+        type: "old-contact" as const,
+        ...store.p2p.get(props.contactId)!,
+      }
+    : store.newContacts.has(props.contactId)
+    ? {
+        type: "new-contact" as const,
+        profile: store.newContacts.get(props.contactId)!,
+      }
+    : undefined;
 
   if (peer === undefined) {
     throw new Error("Contact not found");
+  }
+
+  if (store.profile.profile === null) {
+    throw new Error("User profile is undefined");
   }
 
   return (
@@ -615,11 +625,21 @@ export function P2PChatPage(props: { contactId: UserId }) {
       <div className="h-full flex-grow">
         <ChatHeader
           type="p2p"
-          online={peer.status.online}
+          online={peer.type === "old-contact" ? peer.status.online : false}
           name={peer.profile.name}
-          lastSeen={peer.status.online ? null : peer.status.lastOnline}
+          lastSeen={
+            peer.type === "old-contact"
+              ? peer.status.online
+                ? null
+                : peer.status.lastOnline
+              : null
+          }
           typing={
-            peer.status.online && peer.status.typing ? peer.profile.name : null
+            peer.type === "old-contact"
+              ? peer.status.online && peer.status.typing
+                ? peer.profile.name
+                : null
+              : null
           }
           profilePhotoUrl={peer.profile.profilePhotoUrl}
           onBlock={onBlock}
@@ -639,7 +659,9 @@ export function P2PChatPage(props: { contactId: UserId }) {
               isNewContact={store.newContacts.has(props.contactId)}
               ref={conversationUIControl}
               mode={conversationDisplayMode(
-                peer.profile.peerPermissions,
+                peer.type === "old-contact"
+                  ? peer.profile.peerPermissions
+                  : store.profile.profile.defaultPermissions,
                 peer.profile.userPermissions
               )}
               onChatScrollToTop={onChatScrollToTop}
@@ -665,7 +687,9 @@ export function P2PChatPage(props: { contactId: UserId }) {
           inputMode={inputMode}
           disabled={
             conversationDisplayMode(
-              peer.profile.peerPermissions,
+              peer.type === "old-contact"
+                ? peer.profile.peerPermissions
+                : peer.profile.userPermissions,
               peer.profile.userPermissions
             ).type !== "normal" ||
             !permission(peer.profile.userPermissions).canWrite
@@ -684,7 +708,11 @@ export function P2PChatPage(props: { contactId: UserId }) {
               p.content === "security" ? (
                 <SecurityContent
                   userPermission={peer.profile.userPermissions}
-                  peerPermission={peer.profile.peerPermissions}
+                  peerPermission={
+                    peer.type === "old-contact"
+                      ? peer.profile.peerPermissions
+                      : peer.profile.userPermissions
+                  }
                   onSubmitPermissionChange={onSubmitPermissionChange(() =>
                     p.setContent("info")
                   )}
@@ -706,10 +734,16 @@ export function P2PChatPage(props: { contactId: UserId }) {
         <UnblockModal
           name={peer.profile.name}
           onUnblock={async () => {
-            void (await client["permissions/update_peer_permission"]({
-              newPermission: peer.profile.peerPermissions + "J",
-              peerId: props.contactId,
-            }));
+            const newPermission =
+              peer.type === "old-contact"
+                ? peer.profile.peerPermissions + "J"
+                : (store.get().profile.profile?.defaultPermissions ?? "") + "J";
+
+            if (store.get().profile.profile?.defaultPermissions)
+              void (await client["permissions/update_peer_permission"]({
+                newPermission,
+                peerId: props.contactId,
+              }));
             setShowUnblockModal(false);
           }}
           onCancel={() => setShowUnblockModal(false)}
