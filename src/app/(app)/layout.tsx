@@ -14,6 +14,7 @@ import { match } from "ts-pattern";
 import LoginPage from "~/frontend/features/auth/pages/Login/Login.page";
 import ChatPage from "~/frontend/features/chat/pages/Chat.page";
 import { enableMapSet } from "immer";
+import { ChatTextInput } from "~/frontend/features/chat/pages/components/ChatTextInput/ChatTextInput";
 
 const queryClient = new QueryClient();
 
@@ -28,7 +29,9 @@ export default function RootLayout({
     <QueryClientProvider client={queryClient}>
       <html lang="en">
         <body>
-          <Layout>{children}</Layout>
+          <>
+            <Layout>{children}</Layout>
+          </>
         </body>
       </html>
     </QueryClientProvider>
@@ -63,6 +66,25 @@ function Layout2({ children }: { children: React.ReactNode }) {
     <div>
       <p>Layout2</p>
     </div>
+  );
+}
+
+function Layout3() {
+  return (
+    <ChatTextInput
+      inputMode={{ type: "message" }}
+      onLoadFile={() => {
+        //
+      }}
+      onLoadPhoto={() => {
+        //
+      }}
+      disabled={false}
+      onTyping={(t) => console.log("typing", t)}
+      onMessageSubmit={(s) => {
+        console.log(s);
+      }}
+    />
   );
 }
 

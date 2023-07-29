@@ -68,8 +68,6 @@ const INITIAL_PAGE_SIZE = 64;
 const ChatTextInput = React.memo(ChatTextInputComponent);
 
 export function P2PChatPage(props: { contactId: UserId }) {
-  console.log("RE-RENDER!!!");
-
   const store = useAppStore((s) => ({
     profile: s.profile,
     p2p: s.p2p,
@@ -344,34 +342,40 @@ export function P2PChatPage(props: { contactId: UserId }) {
     [messageSelected, props.contactId, toReplyMessage]
   );
 
-  const onTyping: ChatTextInputProps["onTyping"] = (isTyping) => {
-    void client["topic/notify_typing"]({
-      action: isTyping ? "typing" : "stop-typing",
-      contactUserId: props.contactId,
-    });
-  };
+  const onTyping: ChatTextInputProps["onTyping"] = useCallback(
+    (isTyping) => {
+      void client["topic/notify_typing"]({
+        action: isTyping ? "typing" : "stop-typing",
+        contactUserId: props.contactId,
+      });
+    },
+    [props.contactId]
+  );
 
-  const onLoadFile: ChatTextInputProps["onLoadFile"] = (file) => {
+  const onLoadFile: ChatTextInputProps["onLoadFile"] = useCallback((file) => {
     setInputMode({
       type: "file",
       filename: file.name,
       contentType: file.type,
       size: file.size,
     });
-  };
+  }, []);
 
-  const onLoadPhoto: ChatTextInputProps["onLoadPhoto"] = async (photo) => {
-    if (imgUploadPreviewRef.current) {
-      imgUploadPreviewRef.current.src = URL.createObjectURL(photo);
-    }
+  const onLoadPhoto: ChatTextInputProps["onLoadPhoto"] = useCallback(
+    async (photo) => {
+      if (imgUploadPreviewRef.current) {
+        imgUploadPreviewRef.current.src = URL.createObjectURL(photo);
+      }
 
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(undefined);
-      }, 200);
-    });
-    setInputMode({ type: "photo", filename: photo.name });
-  };
+      await new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(undefined);
+        }, 200);
+      });
+      setInputMode({ type: "photo", filename: photo.name });
+    },
+    [setInputMode]
+  );
 
   const onSubmitPermissionChange: (
     onSubmissionSuccess: () => void
@@ -586,7 +590,12 @@ export function P2PChatPage(props: { contactId: UserId }) {
       setMessageSelected(null);
     },
     () => {
-      // cleanup
+      // no need to do anything for cleanup
+      // because we abort the effect early if component is not mounted
+      // maybe we should cancel the request to get messages in cleanup
+      // but because we're using WebSocket, we don't have abort request utility
+      // such as the AbortController that is available for Fetch
+      // so we'll leave it as it is, it doesn't cause any bugs to the end-user
     },
     [props.contactId, store.get]
   );
@@ -596,22 +605,6 @@ export function P2PChatPage(props: { contactId: UserId }) {
   if (peer === undefined) {
     throw new Error("Contact not found");
   }
-
-  useEffect(() => {
-    console.log("CHANGE: MESSAGES STORE", messagesStore.messages);
-  }, [messagesStore.messages]);
-
-  useEffect(() => {
-    console.log("CHANGE: P2P", store.p2p);
-  }, [store.p2p]);
-
-  useEffect(() => {
-    console.log("CHANGE: CONCAT ID", props.contactId);
-  }, [props.contactId]);
-
-  useEffect(() => {
-    console.log("CHANGE: STORE.GET", store.get);
-  }, [store.get]);
 
   return (
     <div className="relative flex h-screen">

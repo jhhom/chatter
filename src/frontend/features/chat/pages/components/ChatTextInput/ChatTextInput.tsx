@@ -45,7 +45,11 @@ export function ChatTextInput(props: ChatTextInputProps) {
   const [isTyping, register] = useIsTyping({ timeout: 1500 });
 
   useEffect(() => {
-    return;
+    console.log("REGISTER!!!");
+    register(messageInputRef.current);
+  }, [register]);
+
+  useEffect(() => {
     props.onTyping(isTyping);
   }, [isTyping, props.onTyping]);
 
@@ -120,7 +124,7 @@ export function ChatTextInput(props: ChatTextInputProps) {
         filename,
       });
     }
-  }, []);
+  }, [props.inputMode, props.onMessageSubmit]);
 
   return (
     <div className="flex h-12 items-center bg-gray-100">
@@ -157,7 +161,6 @@ export function ChatTextInput(props: ChatTextInputProps) {
           disabled={props.disabled}
           ref={(r) => {
             messageInputRef.current = r;
-            register(r);
           }}
           placeholder={
             props.inputMode.type == "message" ? "New message" : "Caption"
