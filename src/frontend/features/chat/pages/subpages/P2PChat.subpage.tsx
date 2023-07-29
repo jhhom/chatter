@@ -116,6 +116,10 @@ export function P2PChatPage(props: { contactId: UserId }) {
     type: "message",
   });
 
+  useEffect(() => {
+    console.log("STORE MESSAGES", messagesStore.messages);
+  }, [messagesStore.messages]);
+
   const makeMessageListener = useMessageListener(props.contactId, (userId) => {
     if (userId === props.contactId) {
       const profile = store.get().p2p.get(props.contactId);

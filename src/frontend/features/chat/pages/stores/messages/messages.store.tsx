@@ -98,6 +98,7 @@ export const createMessagesStore = () => {
         };
       },
       setMessages: (messages) => {
+        console.log("SET MESSAGES!!!", messages);
         set((s) => {
           s.messages = messages;
         });
@@ -249,6 +250,26 @@ export const useMessagesStore = () => {
   const messagesStore = useStore(zustandMessagesStore);
 
   useEffect(() => {
+    messagesStore.setMessages([
+      {
+        type: "event_log",
+        date: new Date(),
+        isFirstOfDate: true,
+        text: {
+          type: "text",
+          content: "30",
+          forwarded: false,
+        },
+        seqId: 2,
+      },
+    ]);
+  }, []);
+
+  useEffect(() => {
+    console.log("MESSAGES STORE MESSAGES", messagesStore.messages);
+  }, [messagesStore.messages]);
+
+  useEffect(() => {
     messagesStore.setMessages([]);
     messagesStore.setHasEarlierMessages(false);
     messagesStore.setIsLoadingMoreMessages(false);
@@ -285,13 +306,6 @@ export const useMessagesStore = () => {
       return getTopicMember(authorId)?.name ?? "";
     },
     [store.get, getTopicMember]
-  );
-
-  const setMessages = useCallback(
-    (messages: ChatMessageType[]) => {
-      messagesStore.setMessages(messages);
-    },
-    [messagesStore.setMessages]
   );
 
   const _loadMessages = useCallback(

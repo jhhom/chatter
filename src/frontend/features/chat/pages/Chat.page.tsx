@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { IsGroupTopicId, IsUserId } from "~/backend/service/common/topics";
 
@@ -6,6 +6,7 @@ import { MessagesProvider } from "~/frontend/features/chat/pages/stores/messages
 
 import { P2PChatPage } from "~/frontend/features/chat/pages/subpages/P2PChat.subpage";
 import { GroupChatPage } from "~/frontend/features/chat/pages/subpages/GroupChat.subpage";
+import { GroupChatPage2 } from "~/frontend/features/chat/pages/subpages/GroupChat2.subpage";
 import { PastGroupChatPage } from "~/frontend/features/chat/pages/subpages/PastGroupChat.subpage";
 import {
   type MemberProfile,
@@ -44,6 +45,24 @@ const GroupTopic = React.memo(function GroupTopic(props: {
       }}
     >
       <GroupChatPage contactId={props.topic} />
+    </MessagesProvider>
+  );
+});
+
+const GroupTopic2 = React.memo(function GroupTopic(props: {
+  topic: GroupTopicId;
+  getTopicMember: (userId: UserId) => MemberProfile | undefined;
+}) {
+  console.log("GROUP TOPIC RE-RENDER");
+  return (
+    <MessagesProvider
+      contact={{
+        type: "grp",
+        topic: props.topic,
+        getTopicMember: props.getTopicMember,
+      }}
+    >
+      <GroupChatPage2 contactId={props.topic} />
     </MessagesProvider>
   );
 });
@@ -95,6 +114,13 @@ export default function ChatPage() {
 
   const getMembers = useMembersStore((s) => s.getMembers);
 
+  const getTopicMember = useCallback(
+    (userId: UserId) => {
+      return getMembers().get(userId);
+    },
+    [getMembers]
+  );
+
   return topic !== null && (IsUserId(topic) || IsGroupTopicId(topic)) ? (
     <>
       {IsUserId(topic) &&
@@ -102,10 +128,7 @@ export default function ChatPage() {
           <P2PTopic topic={topic} />
         )}
       {IsGroupTopicId(topic) && groupMemberStatus === "current-member" && (
-        <GroupTopic
-          topic={topic}
-          getTopicMember={(userId) => getMembers().get(userId)}
-        />
+        <GroupTopic topic={topic} getTopicMember={getTopicMember} />
       )}
       {IsGroupTopicId(topic) && groupMemberStatus === "past-member" && (
         <PastGroupTopic

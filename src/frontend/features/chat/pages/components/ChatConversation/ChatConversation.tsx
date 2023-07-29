@@ -90,6 +90,10 @@ export const ChatConversation = forwardRef<
     };
   }, [props.onChatScrollToTop]);
 
+  useEffect(() => {
+    console.log("MESSAGES DISPLAYED", props.messages);
+  }, [props.messages]);
+
   useImperativeHandle(
     ref,
     (): IChatConversationUI => {

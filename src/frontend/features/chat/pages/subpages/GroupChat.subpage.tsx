@@ -61,6 +61,7 @@ import {
   useReadListener,
 } from "~/frontend/features/chat/pages/hooks";
 import { match } from "ts-pattern";
+import useAsyncEffect from "use-async-effect";
 
 const PAGE_SIZE = 24;
 const INITIAL_PAGE_SIZE = 64;
@@ -70,6 +71,8 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
     profile: s.profile,
     grp: s.grp,
     p2p: s.p2p,
+    get: s.get,
+    setContact: s.setContact,
   }));
   const messagesStore = useMessagesStore();
   const membersStore = useMembersStore();
@@ -182,15 +185,21 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
   ]);
 
   useEffect(() => {
-    const loadMessagesOfTopic = async () => {
-      membersStore.clear();
+    console.log("CURRENT MESSAGES", messagesStore.messages);
+  }, [messagesStore.messages]);
 
+  useAsyncEffect(
+    async (isMounted) => {
       const memberRetrievalResult = await client["group/members"]({
         groupTopicId: props.contactId,
       });
       if (memberRetrievalResult.isErr()) {
         alert("failed to get group members");
       } else {
+        if (!isMounted) {
+          return;
+        }
+
         for (const member of memberRetrievalResult.value) {
           membersStore.setMember(member.id, {
             name: member.fullname,
@@ -200,14 +209,27 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
         }
       }
 
-      await messagesStore.loadMessages(INITIAL_PAGE_SIZE, -1);
+      const result = await messagesStore.loadMessages(INITIAL_PAGE_SIZE, -1);
+      if (result.isErr()) {
+        return;
+      }
 
-      if (messagesStore.messages.length !== 0) {
+      if (!isMounted) {
+        return;
+      }
+
+      messagesStore.setMessages(result.value.earlierMessages);
+
+      console.log("LOADED MESSAGES", messagesStore.get().messages);
+
+      if (messagesStore.get().messages.length !== 0) {
         const messageStatusUpdateResult = await client[
           "topic/update_message_read_status"
         ]({
           sequenceId:
-            messagesStore.messages[messagesStore.messages.length - 1].seqId,
+            messagesStore.get().messages[
+              messagesStore.get().messages.length - 1
+            ].seqId,
           topicId: props.contactId,
         });
 
@@ -218,7 +240,11 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
           );
         }
 
-        const userId = store.profile?.userId;
+        if (!isMounted) {
+          return;
+        }
+
+        const userId = store.get().profile.profile?.userId;
         if (userId === undefined) {
           throw new Error(`UserId is undefined`);
         }
@@ -234,14 +260,22 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
         if (idbUpdateResult.isErr()) {
           console.error(idbUpdateResult.error);
         }
+
+        if (!isMounted) {
+          return;
+        }
       }
 
       conversationUIControl.current?.scrollChatToTheBottom();
       conversationUIControl.current?.updateFirstMessageRef();
-    };
 
-    void loadMessagesOfTopic();
-  }, [props.contactId, membersStore, messagesStore, store.profile?.userId]);
+      console.log("LOADED MESSAGES 2", messagesStore.get().messages);
+    },
+    () => {
+      // cleanup
+    },
+    [props.contactId, store.get]
+  );
 
   const onClearMessages: ChatHeaderProps["onClearMessages"] =
     useCallback(async () => {
@@ -271,52 +305,66 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
 
       messagesStore.clearMessages();
 
-      const c = store.grp.get(props.contactId);
+      const c = store.get().grp.get(props.contactId);
       if (c) {
-        store.grp.set(props.contactId, {
-          profile: {
-            ...c.profile,
-            lastMessage: null,
-          },
-          status: c.status,
+        store.setContact((s) => {
+          s.grp.set(props.contactId, {
+            profile: {
+              ...c.profile,
+              lastMessage: null,
+            },
+            status: c.status,
+          });
         });
       }
-    }, [props.contactId, messagesStore, store.grp]);
+    }, [
+      props.contactId,
+      messagesStore.clearMessages,
+      store.get,
+      store.setContact,
+    ]);
 
   const onChatScrollToTop: ChatConversationProps["onChatScrollToTop"] =
     useCallback(async () => {
       if (
-        messagesStore.hasEarlierMessages &&
-        !messagesStore.isLoadingMoreMessages
+        messagesStore.get().hasEarlierMessages &&
+        !messagesStore.get().isLoadingMoreMessages
       ) {
-        await messagesStore.loadMessages(
+        const result = await messagesStore.loadMessages(
           PAGE_SIZE,
-          messagesStore.messages[0].seqId
+          messagesStore.get().messages[0].seqId
         );
+        if (result.isOk()) {
+          messagesStore.setMessages(
+            result.value.earlierMessages.concat(messagesStore.get().messages)
+          );
+        }
         return "new messages loaded";
       }
+
       return "no new messages loaded";
-    }, [messagesStore]);
+    }, [messagesStore.get, messagesStore.loadMessages]);
 
   const onReplyMessageClick: ChatConversationProps["onReplyMessageClick"] =
     useCallback(
       async (seqId) => {
         const hasMessageInDisplay =
-          messagesStore.messages.findIndex((x) => x.seqId === seqId) !== -1;
+          messagesStore.get().messages.findIndex((x) => x.seqId === seqId) !==
+          -1;
         if (hasMessageInDisplay) {
           conversationUIControl.current?.scrollToMessage(seqId);
           return;
         }
 
         const hasMessagesBeforeReplyInDisplay =
-          messagesStore.messages.findIndex((x) => x.seqId < seqId) !== -1;
+          messagesStore.get().messages.findIndex((x) => x.seqId < seqId) !== -1;
         if (hasMessagesBeforeReplyInDisplay) {
           toast("Message not found");
           return;
         }
 
         const result = await messagesStore.loadMessagesUntilReply(
-          messagesStore.messages[0].seqId,
+          messagesStore.get().messages[0].seqId,
           seqId
         );
         if (result.isErr()) {
@@ -334,7 +382,7 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
           conversationUIControl.current?.scrollToMessage(seqId);
         }
       },
-      [messagesStore]
+      [messagesStore.get, messagesStore.loadMessagesUntilReply]
     );
 
   const onMessageBubbleMenuClick: ChatConversationProps["onMessageBubbleMenuClick"] =
@@ -597,8 +645,8 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
                   />
                 ))
                 .with("display-info", () => {
-                  if (store.profile === undefined) {
-                    throw new Error("User profile is undefined");
+                  if (store.profile.profile === null) {
+                    throw new Error("User profile is null");
                   }
                   return (
                     <GroupInfo
@@ -606,7 +654,7 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
                         name: grp.profile.name,
                         id: props.contactId,
                         ownerId: grp.profile.ownerId,
-                        userId: store.profile.userId,
+                        userId: store.profile.profile.userId,
                       }}
                       permissions={grp.profile.userPermissions}
                       canInvite={permission(
