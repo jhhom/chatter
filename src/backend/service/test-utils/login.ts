@@ -27,7 +27,7 @@ export async function login(
     emitter: new MockEmitter(),
   };
 
-  const callback = await authUsecase.registerSocket(
+  const callback = authUsecase.registerSocket(
     { db: ctx.db, onlineUsers: ctx.onlineUsers },
     { userCtx: alice.ctx }
   );
