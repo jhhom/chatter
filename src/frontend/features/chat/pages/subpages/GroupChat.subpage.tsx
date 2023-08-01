@@ -60,6 +60,7 @@ import {
   useMessageListener,
   useReadListener,
 } from "~/frontend/features/chat/pages/hooks";
+import { userGroupConversationDisplayMode } from "~/frontend/features/chat/utils";
 import { match } from "ts-pattern";
 import useAsyncEffect from "use-async-effect";
 
@@ -111,25 +112,9 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
 
   const conversationDisplayMode: Parameters<
     typeof ChatConversation
-  >[0]["mode"] = (() => {
-    const user = permission(store.grp.profile.userPermissions);
-
-    if (!user.canRead()) {
-      return { type: "read disabled" };
-    } else if (!user.canWrite()) {
-      return { type: "write disabled" };
-    } else {
-      return { type: "normal" };
-    }
-  })();
-
-  useEffect(() => {
-    console.log("GROUP PROFILE CHANGE", store.grp);
-  }, [store.grp]);
-
-  useEffect(() => {
-    console.log("USER PERMISSION CHANGE", store.grp?.profile.userPermissions);
-  }, [store.grp.profile.userPermissions]);
+  >[0]["mode"] = userGroupConversationDisplayMode(
+    store.grp.profile.userPermissions
+  );
 
   const makeMessageListener = useMessageListener(
     props.contactId,

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import useAsyncEffect from "use-async-effect";
 import { fromPromise } from "neverthrow";
 import type {
   GroupTopicId,
@@ -33,7 +34,7 @@ const INITIAL_PAGE_SIZE = 64;
 export function PastGroupChatPage(props: { contactId: GroupTopicId }) {
   const store = useAppStore((s) => ({
     profile: s.profile,
-    pastGrp: s.pastGrp,
+    pastGrp: s.pastGrp.get(props.contactId),
   }));
   const messagesStore = useMessagesStore();
   const membersStore = useMembersStore();
@@ -103,8 +104,8 @@ export function PastGroupChatPage(props: { contactId: GroupTopicId }) {
     makeDeleteMessageListener,
   ]);
 
-  useEffect(() => {
-    const loadMessages = async () => {
+  useAsyncEffect(
+    async (isMounted) => {
       membersStore.clear();
 
       const memberRetrievalResult = await client["group/members"]({
@@ -113,6 +114,10 @@ export function PastGroupChatPage(props: { contactId: GroupTopicId }) {
       if (memberRetrievalResult.isErr()) {
         alert("failed to get group members");
       } else {
+        if (!isMounted) {
+          return;
+        }
+
         for (const member of memberRetrievalResult.value) {
           membersStore.setMember(member.id, {
             name: member.fullname,
@@ -122,16 +127,31 @@ export function PastGroupChatPage(props: { contactId: GroupTopicId }) {
         }
       }
 
-      await messagesStore.loadMessages(INITIAL_PAGE_SIZE, -1);
+      const result = await messagesStore.loadMessages(INITIAL_PAGE_SIZE, -1);
+      if (result.isErr()) {
+        return;
+      }
 
-      if (messagesStore.messages.length !== 0) {
+      if (!isMounted) {
+        return;
+      }
+
+      messagesStore.setMessages(result.value.earlierMessages);
+
+      if (messagesStore.get().messages.length !== 0) {
         const messageStatusUpdateResult = await client[
           "topic/update_message_read_status"
         ]({
           sequenceId:
-            messagesStore.messages[messagesStore.messages.length - 1].seqId,
+            messagesStore.get().messages[
+              messagesStore.get().messages.length - 1
+            ].seqId,
           topicId: props.contactId,
         });
+
+        if (!isMounted) {
+          return;
+        }
 
         if (messageStatusUpdateResult.isErr()) {
           alert(
@@ -140,7 +160,7 @@ export function PastGroupChatPage(props: { contactId: GroupTopicId }) {
           );
         }
 
-        const userId = store.profile?.userId;
+        const userId = store.profile.profile?.userId;
         if (userId === undefined) {
           throw new Error(`UserId is undefined`);
         }
@@ -160,20 +180,23 @@ export function PastGroupChatPage(props: { contactId: GroupTopicId }) {
 
       conversationUIControl.current?.scrollChatToTheBottom();
       conversationUIControl.current?.updateFirstMessageRef();
-    };
+    },
+    [
+      membersStore.clear,
+      messagesStore.loadMessages,
+      messagesStore.get,
+      props.contactId,
+      store.profile.profile?.userId,
+    ]
+  );
 
-    void loadMessages();
-  }, [membersStore, messagesStore, props.contactId, store.profile?.userId]);
-
-  const grp = store.pastGrp.get(props.contactId);
-
-  if (grp === undefined) {
+  if (store.pastGrp === undefined) {
     throw new Error(`Group is undefined`);
   }
 
-  const user = store.profile;
+  const user = store.profile.profile;
 
-  if (user === undefined) {
+  if (user === null) {
     throw new Error(`User profile is undefined`);
   }
 
@@ -181,66 +204,66 @@ export function PastGroupChatPage(props: { contactId: GroupTopicId }) {
     <div className="flex h-screen">
       <div className="h-full flex-grow">
         <ChatHeader
-          name={grp.profile.name}
+          name={store.pastGrp.profile.name}
           onInfoClick={() => setShowDrawer(false)}
-          profilePhotoUrl={grp.profile.profilePhotoUrl}
-        />
-      </div>
-
-      <div className="h-[calc(100vh-3.5rem)]">
-        <ChatConversation
-          isNewContact={false}
-          peerName={grp.profile.name}
-          userId={user.userId}
-          mode={{ type: "removed from group" }}
-          ref={conversationUIControl}
-          messages={messagesStore.messages}
-          onMessageBubbleMenuClick={() => {
-            //
-          }}
-          onReplyMessageClick={() => {
-            //
-          }}
-          onChatScrollToTop={async () => {
-            if (
-              messagesStore.hasEarlierMessages &&
-              !messagesStore.isLoadingMoreMessages
-            ) {
-              await messagesStore.loadMessages(
-                PAGE_SIZE,
-                messagesStore.messages[0].seqId
-              );
-              return "new messages loaded";
-            }
-            return "no new messages loaded";
-          }}
-          onMessageImageClick={async (messageUrl) => {
-            if (chatImgViewRef.current) {
-              chatImgViewRef.current.src = messageUrl;
-            }
-
-            await new Promise((resolve) => {
-              setTimeout(() => {
-                resolve(undefined);
-              }, 200);
-            });
-
-            setShowMessageImageOverlay(true);
-          }}
+          profilePhotoUrl={store.pastGrp.profile.profilePhotoUrl}
         />
 
-        <div
-          className={clsx(
-            "absolute left-0 top-0 h-[calc(100%)] w-full bg-white",
-            {
-              hidden: !showMessageImageOverlay,
-            }
-          )}
-        >
-          <ChatImageOverlay
-            ref={chatImgViewRef}
-            onCloseOverlay={() => setShowMessageImageOverlay(false)}
+        <div className="h-[calc(100vh-3.5rem)]">
+          <ChatConversation
+            isNewContact={false}
+            peerName={store.pastGrp.profile.name}
+            userId={user.userId}
+            mode={{ type: "removed from group" }}
+            ref={conversationUIControl}
+            messages={messagesStore.messages}
+            onMessageBubbleMenuClick={() => {
+              //
+            }}
+            onReplyMessageClick={() => {
+              //
+            }}
+            onChatScrollToTop={async () => {
+              if (
+                messagesStore.hasEarlierMessages &&
+                !messagesStore.isLoadingMoreMessages
+              ) {
+                await messagesStore.loadMessages(
+                  PAGE_SIZE,
+                  messagesStore.messages[0].seqId
+                );
+                return "new messages loaded";
+              }
+              return "no new messages loaded";
+            }}
+            onMessageImageClick={async (messageUrl) => {
+              if (chatImgViewRef.current) {
+                chatImgViewRef.current.src = messageUrl;
+              }
+
+              await new Promise((resolve) => {
+                setTimeout(() => {
+                  resolve(undefined);
+                }, 200);
+              });
+
+              setShowMessageImageOverlay(true);
+            }}
           />
+
+          <div
+            className={clsx(
+              "absolute left-0 top-0 h-[calc(100%)] w-full bg-white",
+              {
+                hidden: !showMessageImageOverlay,
+              }
+            )}
+          >
+            <ChatImageOverlay
+              ref={chatImgViewRef}
+              onCloseOverlay={() => setShowMessageImageOverlay(false)}
+            />
+          </div>
         </div>
       </div>
     </div>

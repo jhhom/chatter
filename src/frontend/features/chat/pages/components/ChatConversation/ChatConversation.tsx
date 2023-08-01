@@ -6,6 +6,7 @@ import type { ChatMessageType } from "~/frontend/features/chat/pages/stores/mess
 import type { ChatMessageTypeMessage } from "~/frontend/features/chat/pages/stores/messages/get-messages-display-sequences";
 
 import { match } from "ts-pattern";
+import { type GroupConversationDisplayMode } from "~/frontend/features/chat/utils";
 
 export type IChatConversationUI = {
   updateFirstMessageRef: () => void;
@@ -31,23 +32,23 @@ type ChatConversationProps = {
   onReplyMessageClick: (messageSeqId: number) => void;
   mode:
     | {
-        type: "normal";
+        type: GroupConversationDisplayMode["NORMAL"];
       }
     | {
-        type: "needs unblocking";
+        type: GroupConversationDisplayMode["NEEDS_UNBLOCKING"];
         onUnblock: () => void;
       }
     | {
-        type: "blocked by peer";
+        type: GroupConversationDisplayMode["BLOCKED_BY_PEER"];
       }
     | {
-        type: "read disabled";
+        type: GroupConversationDisplayMode["READ_DISABLED"];
       }
     | {
-        type: "write disabled";
+        type: GroupConversationDisplayMode["WRITE_DISABLED"];
       }
     | {
-        type: "removed from group";
+        type: GroupConversationDisplayMode["REMOVED_FROM_GROUP"];
       };
 };
 

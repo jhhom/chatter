@@ -161,14 +161,12 @@ export default function ChatPage() {
         isDebugPage && (
           <GroupTopic3 topic={topic} getTopicMember={getTopicMember} />
         )}
-      {IsGroupTopicId(topic) &&
-        groupMemberStatus === "past-member" &&
-        false && (
-          <PastGroupTopic
-            topic={topic}
-            getTopicMember={(userId) => getMembers().get(userId)}
-          />
-        )}
+      {IsGroupTopicId(topic) && groupMemberStatus === "past-member" && (
+        <PastGroupTopic
+          topic={topic}
+          getTopicMember={(userId) => getMembers().get(userId)}
+        />
+      )}
     </>
   ) : (
     <div>Fallback</div>
