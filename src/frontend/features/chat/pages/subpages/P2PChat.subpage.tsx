@@ -56,6 +56,7 @@ import { useAppStore } from "~/frontend/stores/stores";
 import { useMessagesStore } from "~/frontend/features/chat/pages/stores/messages/messages.store";
 
 import useAsyncEffect from "use-async-effect";
+import { userPeerConversationDisplayMode } from "../../utils";
 
 export type IChatUI = Pick<
   IChatConversationUI,
@@ -444,50 +445,6 @@ export function P2PChatPage(props: { contactId: UserId }) {
       }
     }, [messageSelected, props.contactId]);
 
-  const conversationDisplayMode = useCallback(
-    (
-      peerPermission: string,
-      userPermission: string
-    ): ChatConversationProps["mode"] => {
-      const peer = permission(peerPermission);
-      const user = permission(userPermission);
-
-      if (store.newContacts.has(props.contactId)) {
-        if (!user.canJoin()) {
-          return { type: "blocked by peer" };
-        }
-        if (!user.canRead()) {
-          return { type: "read disabled" };
-        }
-        if (!user.canWrite()) {
-          return { type: "write disabled" };
-        }
-        return { type: "normal" };
-      }
-
-      if (!user.canJoin()) {
-        return { type: "blocked by peer" };
-      }
-      if (peer.canJoin()) {
-        if (user.canRead()) {
-          return { type: "normal" };
-        } else if (user.canWrite()) {
-          return { type: "write disabled" };
-        } else {
-          return { type: "read disabled" };
-        }
-      } else {
-        return {
-          type: "needs unblocking",
-          onUnblock: () => {
-            setShowUnblockModal(true);
-          },
-        };
-      }
-    },
-    [props.contactId, store.newContacts]
-  );
-
   useEffect(() => {
     const messageListener = makeMessageListener(conversationUIControl.current);
     const readNotificationListener = makeReadListener();
@@ -658,11 +615,13 @@ export function P2PChatPage(props: { contactId: UserId }) {
               messages={messagesStore.messages}
               isNewContact={store.newContacts.has(props.contactId)}
               ref={conversationUIControl}
-              mode={conversationDisplayMode(
+              mode={userPeerConversationDisplayMode(
                 peer.type === "old-contact"
                   ? peer.profile.peerPermissions
                   : store.profile.profile.defaultPermissions,
-                peer.profile.userPermissions
+                peer.profile.userPermissions,
+                store.newContacts.has(props.contactId),
+                () => setShowUnblockModal(false)
               )}
               onChatScrollToTop={onChatScrollToTop}
               onReplyMessageClick={onReplyMessageClick}
@@ -686,13 +645,15 @@ export function P2PChatPage(props: { contactId: UserId }) {
         <ChatTextInput
           inputMode={inputMode}
           disabled={
-            conversationDisplayMode(
+            userPeerConversationDisplayMode(
               peer.type === "old-contact"
                 ? peer.profile.peerPermissions
-                : peer.profile.userPermissions,
-              peer.profile.userPermissions
+                : store.profile.profile.defaultPermissions,
+              peer.profile.userPermissions,
+              store.newContacts.has(props.contactId),
+              () => setShowUnblockModal(false)
             ).type !== "normal" ||
-            !permission(peer.profile.userPermissions).canWrite
+            !permission(peer.profile.userPermissions).canWrite()
           }
           onMessageSubmit={onMessageSubmit}
           onTyping={onTyping}
