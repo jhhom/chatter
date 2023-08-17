@@ -1,7 +1,9 @@
-'use client'
-
-import FindContactPanel from "~/frontend/features/contact-list/pages/FindContact/FindContact.page";
+"use client";
 
 export default function NewTpk() {
-  return <FindContactPanel />;
+  return (
+    <div>
+      <p>New Tpk</p>
+    </div>
+  );
 }

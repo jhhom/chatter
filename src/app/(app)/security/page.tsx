@@ -1,7 +1,5 @@
-'use client'
-
-import SecuritySettingsPanel from "~/frontend/features/user/pages/UserPermissionSettingPanel.page";
+"use client";
 
 export default function SecuritySettings() {
-  return <SecuritySettingsPanel />;
+  return <p>Security</p>;
 }
