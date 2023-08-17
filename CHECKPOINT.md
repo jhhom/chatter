@@ -10,4 +10,5 @@ Features targeted to be done before next checkpoints:
 - Receive message
 - Scroll through messages
 
-
+# Checkpoint 3 - Old UI / New UI
+- Checkpoint before we start working on new UI
