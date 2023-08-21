@@ -15,7 +15,7 @@ import { type UserId } from "~/api-contract/subscription/subscription";
 
 type GetAuthorProfileImage = (userId: UserId) => string | undefined;
 
-export function Conversation(props: {
+export function ChatConversation(props: {
   chatItems: ChatMessageType[];
   onReplyMessage: (m: ChatMessageTypeMessage) => void;
   toReplyMessage: ChatMessageTypeMessage | null;

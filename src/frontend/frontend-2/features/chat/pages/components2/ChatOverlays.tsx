@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, forwardRef } from "react";
 
 export function ChatFileUploadPreviewOverlay(props: {
   filename: string;
@@ -65,13 +65,13 @@ export function ChatFileUploadPreviewOverlay(props: {
   );
 }
 
-export function ChatImageUploadPreviewOverlay(props: {
-  imgRef: (r: HTMLImageElement) => void;
-  filename: string;
-  onCloseOverlay: () => void;
-}) {
-  const imgRef = useRef<HTMLImageElement | null>(null);
-
+export const ChatImageUploadPreviewOverlay = forwardRef<
+  HTMLImageElement,
+  {
+    filename: string;
+    onCloseOverlay: () => void;
+  }
+>(function ChatImageUploadPreviewOverlay(props, ref) {
   return (
     <>
       <div className="flex h-14 items-center border-b-2 border-gray-300 bg-gray-100">
@@ -89,8 +89,8 @@ export function ChatImageUploadPreviewOverlay(props: {
         </div>
       </div>
       <div className="flex  h-[calc(100%-3.5rem)] w-full items-center justify-center bg-white">
-        <img ref={imgRef} className="h-full object-scale-down" />
+        <img ref={ref} className="h-full object-scale-down" />
       </div>
     </>
   );
-}
+});

@@ -32,7 +32,6 @@ export function ConversationItem(props: {
     <>
       {props.item.isFirstOfDate && (
         <div className="flex-center flex items-center py-5">
-          ow
           <div className="ml-4 flex-1 border-b border-gray-300" />
           <p className="rounded-full border border-gray-300 px-2.5 py-0.5 text-xs font-medium text-gray-400">
             {formatSeparatorDate(props.item.date)}

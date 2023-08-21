@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { fromPromise } from "neverthrow";
 import { toast, Toaster } from "react-hot-toast";
 import clsx from "clsx";
@@ -11,39 +11,23 @@ import type {
   ChatConversationProps,
   IChatConversationUI,
 } from "~/frontend/frontend-2/features/chat/pages/types";
-import { ChatHeader } from "~/frontend/frontend-2/features/chat/pages/components/ChatHeader";
-import { ChatConversation } from "~/frontend/frontend-2/features/chat/pages/components/ChatConversation/ChatConversation";
 
-import {
-  SecurityContent,
-  InfoContent,
-  P2PInfoDrawer,
-  type SecurityContentProps,
-} from "~/frontend/frontend-2/features/chat/pages/components/ChatDrawer/P2PInfoDrawer";
-import { UnblockModal } from "~/frontend/frontend-2/features/chat/pages/components/UnblockModal";
-import {
-  ChatFileUploadPreviewOverlay,
-  ChatImageUploadPreviewOverlay,
-  ChatImageOverlay,
-  DeleteMessageOverlay,
-  ForwardMessageOverlay,
-  type DeleteMessageOverlayProps,
-} from "~/frontend/frontend-2/features/chat/pages/components/ChatOverlays";
-import {
-  ChatMessageBubbleMenu,
-  ChatMessageBubbleMenuItem,
-} from "~/frontend/frontend-2/features/chat/pages/components/ChatConversation/ChatMessageBubbleMenu";
+import { type SecurityContentProps } from "~/frontend/frontend-2/features/chat/pages/components/ChatDrawer/P2PInfoDrawer";
+import { type DeleteMessageOverlayProps } from "~/frontend/frontend-2/features/chat/pages/components/ChatOverlays";
 import {
   ChatTextInput as ChatTextInputComponent,
   type ChatInputMode,
 } from "~/frontend/frontend-2/features/chat/pages/components/ChatTextInput/ChatTextInput";
-import {
-  ChatReplyPreview,
-  type ChatReplyPreviewProps,
-} from "~/frontend/frontend-2/features/chat/pages/components/ChatReplyPreview";
+import { type ChatReplyPreviewProps } from "~/frontend/frontend-2/features/chat/pages/components/ChatReplyPreview";
 import type { ChatMessageTypeMessage } from "~/frontend/frontend-2/features/chat/pages/components/ChatConversation/ChatMessage";
 
 import { permission } from "~/backend/service/common/permissions";
+import { ChatConversation } from "~/frontend/frontend-2/features/chat/pages/components2/ChatConversation/ChatConversation";
+import { ChatHeader } from "~/frontend/frontend-2/features/chat/pages/components2/ChatHeader";
+import { ChatImageUploadPreviewOverlay } from "~/frontend/frontend-2/features/chat/pages/components2/ChatOverlays";
+import { ChatFileUploadPreviewOverlay } from "~/frontend/frontend-2/features/chat/pages/components2/ChatOverlays";
+import { TextInput } from "~/frontend/frontend-2/features/chat/pages/components2/TextInput/TextInput";
+import { P2PInfoDrawer } from "~/frontend/frontend-2/features/chat/pages/components/ChatDrawer/P2PInfoDrawer";
 
 import {
   useMessageListener,
@@ -56,6 +40,7 @@ import { client } from "~/frontend/external/api-client/client";
 import { useAppStore } from "~/frontend/stores/stores";
 import { useMessagesStore } from "~/frontend/frontend-2/features/chat/pages/stores/messages/messages.store";
 
+import { clsx as cx } from "clsx";
 import useAsyncEffect from "use-async-effect";
 import { userPeerConversationDisplayMode } from "../../utils";
 
@@ -113,6 +98,7 @@ export function P2PChatPage(props: { contactId: UserId }) {
     useState<ChatMessageTypeMessage | null>(null);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [inputMode, setInputMode] = useState<ChatInputMode>({
     type: "message",
@@ -578,5 +564,91 @@ export function P2PChatPage(props: { contactId: UserId }) {
     throw new Error("User profile is undefined");
   }
 
-  return <div className="relative flex h-screen"></div>;
+  return (
+    <div className="relative flex h-screen">
+      <div className="w-full">
+        <ChatHeader onInfoClick={() => setShowDrawer(true)} />
+        <div className="relative  h-[calc(100%-8rem)] w-full">
+          <ChatConversation
+            onReplyMessage={(m) => {
+              setToReplyMessage(true);
+              setMessageSelected(m);
+            }}
+            toReplyMessage={messageSelected}
+            showReplyPreview={toReplyMessage}
+            onCloseReplyPreview={() => setToReplyMessage(false)}
+            getAuthorProfileImage={(userId) => undefined}
+            chatItems={messagesStore.messages}
+          />
+          <div
+            className={cx("absolute left-0 top-0 h-full w-full bg-white", {
+              hidden: inputMode.type != "photo",
+            })}
+          >
+            <ChatImageUploadPreviewOverlay
+              ref={imgUploadPreviewRef}
+              filename={inputMode.type === "photo" ? inputMode.filename : ""}
+              onCloseOverlay={() => setInputMode({ type: "message" })}
+            />
+          </div>
+
+          <div
+            className={cx("absolute left-0 top-0 h-full w-full bg-white", {
+              hidden: inputMode.type != "file",
+            })}
+          >
+            <ChatFileUploadPreviewOverlay
+              filename={inputMode.type == "file" ? inputMode.filename : ""}
+              contentType={
+                inputMode.type == "file" ? inputMode.contentType : ""
+              }
+              size={inputMode.type == "file" ? inputMode.size : 0}
+              onCloseOverlay={() => {
+                setInputMode({ type: "message" });
+              }}
+            />
+          </div>
+        </div>
+        <TextInput
+          inputMode={inputMode}
+          onTyping={() => {
+            console.log("typing");
+          }}
+          onMessageSubmit={(msg) => {
+            console.log("submit");
+          }}
+          onLoadFile={(f) => {
+            setInputMode({
+              type: "file",
+              filename: f.name,
+              contentType: f.type,
+              size: f.size,
+            });
+          }}
+          onLoadPhoto={async (p) => {
+            await new Promise((resolve) => {
+              setTimeout(() => {
+                resolve(undefined);
+              }, 200);
+            });
+
+            if (imgUploadPreviewRef.current) {
+              imgUploadPreviewRef.current.src = URL.createObjectURL(p);
+            }
+
+            setInputMode({ type: "photo", filename: p.name });
+          }}
+          disabled={false}
+        />
+      </div>
+
+      {showDrawer && (
+        <div className="w-[660px] border-l border-gray-300">
+          <P2PInfoDrawer onClose={() => setShowDrawer(false)}>
+            {(props) => <div>P2P drawer</div>}
+          </P2PInfoDrawer>
+        </div>
+      )}
+    </div>
+  );
 }
