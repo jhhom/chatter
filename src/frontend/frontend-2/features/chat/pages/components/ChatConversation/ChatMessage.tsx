@@ -45,30 +45,6 @@ export type ChatBubbleMessageContent = Message & {
   replyTo: null | (Message & { seqId: number; authorName: string });
 };
 
-export type ChatMessageProps = (
-  | {
-      type: "message";
-      authorId: string;
-      authorName: string;
-      seq: ChatMessageDisplaySeq;
-      userIsAuthor: boolean;
-      read: boolean;
-      onImageClick: (imgUrl: string) => void;
-      onMenuClick: ComponentProps<typeof MessageMenuButton>["onClick"];
-      deleted: boolean;
-      content: ChatBubbleMessageContent;
-      onReplyMessageClick: () => void;
-    }
-  | {
-      type: "event_log";
-      content: Message;
-    }
-) & {
-  date: Date;
-  isFirstOfDate: boolean;
-  seqId: number;
-};
-
 export function DeletedMessageContent() {
   return (
     <div className="flex">
@@ -340,6 +316,30 @@ function ReceivedChatMessage(props: {
     </div>
   );
 }
+
+export type ChatMessageProps = (
+  | {
+      type: "message";
+      authorId: string;
+      authorName: string;
+      seq: ChatMessageDisplaySeq;
+      userIsAuthor: boolean;
+      read: boolean;
+      onImageClick: (imgUrl: string) => void;
+      onMenuClick: ComponentProps<typeof MessageMenuButton>["onClick"];
+      deleted: boolean;
+      content: ChatBubbleMessageContent;
+      onReplyMessageClick: () => void;
+    }
+  | {
+      type: "event_log";
+      content: Message;
+    }
+) & {
+  date: Date;
+  isFirstOfDate: boolean;
+  seqId: number;
+};
 
 function ChatMessage(props: ChatMessageProps) {
   return props.type == "message" ? (

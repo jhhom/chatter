@@ -1,12 +1,45 @@
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { PermissionSetting } from "~/frontend/frontend-2/features/common/components";
+import {
+  type PermissionId,
+  PermissionSetting,
+} from "~/frontend/frontend-2/features/common/components";
 import {
   IconBackArrow,
   IconLeaveGroup,
 } from "~/frontend/frontend-2/features/common/icons";
+import { useAppStore } from "~/frontend/stores/stores";
+import storage from "~/frontend/external/browser/local-storage";
+import { client } from "~/frontend/external/api-client/client";
+import { dexie } from "~/frontend/external/browser/indexed-db";
+import { permission } from "~/backend/service/common/permissions";
+
+import { IconPerson } from "~/frontend/frontend-2/features/common/icons";
 
 export function SidePanelSettings() {
   const router = useRouter();
+  const { profile, setAuthStatus } = useAppStore((s) => ({
+    profile: s.profile.profile,
+    setAuthStatus: s.setAuthStatus,
+  }));
+
+  const [permissionStr, setPermissionStr] = useState(
+    profile?.defaultPermissions ?? ""
+  );
+
+  if (profile === null) {
+    throw new Error("Profile is null");
+  }
+
+  const onCheckboxChange = (id: PermissionId, checked: boolean) => {
+    let newPermissionString = permissionStr;
+    if (checked) {
+      newPermissionString = newPermissionString + id;
+    } else {
+      newPermissionString = newPermissionString.replace(id, "");
+    }
+    setPermissionStr(newPermissionString);
+  };
 
   return (
     <div className="pt-4">
@@ -26,17 +59,23 @@ export function SidePanelSettings() {
       <div className="bg-white pb-3 pt-4">
         <div className="flex justify-center py-2">
           <div className="h-14 w-14">
-            <img
-              className="h-full w-full rounded-lg"
-              src="./new-ui-assets/abstract-art.jpg"
-            />
+            {profile?.profilePhotoUrl ? (
+              <img
+                className="inline-block h-10 w-10 rounded-lg object-cover"
+                src={profile?.profilePhotoUrl ?? ""}
+              />
+            ) : (
+              <div className="flex h-14 w-14 items-end justify-center rounded-lg bg-gray-100 pb-1">
+                <IconPerson className="h-10 w-10 text-gray-400" />
+              </div>
+            )}
           </div>
         </div>
 
         <div className="pt-1">
-          <p className="text-center font-medium">Mark Newman</p>
+          <p className="text-center font-medium">{profile.fullname}</p>
           <p className="mt-3 text-center text-sm text-gray-500">
-            ID: usr12345678190
+            ID: {profile.userId}
           </p>
         </div>
 
@@ -51,25 +90,29 @@ export function SidePanelSettings() {
           <PermissionSetting
             name="Join (J)"
             permissionId="J"
-            checked={true}
+            checked={permission(permissionStr).canJoin()}
+            onChange={onCheckboxChange}
             editable={true}
           />
           <PermissionSetting
             name="Read (R)"
             permissionId="R"
-            checked={true}
+            checked={permission(permissionStr).canRead()}
+            onChange={onCheckboxChange}
             editable={true}
           />
           <PermissionSetting
             name="Write (W)"
             permissionId="W"
-            checked={true}
+            checked={permission(permissionStr).canWrite()}
+            onChange={onCheckboxChange}
             editable={true}
           />
           <PermissionSetting
             name="Get notified (P)"
             permissionId="P"
-            checked={true}
+            checked={permission(permissionStr).canGetNotifiedOfPresence()}
+            onChange={onCheckboxChange}
             editable={true}
           />
         </div>
@@ -93,7 +136,19 @@ export function SidePanelSettings() {
       </div>
 
       <div className="px-4">
-        <button className="group mt-3 flex h-10 w-full cursor-pointer items-center justify-between rounded-md bg-red-500 pl-4 text-left text-gray-600 hover:bg-red-600">
+        <button
+          onClick={async () => {
+            const result = await client["auth/logout"]();
+            if (result.isErr()) {
+              alert("Error logout: " + result.error.message);
+            }
+            storage.clearToken();
+            setAuthStatus("logged-out");
+            await dexie.delete().then(() => dexie.open());
+            router.push("/");
+          }}
+          className="group mt-3 flex h-10 w-full cursor-pointer items-center justify-between rounded-md bg-red-500 pl-4 text-left text-gray-600 hover:bg-red-600"
+        >
           <p className="text-sm text-white group-hover:text-white">LOG OUT</p>
           <div className="mr-2 flex h-full w-10 items-center justify-center rounded-md px-2">
             <IconLeaveGroup className="text-white group-hover:text-white" />

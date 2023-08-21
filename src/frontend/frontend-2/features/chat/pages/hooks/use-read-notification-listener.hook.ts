@@ -1,6 +1,6 @@
-import { EventPayload } from "~/api-contract/subscription/subscription";
-import { useMessagesStore } from "~/frontend/features/chat/pages/stores/messages/messages.store";
-import { UserTopicId as TopicId } from "~/api-contract/subscription/subscription";
+import type { EventPayload } from "~/api-contract/subscription/subscription";
+import type { UserTopicId as TopicId } from "~/api-contract/subscription/subscription";
+import { useMessagesStore } from "~/frontend/frontend-2/features/chat/pages/stores/messages/messages.store";
 
 export function useReadListener(
   contactId: TopicId

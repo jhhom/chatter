@@ -16,7 +16,7 @@ export type NewMember = {
 
 export function GroupAddMember(props: {
   groupTopicId: GroupTopicId;
-  onAddMembers: (membersToAdd: UserId[]) => Promise<undefined>;
+  onAddMembers: (membersToAdd: UserId[]) => Promise<unknown>;
   searchNewMembersByName: (query: string) => Promise<NewMember[]>;
   onCancelClick: () => void;
   onAfterMembersAdded: () => void;

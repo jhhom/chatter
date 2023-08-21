@@ -111,10 +111,8 @@ export function SecurityContent(props: SecurityContentProps) {
 }
 
 export function InfoContent(props: {
-  profile: () => {
-    name: string;
-    userId: UserId;
-  };
+  userFullname: string;
+  userId: string;
   onSecurityClick: () => void;
 }) {
   return (
@@ -132,10 +130,10 @@ export function InfoContent(props: {
         <div className="px-2 text-sm">
           <div>
             <p className="text-blue-600">Name</p>
-            <p>{props.profile().name}</p>
+            <p>{props.userFullname}</p>
           </div>
           <div className="mt-4">
-            <p>ID: {props.profile().userId}</p>
+            <p>ID: {props.userId}</p>
           </div>
         </div>
 

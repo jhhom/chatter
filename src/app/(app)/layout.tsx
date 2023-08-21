@@ -14,6 +14,9 @@ import { match } from "ts-pattern";
 import LoginPage from "~/frontend/frontend-2/features/auth/pages/Login/Login.page";
 import { enableMapSet } from "immer";
 
+import { IconPerson } from "~/frontend/frontend-2/features/common/icons";
+import ChatPage from "~/frontend/frontend-2/features/chat/pages/Chat.page";
+
 const queryClient = new QueryClient();
 
 enableMapSet();
@@ -94,8 +97,8 @@ function Layout({ children }: { children: React.ReactNode }) {
             <Header />
             <div>{children}</div>
           </div>
-          <div className="flex w-[calc(100vw-22rem)] items-center justify-center">
-            <p>Chat page</p>
+          <div className=" w-[calc(100vw-22rem)]">
+            <ChatPage />
           </div>
         </div>
       );
@@ -107,18 +110,26 @@ function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export function Header() {
+  const profile = useAppStore((s) => s.profile.profile);
+
   return (
     <div className="flex h-16 w-full items-center">
       <div className="flex h-full w-full border-b-[1.5px] border-gray-200 px-5">
         <div className="mr-2 self-center">
-          <img
-            className="inline-block h-10 w-10 rounded-lg object-cover"
-            src="./new-ui-assets/man-3-[white].jpg"
-          />
+          {profile?.profilePhotoUrl ? (
+            <img
+              className="inline-block h-10 w-10 rounded-lg object-cover"
+              src={profile?.profilePhotoUrl ?? ""}
+            />
+          ) : (
+            <div className="flex h-10 w-10 items-end justify-center rounded-lg bg-gray-100 pb-1">
+              <IconPerson className="h-7 w-7 text-gray-400" />
+            </div>
+          )}
         </div>
         <div className="flex flex-col justify-end self-center">
-          <p className="text-sm font-medium">Mark Newman</p>
-          <p className="text-[13px] text-gray-500">@mnewman</p>
+          <p className="text-sm font-medium">{profile?.fullname}</p>
+          <p className="text-[13px] text-gray-500">@{profile?.username}</p>
         </div>
       </div>
     </div>

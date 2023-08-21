@@ -4,50 +4,134 @@ import {
   IconSettings2,
   IconAddPerson,
 } from "~/frontend/frontend-2/features/common/icons";
-import { usePathname } from "next/navigation";
 import { Tooltip, TooltipTrigger } from "@adobe/react-spectrum";
 import { useRouter } from "next/navigation";
+import { useAppStore } from "~/frontend/stores/stores";
 
-type ContactListProps = {
+import {
+  type GroupTopicId,
+  type UserId,
+} from "~/api-contract/subscription/subscription";
+import { type LastMessageOfTopic } from "~/backend/service/topics/common/get-user-topics/get-last-message-of-topic.repo";
+
+import {
+  ContactListContact,
+  ContactListNewContact,
+} from "~/frontend/frontend-2/features/contact-list/pages/ContactListSidePanel/Contact";
+
+type TopicListItem = {
   name: string;
-  text: string;
-  picture: string;
-  time: string;
-  online: boolean;
-};
-
-const contactList: ContactListProps[] = [
-  {
-    name: "John Graham",
-    text: "Mauris did not laugh in the book",
-    picture: "./new-ui-assets/man-1-[white].jpg",
-    time: "15:07",
-    online: false,
-  },
-  {
-    name: "Designer team",
-    text: "I done for today. Good weekend everyone!",
-    picture: "./new-ui-assets/abstract-art.jpg",
-    time: "12:15",
-    online: true,
-  },
-  {
-    name: "Denis Jakubow",
-    text: "The keyboard may be intact but not broken",
-    picture: "./new-ui-assets/man-6-[white].jpg",
-    time: "9:46",
-    online: false,
-  },
-  {
-    name: "Samantha Mathew",
-    text: "The author of the street arc is easy to recognize",
-    picture: "./new-ui-assets/girl-1.jpg",
-    time: "8:59",
-    online: true,
-  },
-];
+  description: string;
+  profilePhotoUrl: string | null;
+  touchedAt: Date | null;
+} & (
+  | {
+      type: "grp";
+      topicId: GroupTopicId;
+      typing: {
+        id: `usr${string}`;
+        fullname: string;
+      } | null;
+      online: boolean;
+      lastMessage: LastMessageOfTopic | null;
+    }
+  | {
+      type: "p2p";
+      topicId: UserId;
+      typing: boolean;
+      online: boolean;
+      lastMessage: LastMessageOfTopic | null;
+    }
+  | {
+      type: "past-grp";
+      topicId: GroupTopicId;
+      lastMessage: LastMessageOfTopic | null;
+    }
+  | {
+      type: "new-p2p-contact";
+      topicId: UserId;
+    }
+);
 
 export function SidePanelContactList() {
+  const router = useRouter();
+  const store = useAppStore((s) => ({
+    contacts: {
+      newContacts: s.newContacts,
+      p2p: s.p2p,
+      grp: s.grp,
+      pastGrp: s.pastGrp,
+      set: s.setContact,
+    },
+    profile: s.profile,
+  }));
+
+  if (store.profile === undefined) {
+    throw new Error("User profile is not defined");
+  }
+
+  const topicListItems: TopicListItem[] = [
+    ...Array.from(store.contacts.grp.entries()).map(([id, p]) => {
+      let typing = null;
+      if (p.status.online) {
+        typing = p.status.latestTyping;
+      }
+      return {
+        type: "grp" as const,
+        topicId: id,
+        name: p.profile.name,
+        description: p.profile.description,
+        online: p.status.online,
+        typing,
+        profilePhotoUrl: p.profile.profilePhotoUrl,
+        touchedAt: p.profile.touchedAt,
+        lastMessage: p.profile.lastMessage,
+      };
+    }),
+    ...Array.from(store.contacts.p2p.entries()).map(([id, p]) => {
+      return {
+        type: "p2p" as const,
+        topicId: id,
+        name: p.profile.name,
+        description: p.profile.description,
+        online: p.status.online,
+        typing: p.status.online && p.status.typing,
+        profilePhotoUrl: p.profile.profilePhotoUrl,
+        touchedAt: p.profile.touchedAt,
+        lastMessage: p.profile.lastMessage,
+      };
+    }),
+    ...Array.from(store.contacts.pastGrp.entries()).map(([id, p]) => {
+      return {
+        type: "past-grp" as const,
+        topicId: id,
+        name: p.profile.name,
+        description: p.profile.description,
+        profilePhotoUrl: p.profile.profilePhotoUrl,
+        touchedAt: p.profile.touchedAt,
+        lastMessage: p.profile.lastMessage,
+      };
+    }),
+    ...Array.from(store.contacts.newContacts.entries()).map(([id, p]) => {
+      return {
+        type: "new-p2p-contact" as const,
+        topicId: id,
+        name: p.name,
+        description: p.description,
+        profilePhotoUrl: p.profilePhotoUrl,
+        touchedAt: p.touchedAt,
+      };
+    }),
+  ].sort((a, b) => {
+    if (a.touchedAt === null) {
+      return 1;
+    }
+    if (b.touchedAt === null) {
+      return -1;
+    }
+    return a.touchedAt > b.touchedAt ? -1 : 1;
+  });
+
   return (
     <div>
       <Header />
@@ -55,16 +139,88 @@ export function SidePanelContactList() {
       <div className="mt-6 px-5">
         <ContactSearch />
       </div>
+
       <div className="space-y-4 pt-4">
-        {contactList.map((c) => (
-          <Contact
-            name={c.name}
-            text={c.text}
-            picture={c.picture}
-            time={c.time}
-            online={c.online}
-          />
-        ))}
+        {topicListItems.map((t) => {
+          if (store.profile.profile === null) {
+            throw new Error("User profile is not defined");
+          }
+
+          if (t.type == "p2p") {
+            return (
+              <ContactListContact
+                key={t.topicId}
+                type={t.type}
+                userId={store.profile.profile?.userId}
+                onClick={() => {
+                  router.push(location.pathname + `?topic=${t.topicId}`);
+                }}
+                topicId={t.topicId}
+                fullname={t.name}
+                isTyping={t.typing}
+                isOnline={t.online}
+                profilePhotoUrl={t.profilePhotoUrl}
+                lastMessage={
+                  t.lastMessage === null || t.lastMessage === undefined
+                    ? null
+                    : t.lastMessage
+                }
+              />
+            );
+          } else if (t.type == "grp") {
+            return (
+              <ContactListContact
+                key={t.topicId}
+                type={t.type}
+                userId={store.profile.profile.userId}
+                onClick={() => {
+                  router.push(location.pathname + `?topic=${t.topicId}`);
+                }}
+                topicId={t.topicId}
+                fullname={t.name}
+                typingUserFullname={t.typing?.fullname}
+                isOnline={t.online}
+                profilePhotoUrl={t.profilePhotoUrl}
+                lastMessage={
+                  t.lastMessage === null || t.lastMessage === undefined
+                    ? null
+                    : t.lastMessage
+                }
+              />
+            );
+          } else if (t.type == "past-grp") {
+            return (
+              <ContactListContact
+                key={t.topicId}
+                type={t.type}
+                userId={store.profile.profile.userId}
+                onClick={() => {
+                  router.push(location.pathname + `?topic=${t.topicId}`);
+                }}
+                topicId={t.topicId}
+                fullname={t.name}
+                profilePhotoUrl={t.profilePhotoUrl}
+                lastMessage={
+                  t.lastMessage === null || t.lastMessage === undefined
+                    ? null
+                    : t.lastMessage
+                }
+              />
+            );
+          } else {
+            return (
+              <ContactListNewContact
+                key={t.topicId}
+                onClick={() => {
+                  router.push(location.pathname + `?topic=${t.topicId}`);
+                }}
+                topicId={t.topicId}
+                fullname={t.name}
+                profilePhotoUrl={t.profilePhotoUrl}
+              />
+            );
+          }
+        })}
       </div>
     </div>
   );
@@ -122,7 +278,7 @@ function HeaderButton(props: {
 function Contact(props: {
   name: string;
   text: string;
-  picture: string;
+  picture: string | null;
   time: string;
   online: boolean;
 }) {
@@ -131,7 +287,7 @@ function Contact(props: {
       <div className="relative w-10">
         <img
           className="inline-block h-10 w-10 rounded-lg object-cover"
-          src={props.picture}
+          src={props.picture === null ? "" : props.picture}
         />
         {props.online && (
           <div className="absolute -right-1 -top-1 h-3 w-3 rounded-sm bg-white p-[0.1rem]">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef, useState } from "react";
 import type { UserTopicId as TopicId } from "~/api-contract/subscription/subscription";
 
 import { IconX, IconSearch } from "~/frontend/frontend-2/features/common/icons";
@@ -69,11 +69,13 @@ export function ChatFileUploadPreviewOverlay(props: {
   );
 }
 
-export function ChatImageUploadPreviewOverlay(props: {
-  imgRef: (r: HTMLImageElement) => void;
-  filename: string;
-  onCloseOverlay: () => void;
-}) {
+export const ChatImageUploadPreviewOverlay = forwardRef<
+  HTMLImageElement,
+  {
+    filename: string;
+    onCloseOverlay: () => void;
+  }
+>(function ChatImageUploadPreviewOverlay(props, ref) {
   return (
     <>
       <div className="flex h-14 items-center border-b-2 border-gray-300 bg-gray-100">
@@ -92,17 +94,19 @@ export function ChatImageUploadPreviewOverlay(props: {
       </div>
       <div className="flex h-[calc(100%-3.5rem)] items-center justify-center">
         <div className="h-full">
-          <img ref={props.imgRef} className="h-full object-scale-down" />
+          <img ref={ref} className="h-full object-scale-down" />
         </div>
       </div>
     </>
   );
-}
+});
 
-export function ChatImageOverlay(props: {
-  imgRef: (r: HTMLImageElement) => void;
-  onCloseOverlay: () => void;
-}) {
+export const ChatImageOverlay = forwardRef<
+  HTMLImageElement,
+  {
+    onCloseOverlay: () => void;
+  }
+>(function ChatImageOverlay(props, ref) {
   return (
     <>
       <div className="flex h-14 items-center border-b-2 border-gray-300 bg-gray-100">
@@ -121,12 +125,12 @@ export function ChatImageOverlay(props: {
       </div>
       <div className="flex h-[calc(100%-3.5rem)] items-center justify-center">
         <div className="h-full">
-          <img ref={props.imgRef} className="h-full object-scale-down" />
+          <img ref={ref} className="h-full object-scale-down" />
         </div>
       </div>
     </>
   );
-}
+});
 
 export type DeleteMessageOverlayProps = {
   onDeleteForEveryone?: () => void;
@@ -185,7 +189,7 @@ function DeleteMessageOverlayButton(props: {
 }
 
 export function ForwardMessageOverlay(props: {
-  contacts: () => {
+  contacts: {
     name: string;
     topicId: TopicId;
   }[];
@@ -194,9 +198,9 @@ export function ForwardMessageOverlay(props: {
 }) {
   const [contactSearch, setContactSearch] = useState("");
 
-  const filteredContacts = props
-    .contacts()
-    .filter((x) => x.name.toLowerCase().includes(contactSearch.toLowerCase()));
+  const filteredContacts = props.contacts.filter((x) =>
+    x.name.toLowerCase().includes(contactSearch.toLowerCase())
+  );
 
   return (
     <div className="fixed bottom-0 left-1/2 h-[80%] w-full -translate-x-1/2 rounded-md border-t border-gray-100 bg-white shadow-lg sm:bottom-auto sm:top-1/2 sm:h-[85%] sm:w-80 sm:-translate-y-1/2">
