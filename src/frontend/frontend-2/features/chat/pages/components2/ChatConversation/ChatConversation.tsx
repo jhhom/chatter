@@ -22,6 +22,10 @@ export function ChatConversation(props: {
   showReplyPreview: boolean;
   onCloseReplyPreview: () => void;
   getAuthorProfileImage: GetAuthorProfileImage;
+  onMessageBubbleMenuClick: (
+    e: React.MouseEvent<Element, MouseEvent>,
+    message: ChatMessageTypeMessage
+  ) => void;
 }) {
   const conversationContainerRef = useRef<HTMLDivElement | null>(null);
   const chatReplyPreviewRef = useRef<HTMLDivElement | null>(null);
@@ -35,6 +39,7 @@ export function ChatConversation(props: {
         <div className="h-full w-full overflow-y-auto pb-2 pt-2">
           {props.chatItems.map((item) => (
             <ConversationItem
+              key={item.seqId}
               item={item}
               getAuthorProfileImage={props.getAuthorProfileImage}
               onReplyMessage={() => {
@@ -46,6 +51,11 @@ export function ChatConversation(props: {
                   ) {
                     conversationContainerRef.current.style.transform = `translateY(-${chatReplyPreviewRef.current.clientHeight}px)`;
                   }
+                }
+              }}
+              onMenuClick={(e) => {
+                if (item.type === "message") {
+                  props.onMessageBubbleMenuClick(e, item);
                 }
               }}
             />

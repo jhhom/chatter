@@ -1,4 +1,10 @@
-import React, { useRef, useState, useCallback, useEffect } from "react";
+import React, {
+  useRef,
+  useState,
+  useCallback,
+  useEffect,
+  ComponentProps,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fromPromise } from "neverthrow";
 import { toast, Toaster } from "react-hot-toast";
@@ -26,8 +32,12 @@ import { ChatConversation } from "~/frontend/frontend-2/features/chat/pages/comp
 import { ChatHeader } from "~/frontend/frontend-2/features/chat/pages/components2/ChatHeader";
 import { ChatImageUploadPreviewOverlay } from "~/frontend/frontend-2/features/chat/pages/components2/ChatOverlays";
 import { ChatFileUploadPreviewOverlay } from "~/frontend/frontend-2/features/chat/pages/components2/ChatOverlays";
+import {
+  ChatMessageBubbleMenu,
+  ChatMessageBubbleMenuItem,
+} from "~/frontend/frontend-2/features/chat/pages/components2/ChatConversation/ChatMessageBubbleMenu";
 import { TextInput } from "~/frontend/frontend-2/features/chat/pages/components2/TextInput/TextInput";
-import { P2PInfoDrawer } from "~/frontend/frontend-2/features/chat/pages/components/ChatDrawer/P2PInfoDrawer";
+import { P2PInfoDrawer } from "~/frontend/frontend-2/features/chat/pages/components2/Drawers/P2PInfoDrawer";
 
 import {
   useMessageListener,
@@ -51,8 +61,6 @@ export type IChatUI = Pick<
 
 const PAGE_SIZE = 24;
 const INITIAL_PAGE_SIZE = 64;
-
-const ChatTextInput = React.memo(ChatTextInputComponent);
 
 export function P2PChatPage(props: { contactId: UserId }) {
   const store = useAppStore((s) => ({
@@ -249,6 +257,7 @@ export function P2PChatPage(props: { contactId: UserId }) {
   const onMessageBubbleMenuClick: ChatConversationProps["onMessageBubbleMenuClick"] =
     useCallback(
       (e, message) => {
+        console.log("SHOW MESSAEG BUBBLE MENU", showMessageBubbleMenu);
         if (!showMessageBubbleMenu) {
           messageBubbleMenuRef.current?.style.setProperty(
             "--mouse-x",
@@ -258,9 +267,13 @@ export function P2PChatPage(props: { contactId: UserId }) {
             "--mouse-y",
             `${e.clientY}px`
           );
+          setMessageSelected(message);
+          setShowMessageBubbleMenu(true);
+        } else {
+          console.log("SHOW MESSAGE BUBBLM MENU");
+          setMessageSelected(null);
+          setShowMessageBubbleMenu(false);
         }
-        setMessageSelected(message);
-        setShowMessageBubbleMenu(true);
       },
       [showMessageBubbleMenu]
     );
@@ -564,10 +577,31 @@ export function P2PChatPage(props: { contactId: UserId }) {
     throw new Error("User profile is undefined");
   }
 
+  const getAuthorProfileImage: ComponentProps<
+    typeof ChatConversation
+  >["getAuthorProfileImage"] = useCallback(
+    (userId: UserId) => {
+      if (userId === props.contactId) {
+        return peer?.profile.profilePhotoUrl ?? undefined;
+      } else if (userId === store.profile.profile?.userId) {
+        return store.get().profile.profile?.profilePhotoUrl ?? undefined;
+      }
+    },
+    [props.contactId, store.get, peer?.profile.profilePhotoUrl]
+  );
+
   return (
     <div className="relative flex h-screen">
       <div className="w-full">
-        <ChatHeader onInfoClick={() => setShowDrawer(true)} />
+        <ChatHeader
+          contactName={peer.profile.name}
+          contactProfilePhotoUrl={peer?.profile.profilePhotoUrl ?? undefined}
+          onInfoClick={() => setShowDrawer(true)}
+          type="p2p"
+          onClearMessages={() => {
+            console.log("clear messages");
+          }}
+        />
         <div className="relative  h-[calc(100%-8rem)] w-full">
           <ChatConversation
             onReplyMessage={(m) => {
@@ -577,7 +611,8 @@ export function P2PChatPage(props: { contactId: UserId }) {
             toReplyMessage={messageSelected}
             showReplyPreview={toReplyMessage}
             onCloseReplyPreview={() => setToReplyMessage(false)}
-            getAuthorProfileImage={(userId) => undefined}
+            onMessageBubbleMenuClick={onMessageBubbleMenuClick}
+            getAuthorProfileImage={getAuthorProfileImage}
             chatItems={messagesStore.messages}
           />
           <div
@@ -644,11 +679,53 @@ export function P2PChatPage(props: { contactId: UserId }) {
 
       {showDrawer && (
         <div className="w-[660px] border-l border-gray-300">
-          <P2PInfoDrawer onClose={() => setShowDrawer(false)}>
-            {(props) => <div>P2P drawer</div>}
-          </P2PInfoDrawer>
+          <P2PInfoDrawer
+            userName={peer.profile.name}
+            userId={props.contactId}
+            onClose={() => setShowDrawer(false)}
+            onSavePermissionChanges={() => {
+              console.log("NEW PERMISSION!!");
+              setShowDrawer(false);
+            }}
+          />
         </div>
       )}
+
+      <ChatMessageBubbleMenu
+        showMenu={showMessageBubbleMenu}
+        onClose={() => setShowMessageBubbleMenu(false)}
+        ref={messageBubbleMenuRef}
+      >
+        <ChatMessageBubbleMenuItem
+          onClick={() => {
+            setShowForwardMessageOverlay(true);
+            setShowMessageBubbleMenu(false);
+          }}
+          content="Forward"
+        />
+        <ChatMessageBubbleMenuItem
+          onClick={() => {
+            setToReplyMessage(true);
+            setShowMessageBubbleMenu(false);
+            if (
+              conversationContainerRef.current &&
+              chatReplyPreviewRef.current
+            ) {
+              conversationContainerRef.current.style.transform = `translateY(-${chatReplyPreviewRef.current.clientHeight}px)`;
+            }
+          }}
+          content="Reply"
+        />
+        <ChatMessageBubbleMenuItem
+          onClick={() => {
+            setShowDeleteMessageOverlay(true);
+            setShowMessageBubbleMenu(false);
+          }}
+          content="Delete"
+        />
+      </ChatMessageBubbleMenu>
+
+      <Toaster position="bottom-left" />
     </div>
   );
 }

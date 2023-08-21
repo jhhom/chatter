@@ -1,11 +1,11 @@
 import type { UserId } from "~/api-contract/subscription/subscription";
-import { IconShield, IconX } from "~/frontend/frontend-2/features/common/icons";
+import { IconX } from "~/frontend/frontend-2/features/common/icons";
 import { PermissionSetting } from "./Permission";
 
 export function P2PInfoDrawer(props: {
   userName: string;
   userId: UserId;
-  onSecurityClick: () => void;
+  onSavePermissionChanges: () => void;
   onClose: () => void;
 }) {
   return (
@@ -79,11 +79,17 @@ export function P2PInfoDrawer(props: {
         </div>
 
         <div className="mt-8 flex justify-between px-4 text-sm">
-          <button className="rounded-md border-2 border-gray-200 px-4 py-1.5">
+          <button
+            onClick={props.onClose}
+            className="rounded-md border-2 border-gray-200 px-4 py-1.5"
+          >
             Cancel
           </button>
 
-          <button className="rounded-md bg-green-600 px-4 py-1.5 font-medium text-white">
+          <button
+            onClick={() => props.onSavePermissionChanges()}
+            className="rounded-md bg-green-600 px-4 py-1.5 font-medium text-white"
+          >
             Save changes
           </button>
         </div>

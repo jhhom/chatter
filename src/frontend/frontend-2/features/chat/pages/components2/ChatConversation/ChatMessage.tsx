@@ -11,6 +11,7 @@ import {
   IconEllipsisVertical,
   IconFile,
   IconCamera,
+  IconPerson,
 } from "~/frontend/frontend-2/features/common/icons";
 
 import { clsx as cx } from "clsx";
@@ -24,6 +25,7 @@ export function ConversationItem(props: {
   item: ChatMessageType;
   getAuthorProfileImage: (userId: UserId) => string | undefined;
   onReplyMessage: () => void;
+  onMenuClick: React.MouseEventHandler<HTMLButtonElement>;
 }) {
   const [isUserHovering, setIsUserHovering] = useState(false);
   const [openChatMessageMenu, setOpenChatMessageMenu] = useState(false);
@@ -72,12 +74,17 @@ export function ConversationItem(props: {
               })}
             >
               {props.item.seq === "first" ||
-                (props.item.seq === "single" && (
-                  <img
-                    className="inline-block h-8 w-8 rounded-md object-cover"
-                    src={props.getAuthorProfileImage(props.item.authorId)}
-                  />
-                ))}
+                (props.item.seq === "single" &&
+                  (props.getAuthorProfileImage(props.item.authorId) ? (
+                    <img
+                      className="inline-block h-8 w-8 rounded-md object-cover"
+                      src={props.getAuthorProfileImage(props.item.authorId)}
+                    />
+                  ) : (
+                    <div className="flex h-8 w-8 items-end justify-center rounded-lg bg-gray-100 pb-1">
+                      <IconPerson className="h-6 w-6 text-gray-400" />
+                    </div>
+                  )))}
             </div>
 
             <div
@@ -135,19 +142,19 @@ export function ConversationItem(props: {
                   "justify-end": props.item.userIsAuthor,
                 })}
               >
-                {isUserHovering ||
-                  (openChatMessageMenu && (
-                    <TooltipTrigger>
-                      <button className="h-7 w-7 rounded-md border-[1.5px] border-gray-300 bg-white p-1">
-                        <IconEllipsisVertical className="text-gray-600" />
-                      </button>
-                      <Tooltip>
-                        <p className="px-1 py-0.5 text-xs text-gray-600">
-                          Menu
-                        </p>
-                      </Tooltip>
-                    </TooltipTrigger>
-                  ))}
+                {(isUserHovering || openChatMessageMenu) && (
+                  <TooltipTrigger>
+                    <button
+                      onClick={(e) => props.onMenuClick(e)}
+                      className="h-7 w-7 rounded-md border-[1.5px] border-gray-300 bg-white p-1"
+                    >
+                      <IconEllipsisVertical className="text-gray-600" />
+                    </button>
+                    <Tooltip>
+                      <p className="px-1 py-0.5 text-xs text-gray-600">Menu</p>
+                    </Tooltip>
+                  </TooltipTrigger>
+                )}
               </div>
               <div>
                 {props.item.userIsAuthor && props.item.read && (

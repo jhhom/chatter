@@ -17,6 +17,8 @@ import { enableMapSet } from "immer";
 import { IconPerson } from "~/frontend/frontend-2/features/common/icons";
 import ChatPage from "~/frontend/frontend-2/features/chat/pages/Chat.page";
 
+import { defaultTheme, Provider } from "@adobe/react-spectrum";
+
 const queryClient = new QueryClient();
 
 enableMapSet();
@@ -30,9 +32,9 @@ export default function RootLayout({
     <QueryClientProvider client={queryClient}>
       <html lang="en">
         <body>
-          <>
+          <Provider theme={defaultTheme} colorScheme="light">
             <Layout>{children}</Layout>
-          </>
+          </Provider>
         </body>
       </html>
     </QueryClientProvider>
@@ -93,7 +95,7 @@ function Layout({ children }: { children: React.ReactNode }) {
     .with("logged-in", () => {
       return (
         <div className="flex h-screen w-screen">
-          <div className="w-[22rem]">
+          <div className="w-[22rem] border-r">
             <Header />
             <div>{children}</div>
           </div>
