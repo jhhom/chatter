@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, forwardRef, useEffect, useImperativeHandle } from "react";
 
 import { ConversationItem } from "~/frontend/frontend-2/features/chat/pages/components2/ChatConversation/ChatMessage";
 import { type ChatMessageTypeMessage } from "~/frontend/frontend-2/features/chat/pages/components/ChatConversation/ChatMessage";
@@ -12,23 +12,104 @@ import { clsx as cx } from "clsx";
 import { match } from "ts-pattern";
 import { type ChatMessageType } from "~/frontend/frontend-2/features/chat/pages/stores/messages/get-messages-display-sequences";
 import { type UserId } from "~/api-contract/subscription/subscription";
+import { type IChatConversationUI } from "~/frontend/frontend-2/features/chat/pages/types";
 
 type GetAuthorProfileImage = (userId: UserId) => string | undefined;
 
-export function ChatConversation(props: {
+type ChatConversationProps = {
   chatItems: ChatMessageType[];
   onReplyMessage: (m: ChatMessageTypeMessage) => void;
   toReplyMessage: ChatMessageTypeMessage | null;
   showReplyPreview: boolean;
   onCloseReplyPreview: () => void;
   getAuthorProfileImage: GetAuthorProfileImage;
+  onChatScrollToTop: () => Promise<
+    "new messages loaded" | "no new messages loaded"
+  >;
   onMessageBubbleMenuClick: (
     e: React.MouseEvent<Element, MouseEvent>,
     message: ChatMessageTypeMessage
   ) => void;
-}) {
+};
+
+export const ChatConversation = forwardRef<
+  IChatConversationUI,
+  ChatConversationProps
+>(function ChatConversation(props, ref) {
+  const firstMessageRef = useRef<HTMLDivElement | null>(null);
   const conversationContainerRef = useRef<HTMLDivElement | null>(null);
   const chatReplyPreviewRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const r = conversationContainerRef.current;
+    if (r === null) {
+      console.log("I WILL RETURN");
+      return;
+    }
+    const onScroll = async (e: Event) => {
+      console.log("SCROLLING...");
+      if (r.scrollTop <= 0) {
+        console.log("REACHING TOP !!");
+        const messageMarginTop = 4 + 1.75;
+        const result = await props.onChatScrollToTop();
+        if (result == "no new messages loaded") {
+          return;
+        }
+
+        if (firstMessageRef.current) {
+          r.scrollTo(
+            0,
+            firstMessageRef.current.offsetTop - r.offsetTop - messageMarginTop
+          );
+        }
+
+        firstMessageRef.current = conversationContainerRef.current
+          ?.firstChild as HTMLDivElement;
+      }
+    };
+
+    r.addEventListener("scroll", onScroll);
+
+    return () => {
+      r.removeEventListener("scroll", onScroll);
+    };
+  }, [props.onChatScrollToTop]);
+
+  useImperativeHandle(
+    ref,
+    (): IChatConversationUI => {
+      return {
+        updateFirstMessageRef() {
+          firstMessageRef.current = conversationContainerRef.current
+            ?.firstChild as HTMLDivElement;
+        },
+        isUserAtTheBottomOfScroll() {
+          const r = conversationContainerRef.current;
+          if (r === null) {
+            return true;
+          }
+          return Math.abs(r.scrollHeight - r.scrollTop - r.clientHeight) < 5;
+        },
+        scrollChatToTheBottom() {
+          return conversationContainerRef.current?.scrollTo(
+            0,
+            conversationContainerRef.current.scrollHeight
+          );
+        },
+        scrollToMessage(seqId: number) {
+          const messageEl = document.getElementById(`message-${seqId}`);
+          if (messageEl == undefined) {
+            return;
+          }
+          conversationContainerRef.current?.scroll({
+            top: messageEl.offsetTop,
+            behavior: "smooth",
+          });
+        },
+      };
+    },
+    []
+  );
 
   return (
     <div className="relative h-full w-full overflow-y-hidden bg-gray-50">
@@ -84,7 +165,7 @@ export function ChatConversation(props: {
       </div>
     </div>
   );
-}
+});
 
 type ChatReplyPreviewProps = {
   messageReplied: ChatMessageTypeMessage;

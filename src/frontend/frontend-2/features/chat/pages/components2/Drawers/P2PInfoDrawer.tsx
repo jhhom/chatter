@@ -1,10 +1,11 @@
 import type { UserId } from "~/api-contract/subscription/subscription";
-import { IconX } from "~/frontend/frontend-2/features/common/icons";
+import { IconX, IconPerson } from "~/frontend/frontend-2/features/common/icons";
 import { PermissionSetting } from "./Permission";
 
 export function P2PInfoDrawer(props: {
   userName: string;
   userId: UserId;
+  userProfilePhotoUrl: string | null;
   onSavePermissionChanges: () => void;
   onClose: () => void;
 }) {
@@ -15,10 +16,16 @@ export function P2PInfoDrawer(props: {
       <div className="bg-white pb-3 pt-4">
         <div className="flex justify-center py-2">
           <div className="h-14 w-14">
-            <img
-              className="h-full w-full rounded-lg"
-              src="./assets/abstract-art.jpg"
-            />
+            {props.userProfilePhotoUrl ? (
+              <img
+                className="h-full w-full rounded-lg"
+                src={props.userProfilePhotoUrl ?? ""}
+              />
+            ) : (
+              <div className="flex h-full w-full items-end justify-center rounded-lg bg-gray-100 pb-1">
+                <IconPerson className="h-10 w-10 text-gray-400" />
+              </div>
+            )}
           </div>
         </div>
 

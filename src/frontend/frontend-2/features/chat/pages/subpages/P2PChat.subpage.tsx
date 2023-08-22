@@ -608,6 +608,7 @@ export function P2PChatPage(props: { contactId: UserId }) {
               setToReplyMessage(true);
               setMessageSelected(m);
             }}
+            onChatScrollToTop={onChatScrollToTop}
             toReplyMessage={messageSelected}
             showReplyPreview={toReplyMessage}
             onCloseReplyPreview={() => setToReplyMessage(false)}
@@ -646,33 +647,10 @@ export function P2PChatPage(props: { contactId: UserId }) {
         </div>
         <TextInput
           inputMode={inputMode}
-          onTyping={() => {
-            console.log("typing");
-          }}
-          onMessageSubmit={(msg) => {
-            console.log("submit");
-          }}
-          onLoadFile={(f) => {
-            setInputMode({
-              type: "file",
-              filename: f.name,
-              contentType: f.type,
-              size: f.size,
-            });
-          }}
-          onLoadPhoto={async (p) => {
-            await new Promise((resolve) => {
-              setTimeout(() => {
-                resolve(undefined);
-              }, 200);
-            });
-
-            if (imgUploadPreviewRef.current) {
-              imgUploadPreviewRef.current.src = URL.createObjectURL(p);
-            }
-
-            setInputMode({ type: "photo", filename: p.name });
-          }}
+          onTyping={onTyping}
+          onMessageSubmit={onMessageSubmit}
+          onLoadFile={onLoadFile}
+          onLoadPhoto={onLoadPhoto}
           disabled={false}
         />
       </div>
@@ -682,6 +660,7 @@ export function P2PChatPage(props: { contactId: UserId }) {
           <P2PInfoDrawer
             userName={peer.profile.name}
             userId={props.contactId}
+            userProfilePhotoUrl={peer.profile.profilePhotoUrl}
             onClose={() => setShowDrawer(false)}
             onSavePermissionChanges={() => {
               console.log("NEW PERMISSION!!");
