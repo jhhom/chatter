@@ -13,6 +13,7 @@ import {
   IconCamera,
   IconPerson,
   IconBlock,
+  IconForwardMessageArrow,
 } from "~/frontend/frontend-2/features/common/icons";
 
 import { clsx as cx } from "clsx";
@@ -67,6 +68,9 @@ export function ConversationItem(props: {
                 props.item.type === "message" &&
                 props.item.userIsAuthor &&
                 props.item.text.type === "text",
+              "max-w-[280px] sm:max-w-[80%] md:max-w-[60%]":
+                props.item.type === "message" &&
+                props.item.text.type === "text",
             })}
           >
             <div
@@ -92,19 +96,23 @@ export function ConversationItem(props: {
               className={cx("w-fit rounded-md pb-1", {
                 "bg-green-100": props.item.userIsAuthor,
                 "bg-white": !props.item.userIsAuthor,
-                "max-w-[280px] sm:max-w-[80%] md:max-w-[60%]":
-                  props.item.type === "message" &&
-                  props.item.text.type === "text",
               })}
             >
               {props.item.seq === "first" ||
                 (props.item.seq === "single" && (
-                  <div className="flex items-end bg-red-100 pl-4 pr-3 pt-1 text-[13px]">
+                  <div className="flex items-end pl-4 pr-3 pt-1 text-[13px]">
                     <p className="font-medium text-black">
                       {props.item.authorName}
                     </p>
                   </div>
                 ))}
+
+              {props.item.text.forwarded && (
+                <div className="flex items-center pb-1 pl-4 pr-4 pt-1.5">
+                  <IconForwardMessageArrow className="h-3 w-3 text-gray-400" />
+                  <p className="ml-1 text-xs italic text-gray-500">Forwarded</p>
+                </div>
+              )}
 
               <div className="w-fit">
                 {props.item.deleted ? (
@@ -113,7 +121,7 @@ export function ConversationItem(props: {
                       <div className="flex h-5 w-5 items-center justify-center p-0.5">
                         <IconBlock className="text-gray-500" />
                       </div>
-                      <p className="ml-0.5 whitespace-nowrap italic">
+                      <p className="ml-0.5 w-fit whitespace-nowrap italic">
                         This message was deleted
                       </p>
                     </div>

@@ -56,6 +56,7 @@ import { useMessagesStore } from "~/frontend/frontend-2/features/chat/pages/stor
 import { clsx as cx } from "clsx";
 import useAsyncEffect from "use-async-effect";
 import { userPeerConversationDisplayMode } from "../../utils";
+import { getPeerPermission } from "~/backend/service/topics/permissions/permissions";
 
 export type IChatUI = Pick<
   IChatConversationUI,
@@ -367,32 +368,26 @@ export function P2PChatPage(props: { contactId: UserId }) {
     [setInputMode]
   );
 
-  const onSubmitPermissionChange: (
-    onSubmissionSuccess: () => void
-  ) => SecurityContentProps["onSubmitPermissionChange"] = useCallback(
-    (onSubmissionSuccess) => {
-      const onSubmitPermission: SecurityContentProps["onSubmitPermissionChange"] =
-        async (permission) => {
-          const r = await client["permissions/update_peer_permission"]({
-            newPermission: permission,
-            peerId: props.contactId,
-          });
-          if (r.isErr()) {
-            alert("Failed to update peer's permission: " + r.error.message);
-            return { result: "update failed" } as const;
-          } else {
-            onSubmissionSuccess();
-            return {
-              newPermission: r.value.permissions,
-              result: "update successful",
-            } as const;
-          }
-        };
-
-      return onSubmitPermission;
-    },
-    [props.contactId]
-  );
+  const onSubmitPermissionChange: SecurityContentProps["onSubmitPermissionChange"] =
+    useCallback(
+      async (permission) => {
+        const r = await client["permissions/update_peer_permission"]({
+          newPermission: permission,
+          peerId: props.contactId,
+        });
+        if (r.isErr()) {
+          alert("Failed to update peer's permission: " + r.error.message);
+          return { result: "update failed" } as const;
+        } else {
+          setShowDrawer(false);
+          return {
+            newPermission: r.value.permissions,
+            result: "update successful",
+          } as const;
+        }
+      },
+      [props.contactId]
+    );
 
   const onDeleteForEveryone: DeleteMessageOverlayProps["onDeleteForEveryone"] =
     useCallback(async () => {
@@ -590,14 +585,15 @@ export function P2PChatPage(props: { contactId: UserId }) {
           }
           contactName={peer.profile.name}
           contactProfilePhotoUrl={peer?.profile.profilePhotoUrl ?? undefined}
+          onBlock={onBlock}
+          onClearMessages={onClearMessages}
           onInfoClick={() => setShowDrawer(true)}
           type="p2p"
-          onClearMessages={() => {
-            console.log("clear messages");
-          }}
         />
         <div className="relative h-[calc(100%-8rem)] w-full">
           <ChatConversation
+            isNewContact={false}
+            peerName={peer.profile.name}
             ref={conversationUIControl}
             onReplyMessage={(m) => {
               setToReplyMessage(true);
@@ -610,6 +606,14 @@ export function P2PChatPage(props: { contactId: UserId }) {
             onMessageBubbleMenuClick={onMessageBubbleMenuClick}
             getAuthorProfileImage={getAuthorProfileImage}
             chatItems={messagesStore.messages}
+            mode={userPeerConversationDisplayMode(
+              peer.profile.userPermissions,
+              peer.type === "old-contact"
+                ? peer.profile.peerPermissions
+                : store.profile.profile.defaultPermissions,
+              store.newContacts.has(props.contactId),
+              () => setShowUnblockModal(false)
+            )}
           />
           <div
             className={cx("absolute left-0 top-0 h-full w-full bg-white", {
@@ -646,21 +650,30 @@ export function P2PChatPage(props: { contactId: UserId }) {
           onMessageSubmit={onMessageSubmit}
           onLoadFile={onLoadFile}
           onLoadPhoto={onLoadPhoto}
-          disabled={false}
+          disabled={
+            userPeerConversationDisplayMode(
+              peer.profile.userPermissions,
+              peer.type === "old-contact"
+                ? peer.profile.peerPermissions
+                : store.profile.profile.defaultPermissions,
+              store.newContacts.has(props.contactId),
+              () => setShowUnblockModal(false)
+            ).type !== "normal" ||
+            !permission(peer.profile.userPermissions).canWrite()
+          }
         />
       </div>
 
-      {showDrawer && (
+      {showDrawer && peer.type === "old-contact" && (
         <div className="w-[660px] border-l border-gray-300">
           <P2PInfoDrawer
+            userPermission={peer.profile.userPermissions}
+            peerPermission={peer.profile.peerPermissions}
             userName={peer.profile.name}
             userId={props.contactId}
             userProfilePhotoUrl={peer.profile.profilePhotoUrl}
             onClose={() => setShowDrawer(false)}
-            onSavePermissionChanges={() => {
-              console.log("NEW PERMISSION!!");
-              setShowDrawer(false);
-            }}
+            onSavePermissionChanges={onSubmitPermissionChange}
           />
         </div>
       )}
@@ -670,20 +683,26 @@ export function P2PChatPage(props: { contactId: UserId }) {
         onClose={() => setShowMessageBubbleMenu(false)}
         ref={messageBubbleMenuRef}
       >
-        <ChatMessageBubbleMenuItem
-          onClick={() => {
-            setShowForwardMessageOverlay(true);
-            setShowMessageBubbleMenu(false);
-          }}
-          content="Forward"
-        />
-        <ChatMessageBubbleMenuItem
-          onClick={() => {
-            setToReplyMessage(true);
-            setShowMessageBubbleMenu(false);
-          }}
-          content="Reply"
-        />
+        {!messageSelected?.deleted && (
+          <>
+            <ChatMessageBubbleMenuItem
+              onClick={() => {
+                setShowForwardMessageOverlay(true);
+                setShowMessageBubbleMenu(false);
+              }}
+              content="Forward"
+            />
+
+            <ChatMessageBubbleMenuItem
+              onClick={() => {
+                setToReplyMessage(true);
+                setShowMessageBubbleMenu(false);
+              }}
+              content="Reply"
+            />
+          </>
+        )}
+
         <ChatMessageBubbleMenuItem
           onClick={() => {
             setShowDeleteMessageOverlay(true);
@@ -731,7 +750,11 @@ export function P2PChatPage(props: { contactId: UserId }) {
 
       {showDeleteMessageOverlay && (
         <DeleteMessageOverlay
-          onDeleteForEveryone={onDeleteForEveryone}
+          onDeleteForEveryone={
+            messageSelected?.deleted || !messageSelected?.userIsAuthor
+              ? undefined
+              : onDeleteForEveryone
+          }
           onDeleteForMe={onDeleteForMe}
           onCancel={() => setShowDeleteMessageOverlay(false)}
         />

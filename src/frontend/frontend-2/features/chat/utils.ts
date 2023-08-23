@@ -77,12 +77,12 @@ export const userPeerConversationDisplayMode = (
     return { type: "blocked by peer" };
   }
   if (peer.canJoin()) {
-    if (user.canRead()) {
+    if (user.canRead() && user.canWrite()) {
       return { type: "normal" };
     } else if (user.canWrite()) {
-      return { type: "write disabled" };
-    } else {
       return { type: "read disabled" };
+    } else {
+      return { type: "write disabled" };
     }
   } else {
     return {

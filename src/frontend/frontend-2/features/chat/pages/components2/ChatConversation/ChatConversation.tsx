@@ -14,9 +14,14 @@ import { type ChatMessageType } from "~/frontend/frontend-2/features/chat/pages/
 import { type UserId } from "~/api-contract/subscription/subscription";
 import { type IChatConversationUI } from "~/frontend/frontend-2/features/chat/pages/types";
 
+import type { GroupConversationDisplayMode } from "~/frontend/frontend-2/features/chat/utils";
+
 type GetAuthorProfileImage = (userId: UserId) => string | undefined;
 
 type ChatConversationProps = {
+  peerName: string;
+
+  isNewContact: boolean;
   chatItems: ChatMessageType[];
   onReplyMessage: (m: ChatMessageTypeMessage) => void;
   toReplyMessage: ChatMessageTypeMessage | null;
@@ -30,6 +35,26 @@ type ChatConversationProps = {
     e: React.MouseEvent<Element, MouseEvent>,
     message: ChatMessageTypeMessage
   ) => void;
+  mode:
+    | {
+        type: GroupConversationDisplayMode["NORMAL"];
+      }
+    | {
+        type: GroupConversationDisplayMode["NEEDS_UNBLOCKING"];
+        onUnblock: () => void;
+      }
+    | {
+        type: GroupConversationDisplayMode["BLOCKED_BY_PEER"];
+      }
+    | {
+        type: GroupConversationDisplayMode["READ_DISABLED"];
+      }
+    | {
+        type: GroupConversationDisplayMode["WRITE_DISABLED"];
+      }
+    | {
+        type: GroupConversationDisplayMode["REMOVED_FROM_GROUP"];
+      };
 };
 
 export const ChatConversation = forwardRef<
@@ -137,55 +162,120 @@ export const ChatConversation = forwardRef<
         ref={replyPreviewAnimationContainerRef}
         className="absolute h-full w-full transition-transform duration-200"
       >
-        <div
-          ref={conversationContainerRef}
-          className="h-full w-full overflow-y-auto pb-2 pt-2"
-        >
-          {props.chatItems.map((item) => (
-            <ConversationItem
-              key={item.seqId}
-              item={item}
-              getAuthorProfileImage={props.getAuthorProfileImage}
-              onReplyMessage={() => {
-                if (item.type === "message") {
-                  props.onReplyMessage(item);
-                  if (
-                    conversationContainerRef.current &&
-                    chatReplyPreviewRef.current
-                  ) {
-                    conversationContainerRef.current.style.transform = `translateY(-${chatReplyPreviewRef.current.clientHeight}px)`;
-                  }
-                }
-              }}
-              onMenuClick={(e) => {
-                if (item.type === "message") {
-                  props.onMessageBubbleMenuClick(e, item);
-                }
-              }}
-            />
-          ))}
-        </div>
-        <div
-          ref={chatReplyPreviewRef}
-          className={cx("border-t bg-red-400", {
-            hidden: !props.showReplyPreview,
-          })}
-        >
-          <div>
-            {props.toReplyMessage !== null && (
-              <ChatReplyPreview
-                messageReplied={props.toReplyMessage}
-                onClose={() => {
-                  props.onCloseReplyPreview();
-                  if (conversationContainerRef.current) {
-                    conversationContainerRef.current.style.transform = `translateY(0)`;
-                  }
-                }}
-              />
-            )}
-          </div>
-        </div>
+        {props.mode.type === "read disabled" ? (
+          <div></div>
+        ) : (
+          <>
+            <div
+              ref={conversationContainerRef}
+              className="h-full w-full overflow-y-auto pb-2 pt-2"
+            >
+              {props.chatItems.map((item) => (
+                <ConversationItem
+                  key={item.seqId}
+                  item={item}
+                  getAuthorProfileImage={props.getAuthorProfileImage}
+                  onReplyMessage={() => {
+                    if (item.type === "message") {
+                      props.onReplyMessage(item);
+                      if (
+                        conversationContainerRef.current &&
+                        chatReplyPreviewRef.current
+                      ) {
+                        conversationContainerRef.current.style.transform = `translateY(-${chatReplyPreviewRef.current.clientHeight}px)`;
+                      }
+                    }
+                  }}
+                  onMenuClick={(e) => {
+                    if (item.type === "message") {
+                      props.onMessageBubbleMenuClick(e, item);
+                    }
+                  }}
+                />
+              ))}
+            </div>
+            <div
+              ref={chatReplyPreviewRef}
+              className={cx("border-t bg-red-400", {
+                hidden: !props.showReplyPreview,
+              })}
+            >
+              <div>
+                {props.toReplyMessage !== null && (
+                  <ChatReplyPreview
+                    messageReplied={props.toReplyMessage}
+                    onClose={() => {
+                      props.onCloseReplyPreview();
+                      if (conversationContainerRef.current) {
+                        conversationContainerRef.current.style.transform = `translateY(0)`;
+                      }
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
+
+      {props.mode.type !== "normal" && props.isNewContact && (
+        <div className="sticky top-full  bg-red-200 px-3 py-2">
+          {match(props.mode.type)
+            .with("read disabled", () => (
+              <p>{props.peerName} has disabled viewing past conversations</p>
+            ))
+            .with("blocked by peer", () => (
+              <p>
+                {props.peerName} is currently not letting any newly added
+                contacts send messages to them currently
+              </p>
+            ))
+            .with("write disabled", () => (
+              <p>
+                {props.peerName} is not letting any newly added contacts send
+                messages to them currently
+              </p>
+            ))
+            .run()}
+        </div>
+      )}
+
+      {props.mode.type !== "normal" && !props.isNewContact && (
+        <div className="sticky top-full bg-red-200 px-3 py-2">
+          {match(props.mode.type)
+            .with("removed from group", () => (
+              <p>You're no longer a participant of the group</p>
+            ))
+            .with("write disabled", () => (
+              <p>
+                {props.peerName} has disabled you from sending new messages to
+                them
+              </p>
+            ))
+            .with("read disabled", () => (
+              <p>{props.peerName} has disabled viewing past conversations</p>
+            ))
+            .with("blocked by peer", () => (
+              <p>You have been blocked by {props.peerName}</p>
+            ))
+            .with("needs unblocking", () => (
+              <p>
+                You have blocked {props.peerName},{" "}
+                <button
+                  onClick={() =>
+                    props.mode.type == "needs unblocking" &&
+                    props.mode.onUnblock()
+                  }
+                  className="underline"
+                >
+                  unblock
+                </button>{" "}
+                them to send new messages
+              </p>
+            ))
+            .run()}
+        </div>
+      )}
     </div>
   );
 });

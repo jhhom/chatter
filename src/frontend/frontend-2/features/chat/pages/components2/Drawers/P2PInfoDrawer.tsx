@@ -1,14 +1,33 @@
 import type { UserId } from "~/api-contract/subscription/subscription";
+import { useState } from "react";
 import { IconX, IconPerson } from "~/frontend/frontend-2/features/common/icons";
 import { PermissionSetting } from "./Permission";
+import { permission } from "~/backend/service/common/permissions";
+import type { PermissionId } from "./Permission";
 
 export function P2PInfoDrawer(props: {
+  userPermission: string;
+  peerPermission: string;
   userName: string;
   userId: UserId;
   userProfilePhotoUrl: string | null;
-  onSavePermissionChanges: () => void;
+  onSavePermissionChanges: (permission: string) => void;
   onClose: () => void;
 }) {
+  const [permissionStr, setPermissionStr] = useState(props.peerPermission);
+
+  const peerPermission = permission(permissionStr);
+
+  const onCheckboxChange = (id: PermissionId, checked: boolean) => {
+    let newPermissionString = permissionStr;
+    if (checked) {
+      newPermissionString = newPermissionString + id;
+    } else {
+      newPermissionString = newPermissionString.replace(id, "");
+    }
+    setPermissionStr(newPermissionString);
+  };
+
   return (
     <div>
       <DrawerHeader onClose={props.onClose} />
@@ -47,37 +66,29 @@ export function P2PInfoDrawer(props: {
           <PermissionSetting
             name="Join (J)"
             permissionId="J"
-            checked={true}
-            onChange={() => {
-              console.log("change");
-            }}
+            checked={peerPermission.canJoin()}
+            onChange={onCheckboxChange}
             editable={true}
           />
           <PermissionSetting
             name="Read (R)"
             permissionId="R"
-            checked={true}
-            onChange={() => {
-              console.log("change");
-            }}
+            checked={peerPermission.canRead()}
+            onChange={onCheckboxChange}
             editable={true}
           />
           <PermissionSetting
             name="Write (W)"
             permissionId="W"
-            checked={true}
-            onChange={() => {
-              console.log("change");
-            }}
+            checked={peerPermission.canWrite()}
+            onChange={onCheckboxChange}
             editable={true}
           />
           <PermissionSetting
             name="Get notified (P)"
             permissionId="P"
-            checked={true}
-            onChange={() => {
-              console.log("change");
-            }}
+            checked={peerPermission.canGetNotifiedOfPresence()}
+            onChange={onCheckboxChange}
             editable={true}
           />
 
@@ -94,7 +105,7 @@ export function P2PInfoDrawer(props: {
           </button>
 
           <button
-            onClick={() => props.onSavePermissionChanges()}
+            onClick={() => props.onSavePermissionChanges(permissionStr)}
             className="rounded-md bg-green-600 px-4 py-1.5 font-medium text-white"
           >
             Save changes
