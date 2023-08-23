@@ -37,13 +37,13 @@ export const ChatConversation = forwardRef<
   ChatConversationProps
 >(function ChatConversation(props, ref) {
   const firstMessageRef = useRef<HTMLDivElement | null>(null);
+  const replyPreviewAnimationContainerRef = useRef<HTMLDivElement | null>(null);
   const conversationContainerRef = useRef<HTMLDivElement | null>(null);
   const chatReplyPreviewRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const r = conversationContainerRef.current;
     if (r === null) {
-      console.log("I WILL RETURN");
       return;
     }
     const onScroll = async (e: Event) => {
@@ -91,6 +91,11 @@ export const ChatConversation = forwardRef<
           return Math.abs(r.scrollHeight - r.scrollTop - r.clientHeight) < 5;
         },
         scrollChatToTheBottom() {
+          console.log(
+            "SCROLLING TO THE BOTTOM",
+            conversationContainerRef.current?.scrollHeight
+          );
+
           return conversationContainerRef.current?.scrollTo(
             0,
             conversationContainerRef.current.scrollHeight
@@ -111,13 +116,31 @@ export const ChatConversation = forwardRef<
     []
   );
 
+  useEffect(() => {
+    if (props.toReplyMessage !== null) {
+      if (
+        replyPreviewAnimationContainerRef.current &&
+        chatReplyPreviewRef.current
+      ) {
+        replyPreviewAnimationContainerRef.current.style.transform = `translateY(-${chatReplyPreviewRef.current.clientHeight}px)`;
+      }
+    } else {
+      if (replyPreviewAnimationContainerRef.current) {
+        replyPreviewAnimationContainerRef.current.style.transform = `translateY(0)`;
+      }
+    }
+  }, [props.toReplyMessage]);
+
   return (
     <div className="relative h-full w-full overflow-y-hidden bg-gray-50">
       <div
-        ref={conversationContainerRef}
+        ref={replyPreviewAnimationContainerRef}
         className="absolute h-full w-full transition-transform duration-200"
       >
-        <div className="h-full w-full overflow-y-auto pb-2 pt-2">
+        <div
+          ref={conversationContainerRef}
+          className="h-full w-full overflow-y-auto pb-2 pt-2"
+        >
           {props.chatItems.map((item) => (
             <ConversationItem
               key={item.seqId}
@@ -144,7 +167,7 @@ export const ChatConversation = forwardRef<
         </div>
         <div
           ref={chatReplyPreviewRef}
-          className={cx("border-t", {
+          className={cx("border-t bg-red-400", {
             hidden: !props.showReplyPreview,
           })}
         >

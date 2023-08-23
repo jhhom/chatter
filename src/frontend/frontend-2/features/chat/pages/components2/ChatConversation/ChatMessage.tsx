@@ -12,6 +12,7 @@ import {
   IconFile,
   IconCamera,
   IconPerson,
+  IconBlock,
 } from "~/frontend/frontend-2/features/common/icons";
 
 import { clsx as cx } from "clsx";
@@ -98,33 +99,46 @@ export function ConversationItem(props: {
             >
               {props.item.seq === "first" ||
                 (props.item.seq === "single" && (
-                  <div className="flex items-end pl-4 pr-3 pt-1 text-[13px]">
+                  <div className="flex items-end bg-red-100 pl-4 pr-3 pt-1 text-[13px]">
                     <p className="font-medium text-black">
                       {props.item.authorName}
                     </p>
                   </div>
                 ))}
 
-              <div>
-                {match(props.item.text)
-                  .with({ type: "text" }, (c) => (
-                    <MessageText
-                      {...c}
-                      addTopPadding={
-                        props.item.type === "message" &&
-                        (!(
-                          props.item.seq === "first" ||
-                          props.item.seq === "single"
-                        ) ||
-                          props.item.text.replyTo !== null)
-                      }
-                    />
-                  ))
-                  .with({ type: "picture" }, (c) => (
-                    <MessageWithPicture {...c} />
-                  ))
-                  .with({ type: "file" }, (c) => <MessageWithFile {...c} />)
-                  .exhaustive()}
+              <div className="w-fit">
+                {props.item.deleted ? (
+                  <div className="w-fit pb-1 pt-1">
+                    <div className="flex w-fit px-4 text-[13px] text-gray-600">
+                      <div className="flex h-5 w-5 items-center justify-center p-0.5">
+                        <IconBlock className="text-gray-500" />
+                      </div>
+                      <p className="ml-0.5 whitespace-nowrap italic">
+                        This message was deleted
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  match(props.item.text)
+                    .with({ type: "text" }, (c) => (
+                      <MessageText
+                        {...c}
+                        addTopPadding={
+                          props.item.type === "message" &&
+                          (!(
+                            props.item.seq === "first" ||
+                            props.item.seq === "single"
+                          ) ||
+                            props.item.text.replyTo !== null)
+                        }
+                      />
+                    ))
+                    .with({ type: "picture" }, (c) => (
+                      <MessageWithPicture {...c} />
+                    ))
+                    .with({ type: "file" }, (c) => <MessageWithFile {...c} />)
+                    .exhaustive()
+                )}
               </div>
             </div>
 

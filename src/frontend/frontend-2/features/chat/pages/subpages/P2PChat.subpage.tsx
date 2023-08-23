@@ -8,7 +8,6 @@ import React, {
 import { useRouter, useSearchParams } from "next/navigation";
 import { fromPromise } from "neverthrow";
 import { toast, Toaster } from "react-hot-toast";
-import clsx from "clsx";
 
 import type { UserId } from "~/api-contract/subscription/subscription";
 
@@ -30,8 +29,12 @@ import type { ChatMessageTypeMessage } from "~/frontend/frontend-2/features/chat
 import { permission } from "~/backend/service/common/permissions";
 import { ChatConversation } from "~/frontend/frontend-2/features/chat/pages/components2/ChatConversation/ChatConversation";
 import { ChatHeader } from "~/frontend/frontend-2/features/chat/pages/components2/ChatHeader";
-import { ChatImageUploadPreviewOverlay } from "~/frontend/frontend-2/features/chat/pages/components2/ChatOverlays";
-import { ChatFileUploadPreviewOverlay } from "~/frontend/frontend-2/features/chat/pages/components2/ChatOverlays";
+import {
+  ChatFileUploadPreviewOverlay,
+  ForwardMessageOverlay,
+  ChatImageUploadPreviewOverlay,
+  DeleteMessageOverlay,
+} from "~/frontend/frontend-2/features/chat/pages/components2/ChatOverlays";
 import {
   ChatMessageBubbleMenu,
   ChatMessageBubbleMenuItem,
@@ -73,11 +76,9 @@ export function P2PChatPage(props: { contactId: UserId }) {
   }));
   const messagesStore = useMessagesStore();
 
-  const conversationContainerRef = useRef<HTMLDivElement | null>(null);
   const messageBubbleMenuRef = useRef<HTMLDivElement | null>(null);
   const chatImgViewRef = useRef<HTMLImageElement | null>(null);
   const imgUploadPreviewRef = useRef<HTMLImageElement | null>(null);
-  const chatReplyPreviewRef = useRef<HTMLDivElement | null>(null);
   const conversationUIControl = useRef<IChatConversationUI>({
     updateFirstMessageRef() {
       return;
@@ -294,13 +295,7 @@ export function P2PChatPage(props: { contactId: UserId }) {
     }, []);
 
   const onCloseReplyPreview: ChatReplyPreviewProps["onClose"] =
-    useCallback(async () => {
-      if (conversationContainerRef.current) {
-        conversationContainerRef.current.style.transform = `translateY(0)`;
-      }
-      // await animations to finish
-      // before we completely hide the preview
-      await new Promise((r) => setTimeout(() => r(undefined), 250));
+    useCallback(() => {
       setToReplyMessage(false);
       setMessageSelected(null);
     }, []);
@@ -320,12 +315,6 @@ export function P2PChatPage(props: { contactId: UserId }) {
         if (result.isOk()) {
           conversationUIControl.current.scrollChatToTheBottom();
         }
-        if (conversationContainerRef.current) {
-          conversationContainerRef.current.style.transform = `translateY(0)`;
-        }
-        // await animations to finish
-        // before we completely hide the preview
-        await new Promise((r) => setTimeout(() => r(undefined), 250));
         setToReplyMessage(false);
         setMessageSelected(null);
       } else {
@@ -539,10 +528,6 @@ export function P2PChatPage(props: { contactId: UserId }) {
       conversationUIControl.current.scrollChatToTheBottom();
       conversationUIControl.current.updateFirstMessageRef();
       setShowDrawer(false);
-      if (conversationContainerRef.current) {
-        conversationContainerRef.current.style.transform = `translateY(0)`;
-      }
-      await new Promise((r) => setTimeout(() => r(undefined), 250));
       setToReplyMessage(false);
       setMessageSelected(null);
     },
@@ -594,6 +579,15 @@ export function P2PChatPage(props: { contactId: UserId }) {
     <div className="relative flex h-screen">
       <div className="w-full">
         <ChatHeader
+          online={peer.type === "old-contact" ? peer.status.online : false}
+          lastSeen={peer.profile.touchedAt}
+          typing={
+            peer.type === "old-contact"
+              ? peer.status.online && peer.status.typing
+                ? peer.profile.name
+                : null
+              : null
+          }
           contactName={peer.profile.name}
           contactProfilePhotoUrl={peer?.profile.profilePhotoUrl ?? undefined}
           onInfoClick={() => setShowDrawer(true)}
@@ -602,16 +596,17 @@ export function P2PChatPage(props: { contactId: UserId }) {
             console.log("clear messages");
           }}
         />
-        <div className="relative  h-[calc(100%-8rem)] w-full">
+        <div className="relative h-[calc(100%-8rem)] w-full">
           <ChatConversation
+            ref={conversationUIControl}
             onReplyMessage={(m) => {
               setToReplyMessage(true);
               setMessageSelected(m);
             }}
             onChatScrollToTop={onChatScrollToTop}
-            toReplyMessage={messageSelected}
+            toReplyMessage={toReplyMessage ? messageSelected : null}
             showReplyPreview={toReplyMessage}
-            onCloseReplyPreview={() => setToReplyMessage(false)}
+            onCloseReplyPreview={onCloseReplyPreview}
             onMessageBubbleMenuClick={onMessageBubbleMenuClick}
             getAuthorProfileImage={getAuthorProfileImage}
             chatItems={messagesStore.messages}
@@ -686,12 +681,6 @@ export function P2PChatPage(props: { contactId: UserId }) {
           onClick={() => {
             setToReplyMessage(true);
             setShowMessageBubbleMenu(false);
-            if (
-              conversationContainerRef.current &&
-              chatReplyPreviewRef.current
-            ) {
-              conversationContainerRef.current.style.transform = `translateY(-${chatReplyPreviewRef.current.clientHeight}px)`;
-            }
           }}
           content="Reply"
         />
@@ -703,6 +692,50 @@ export function P2PChatPage(props: { contactId: UserId }) {
           content="Delete"
         />
       </ChatMessageBubbleMenu>
+
+      {showForwardMessageOverlay && (
+        <ForwardMessageOverlay
+          contacts={[
+            ...Array.from(store.grp.entries()).map(([id, g]) => ({
+              topicId: id,
+              name: g.profile.name,
+            })),
+            ...Array.from(store.p2p.entries()).map(([id, p]) => ({
+              topicId: id,
+              name: p.profile.name,
+            })),
+          ]}
+          onForwardMessage={async (forwardTo) => {
+            if (messageSelected == null) {
+              setShowForwardMessageOverlay(false);
+              return;
+            }
+
+            const result = await client["topic/forward_message"]({
+              message: {
+                seqId: messageSelected.seqId,
+                topicId: props.contactId,
+              },
+              forwardTo,
+            });
+            if (result.isOk()) {
+              router.push(location.pathname + `?topic=${forwardTo}`);
+            }
+            setShowForwardMessageOverlay(false);
+          }}
+          onClose={() => {
+            setShowForwardMessageOverlay(false);
+          }}
+        />
+      )}
+
+      {showDeleteMessageOverlay && (
+        <DeleteMessageOverlay
+          onDeleteForEveryone={onDeleteForEveryone}
+          onDeleteForMe={onDeleteForMe}
+          onCancel={() => setShowDeleteMessageOverlay(false)}
+        />
+      )}
 
       <Toaster position="bottom-left" />
     </div>

@@ -20,6 +20,9 @@ const MenuItem = (props: { content: string; onClick?: () => void }) => {
 
 export function ChatHeader(props: {
   type: "p2p" | "grp";
+  online: boolean;
+  lastSeen: Date | null;
+  typing: string | null;
   contactName: string;
   contactProfilePhotoUrl?: string;
   onInfoClick: () => void;
@@ -57,9 +60,11 @@ export function ChatHeader(props: {
             </div>
           )}
 
-          <div className="absolute -right-1 -top-1 h-3 w-3 rounded-sm bg-white p-[0.1rem]">
-            <div className="h-full w-full rounded-sm bg-green-400/80" />
-          </div>
+          {props.online && (
+            <div className="absolute -right-1 -top-1 h-3 w-3 rounded-sm bg-white p-[0.1rem]">
+              <div className="h-full w-full rounded-sm bg-green-400/80" />
+            </div>
+          )}
         </div>
 
         <p className="pl-3 font-medium">{props.contactName}</p>
