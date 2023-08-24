@@ -40,8 +40,6 @@ import {
   ChatMessageBubbleMenu,
   ChatMessageBubbleMenuItem,
 } from "~/frontend/frontend-2/features/chat/pages/components/ChatConversation/ChatMessageBubbleMenu";
-import { GroupInviteLinkInfo } from "~/frontend/frontend-2/features/chat/pages/components/ChatDrawer/GroupInfoDrawer/GroupInviteLinkInfo";
-import { GroupMemberSecurityContent } from "~/frontend/frontend-2/features/chat/pages/components/ChatDrawer/GroupInfoDrawer/GroupMemberSecurityContent";
 
 import { useAppStore } from "~/frontend/stores/stores";
 import { client } from "~/frontend/external/api-client/client";
@@ -61,6 +59,13 @@ import { userGroupConversationDisplayMode } from "~/frontend/frontend-2/features
 import { match } from "ts-pattern";
 import { clsx as cx } from "clsx";
 import useAsyncEffect from "use-async-effect";
+import {
+  GroupInfoDrawer3,
+  DrawerContentSecurity,
+  DrawerContentInviteLink,
+  DrawerContentInfo,
+  DrawerContentAddMembersToGroup,
+} from "~/frontend/frontend-2/features/chat/pages/components2/Drawers/GrpInfoDrawer/GrpInfoDrawer2";
 
 const PAGE_SIZE = 24;
 const INITIAL_PAGE_SIZE = 64;
@@ -610,6 +615,42 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
           content="Delete"
         />
       </ChatMessageBubbleMenu>
+
+      {showDrawer && (
+        <div className="h-full basis-2/5">
+          <GroupInfoDrawer3 onClose={() => setShowDrawer(false)}>
+            {(p) => {
+              return match(p.content)
+                .with("security", () => (
+                  <DrawerContentSecurity
+                    onBack={() => p.setContent("info")}
+                    hasPermissionToEdit={false}
+                  />
+                ))
+                .with("invite-link", () => <DrawerContentInviteLink />)
+                .with("add-member", () => <DrawerContentAddMembersToGroup />)
+                .otherwise(() => (
+                  <DrawerContentInfo
+                    memberList={Array.from(membersStore.members.entries()).map(
+                      ([uId, uProfile]) => {
+                        return {
+                          userId: uId,
+                          name: uProfile.name,
+                          online: uProfile.online,
+                          profilePhotoUrl: uProfile.profilePhotoUrl,
+                        };
+                      }
+                    )}
+                    profilePhotoUrl={store.grp?.profile.profilePhotoUrl ?? null}
+                    onSecurityClick={() => p.setContent("security")}
+                    onInviteLinkClick={() => p.setContent("invite-link")}
+                    onAddMemberClick={() => p.setContent("add-member")}
+                  />
+                ));
+            }}
+          </GroupInfoDrawer3>
+        </div>
+      )}
 
       {showForwardMessageOverlay && (
         <ForwardMessageOverlay

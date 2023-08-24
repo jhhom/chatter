@@ -8,11 +8,14 @@ import {
   IconPlus,
   IconLeaveGroup,
   IconChevronDown,
+  IconPerson,
 } from "~/frontend/frontend-2/features/common/icons";
 import { DrawerContentSecurity } from "./DrawerContentSecurity";
 import { DrawerContentInviteLink } from "./DrawerContentInviteLink";
-import { DrawerButton } from "./components";
 import { DrawerContentAddMembersToGroup } from "./DrawerContentAddMembersToGroup";
+import { DrawerContentInfo } from "~/frontend/frontend-2/features/chat/pages/components2/Drawers/GrpInfoDrawer/DrawerContentInfo";
+
+import { DrawerButton } from "./components";
 
 import {
   Popover,
@@ -21,6 +24,7 @@ import {
   TooltipTrigger,
   Tooltip,
 } from "react-aria-components";
+import type { UserId } from "~/api-contract/subscription/subscription";
 import { DialogTrigger } from "@adobe/react-spectrum";
 
 const groupMembers: {
@@ -49,10 +53,30 @@ const groupMembers: {
   },
 ];
 
-export function GrpInfoDrawer2() {
-  const [content, setContent] = useState<
-    "info" | "security" | "invite-link" | "add-member"
-  >("info");
+type Content =
+  | "info"
+  | "security"
+  | "invite-link"
+  | "add-member"
+  | "member-security";
+
+export function GroupInfoDrawer3(props: {
+  onClose: () => void;
+  children: (props: {
+    content: Content;
+    checkingOutMember: UserId | null;
+    setContent: (content: Content) => void;
+    setCheckingOutMember: (userId: UserId | null) => void;
+    memberSecurityContentEditable: boolean;
+    setMemberSecurityContentEditable: (editable: boolean) => void;
+  }) => JSX.Element;
+}) {
+  const [content, setContent] = useState<Content>("info");
+  const [checkingOutMember, setCheckingOutMember] = useState<UserId | null>(
+    null
+  );
+  const [memberSecurityContentEditable, setMemberSecurityContentEditable] =
+    useState(false);
 
   return (
     <div className="h-full overflow-y-auto">
@@ -62,6 +86,7 @@ export function GrpInfoDrawer2() {
           .with("invite-link", () => "Invite link")
           .with("security", () => "Security")
           .with("add-member", () => "Add member")
+          .with("member-security", () => "Member security")
           .exhaustive()}
         onClose={() => {
           if (content !== "info") {
@@ -71,23 +96,17 @@ export function GrpInfoDrawer2() {
         }}
       />
 
-      <div className="h-[calc(100%-4rem)]">
-        {match(content)
-          .with("security", () => (
-            <DrawerContentSecurity
-              onBack={() => setContent("info")}
-              hasPermissionToEdit={false}
-            />
-          ))
-          .with("invite-link", () => <DrawerContentInviteLink />)
-          .with("add-member", () => <DrawerContentAddMembersToGroup />)
-          .otherwise(() => (
-            <DrawerContentInfo
-              onSecurityClick={() => setContent("security")}
-              onInviteLinkClick={() => setContent("invite-link")}
-              onAddMemberClick={() => setContent("add-member")}
-            />
-          ))}
+      <div className="h-[calc(100vh-4rem)] flex-grow overflow-y-auto bg-gray-50">
+        <div className="h-full">
+          {props.children({
+            content: content,
+            setContent,
+            checkingOutMember: checkingOutMember,
+            setCheckingOutMember,
+            memberSecurityContentEditable: memberSecurityContentEditable,
+            setMemberSecurityContentEditable,
+          })}
+        </div>
       </div>
     </div>
   );
@@ -95,7 +114,7 @@ export function GrpInfoDrawer2() {
 
 function DrawerHeader(props: { title: string; onClose: () => void }) {
   return (
-    <div className="flex h-16 items-center justify-between border-b border-gray-300 px-4">
+    <div className="flex h-16 items-center justify-between border-b border-l border-gray-300 px-4">
       <p>{props.title}</p>
       <button
         onClick={props.onClose}
@@ -107,118 +126,10 @@ function DrawerHeader(props: { title: string; onClose: () => void }) {
   );
 }
 
-function DrawerContentInfo(props: {
-  onSecurityClick: () => void;
-  onInviteLinkClick: () => void;
-  onAddMemberClick: () => void;
-}) {
-  return (
-    <div>
-      <div className="bg-white pb-3 pt-4">
-        <div className="flex justify-center py-2">
-          <div className="h-14 w-14">
-            <img
-              className="h-full w-full rounded-lg"
-              src="./assets/abstract-art.jpg"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="pt-1">
-        <p className="text-center font-medium">Designers Team</p>
-        <p className="mt-3 text-center text-sm text-gray-500">
-          ID: grpv0gv99eytynq
-        </p>
-      </div>
-
-      <div className="mb-10 mt-8 text-sm">
-        <div className="w-full space-y-4 px-4">
-          <DrawerButton
-            content="Security"
-            icon={<IconShield2 height={20} className="text-gray-500" />}
-            iconPadding="px-2"
-            onClick={props.onSecurityClick}
-          />
-          <DrawerButton
-            content="Invite to group via link"
-            icon={<IconLink className="text-gray-500" />}
-            iconPadding="px-2"
-            onClick={props.onInviteLinkClick}
-          />
-          <DrawerButton
-            content="Add members to group"
-            icon={<IconPlus className="text-gray-500" />}
-            iconPadding="px-2.5"
-            onClick={props.onAddMemberClick}
-          />
-        </div>
-      </div>
-
-      <div className="px-4 text-sm">
-        <div className="flex justify-between">
-          <p className="border-gray-400  font-medium">Group members (10)</p>
-        </div>
-
-        <div className="mt-5">
-          <ul className="space-y-5">
-            {groupMembers.map((m) => (
-              <li className="group flex cursor-pointer items-center justify-between rounded-lg">
-                <div className="flex items-center">
-                  <div className="h-9 w-9">
-                    <img
-                      className="h-full w-full rounded-lg object-cover"
-                      src={m.profilePicSrc}
-                    />
-                  </div>
-                  <p className="pl-3">{m.username}</p>
-                </div>
-
-                <DialogTrigger>
-                  <TooltipTrigger>
-                    <button className="block h-8 w-8 rounded-md bg-white px-2 hover:border-2 hover:bg-gray-50">
-                      <IconChevronDown className="text-gray-500" />
-                    </button>
-                    <Tooltip>
-                      <p className="px-1 py-0.5 text-xs text-gray-600">Menu</p>
-                    </Tooltip>
-                  </TooltipTrigger>
-                  <Popover>
-                    <OverlayArrow>
-                      <svg width={12} height={12}>
-                        <path d="M0 0,L6 6,L12 0" />
-                      </svg>
-                    </OverlayArrow>
-                    <Dialog>
-                      <button className="block w-full px-4 py-2 text-left hover:bg-gray-100">
-                        Remove
-                      </button>
-                      <button className="block w-full px-4 py-2 text-left hover:bg-gray-100">
-                        Edit permissions
-                      </button>
-                    </Dialog>
-                  </Popover>
-                </DialogTrigger>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      <div className="my-6 px-4">
-        <hr className="border-t border-gray-300" />
-      </div>
-
-      <div className="px-4">
-        <button className="group mt-3 flex h-12 w-full cursor-pointer items-center justify-between rounded-md border border-red-400 pl-4 text-left text-gray-600 hover:bg-red-500">
-          <p className="text-sm text-red-600 group-hover:text-white">
-            LEAVE CONVERSATION
-          </p>
-          <div className="mr-2 flex h-full w-10 items-center justify-center rounded-md px-2">
-            <IconLeaveGroup className="text-red-500 group-hover:text-white" />
-          </div>
-        </button>
-      </div>
-    </div>
-  );
-}
+export {
+  DrawerHeader,
+  DrawerContentSecurity,
+  DrawerContentInviteLink,
+  DrawerContentAddMembersToGroup,
+  DrawerContentInfo,
+};
