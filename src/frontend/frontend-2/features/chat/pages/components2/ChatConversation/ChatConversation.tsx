@@ -31,6 +31,7 @@ type ChatConversationProps = {
   onChatScrollToTop: () => Promise<
     "new messages loaded" | "no new messages loaded"
   >;
+  onMessageImageClick: (messageUrl: string) => void;
   onMessageBubbleMenuClick: (
     e: React.MouseEvent<Element, MouseEvent>,
     message: ChatMessageTypeMessage
@@ -186,6 +187,7 @@ export const ChatConversation = forwardRef<
                       }
                     }
                   }}
+                  onMessageImageClick={props.onMessageImageClick}
                   onMenuClick={(e) => {
                     if (item.type === "message") {
                       props.onMessageBubbleMenuClick(e, item);

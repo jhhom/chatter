@@ -41,6 +41,7 @@ import {
 } from "~/frontend/frontend-2/features/chat/pages/components2/ChatConversation/ChatMessageBubbleMenu";
 import { TextInput } from "~/frontend/frontend-2/features/chat/pages/components2/TextInput/TextInput";
 import { P2PInfoDrawer } from "~/frontend/frontend-2/features/chat/pages/components2/Drawers/P2PInfoDrawer";
+import { UnblockModal } from "~/frontend/frontend-2/features/chat/pages/components/UnblockModal";
 
 import {
   useMessageListener,
@@ -173,6 +174,8 @@ export function P2PChatPage(props: { contactId: UserId }) {
             `An unexpected error had occured when clearing local messages cache`
           )
         );
+
+      messagesStore.clearMessages();
     } catch {}
     // TODO: chat.clearMessages();
 
@@ -575,7 +578,13 @@ export function P2PChatPage(props: { contactId: UserId }) {
       <div className="w-full">
         <ChatHeader
           online={peer.type === "old-contact" ? peer.status.online : false}
-          lastSeen={peer.profile.touchedAt}
+          lastSeen={
+            peer.type === "old-contact"
+              ? peer.status.online
+                ? null
+                : peer.status.lastOnline
+              : null
+          }
           typing={
             peer.type === "old-contact"
               ? peer.status.online && peer.status.typing
@@ -612,8 +621,9 @@ export function P2PChatPage(props: { contactId: UserId }) {
                 ? peer.profile.peerPermissions
                 : store.profile.profile.defaultPermissions,
               store.newContacts.has(props.contactId),
-              () => setShowUnblockModal(false)
+              () => setShowUnblockModal(true)
             )}
+            onMessageImageClick={onMessageImageClick}
           />
           <div
             className={cx("absolute left-0 top-0 h-full w-full bg-white", {
@@ -711,6 +721,26 @@ export function P2PChatPage(props: { contactId: UserId }) {
           content="Delete"
         />
       </ChatMessageBubbleMenu>
+
+      {showUnblockModal && (
+        <UnblockModal
+          name={peer.profile.name}
+          onUnblock={async () => {
+            const newPermission =
+              peer.type === "old-contact"
+                ? peer.profile.peerPermissions + "J"
+                : (store.get().profile.profile?.defaultPermissions ?? "") + "J";
+
+            if (store.get().profile.profile?.defaultPermissions)
+              void (await client["permissions/update_peer_permission"]({
+                newPermission,
+                peerId: props.contactId,
+              }));
+            setShowUnblockModal(false);
+          }}
+          onCancel={() => setShowUnblockModal(false)}
+        />
+      )}
 
       {showForwardMessageOverlay && (
         <ForwardMessageOverlay

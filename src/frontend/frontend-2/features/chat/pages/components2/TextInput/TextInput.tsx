@@ -122,17 +122,51 @@ export function TextInput(props: TextInputProps) {
   return (
     <div className="flex h-16 items-center border-t-[1.5px] border-gray-200 pl-2 pr-6">
       {props.inputMode.type === "message" && (
-        <div className="flex">
+        <div
+          className={cx("flex", {
+            "cursor-not-allowed": props.disabled,
+          })}
+        >
+          <input
+            disabled={props.disabled}
+            ref={photoInputRef}
+            type="file"
+            id="photo-input"
+            className="hidden"
+            accept="image/*"
+            onChange={loadPhoto}
+          />
+
+          <input
+            disabled={props.disabled}
+            ref={fileInputRef}
+            type="file"
+            id="file-input"
+            className="hidden"
+            onChange={loadFile}
+          />
           <label
             htmlFor="photo-input"
-            className="mr-1 h-10 w-10 cursor-pointer rounded-lg p-3 hover:bg-gray-100"
+            className={cx(
+              "mr-1 h-10 w-10  rounded-lg p-3 hover:bg-gray-100 disabled:cursor-not-allowed",
+              {
+                "cursor-pointer": !props.disabled,
+                "cursor-not-allowed": props.disabled,
+              }
+            )}
           >
             <IconPicture className="text-gray-400" />
           </label>
           <div className="h-6 self-center border-r-[1.5px] border-gray-200"></div>
           <label
             htmlFor="file-input"
-            className="mx-1 h-10 w-10 cursor-pointer rounded-md p-3 hover:bg-gray-100"
+            className={cx(
+              "mx-1 h-10 w-10 rounded-md p-3 hover:bg-gray-100 disabled:cursor-not-allowed",
+              {
+                "cursor-not-allowed": props.disabled,
+                "cursor-pointer": !props.disabled,
+              }
+            )}
           >
             <IconFile className="text-gray-400" />
           </label>
@@ -148,6 +182,7 @@ export function TextInput(props: TextInputProps) {
       </div>
 
       <textarea
+        disabled={props.disabled}
         ref={messageInputRef}
         className={cx(
           "block h-10 w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-blue-100 disabled:cursor-not-allowed",
@@ -165,23 +200,6 @@ export function TextInput(props: TextInputProps) {
           <IconPaperPlane className="" />
         </button>
       </div>
-
-      <input
-        ref={photoInputRef}
-        type="file"
-        id="photo-input"
-        className="hidden"
-        accept="image/*"
-        onChange={loadPhoto}
-      />
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        id="file-input"
-        className="hidden"
-        onChange={loadFile}
-      />
     </div>
   );
 }

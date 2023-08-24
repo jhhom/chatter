@@ -28,6 +28,7 @@ export function ConversationItem(props: {
   getAuthorProfileImage: (userId: UserId) => string | undefined;
   onReplyMessage: () => void;
   onMenuClick: React.MouseEventHandler<HTMLButtonElement>;
+  onMessageImageClick: (imgUrl: string) => void;
 }) {
   const [isUserHovering, setIsUserHovering] = useState(false);
   const [openChatMessageMenu, setOpenChatMessageMenu] = useState(false);
@@ -142,7 +143,10 @@ export function ConversationItem(props: {
                       />
                     ))
                     .with({ type: "picture" }, (c) => (
-                      <MessageWithPicture {...c} />
+                      <MessageWithPicture
+                        onPictureClick={() => props.onMessageImageClick(c.url)}
+                        {...c}
+                      />
                     ))
                     .with({ type: "file" }, (c) => <MessageWithFile {...c} />)
                     .exhaustive()
@@ -313,7 +317,9 @@ function ChatImage(props: {
 }
 
 function MessageWithPicture(
-  props: Extract<ChatBubbleMessageContent, { type: "picture" }>
+  props: Extract<ChatBubbleMessageContent, { type: "picture" }> & {
+    onPictureClick: () => void;
+  }
 ) {
   const [imgDisplayMode, setImageDisplayMode] =
     useState<ImageDisplayMode>("square");
@@ -347,7 +353,7 @@ function MessageWithPicture(
         </div>
       )}
       <div className="px-1">
-        <div>
+        <div onClick={props.onPictureClick}>
           <ChatImage
             imgDisplayMode={imgDisplayMode}
             setImgDisplayMode={setImageDisplayMode}

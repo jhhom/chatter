@@ -1,4 +1,10 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  type ComponentProps,
+} from "react";
 import { toast, Toaster } from "react-hot-toast";
 import { ok, err, fromPromise } from "neverthrow";
 import { useRouter } from "next/navigation";
@@ -10,22 +16,11 @@ import type {
 } from "~/api-contract/subscription/subscription";
 import { permission } from "~/backend/service/common/permissions";
 
-import type {
-  ChatConversationProps,
-  IChatConversationUI,
-} from "~/frontend/frontend-2/features/chat/pages/types";
-import type { ChatMessageTypeMessage } from "~/frontend/frontend-2/features/chat/pages/components/ChatConversation/ChatMessage";
-import { ChatConversation } from "~/frontend/frontend-2/features/chat/pages/components/ChatConversation/ChatConversation";
-import {
-  ChatHeader,
-  type ChatHeaderProps,
-} from "~/frontend/frontend-2/features/chat/pages/components/ChatHeader";
-import { ChatTextInput } from "~/frontend/frontend-2/features/chat/pages/components/ChatTextInput/ChatTextInput";
+import type { IChatConversationUI } from "~/frontend/frontend-2/features/chat/pages/types";
+import type { ChatMessageTypeMessage } from "~/frontend/frontend-2/features/chat/pages/stores/messages/get-messages-display-sequences";
+import { ChatConversation } from "~/frontend/frontend-2/features/chat/pages/components2/ChatConversation/ChatConversation";
+import { ChatHeader } from "~/frontend/frontend-2/features/chat/pages/components2/ChatHeader";
 
-import { GroupInfoDrawer } from "~/frontend/frontend-2/features/chat/pages/components/ChatDrawer";
-import { GroupInfo } from "~/frontend/frontend-2/features/chat/pages/components/ChatDrawer/GroupInfoDrawer/GroupInfo";
-import { GroupAddMember } from "~/frontend/frontend-2/features/chat/pages/components/ChatDrawer/GroupInfoDrawer/GroupAddMember";
-import { GroupSecurityContent } from "~/frontend/frontend-2/features/chat/pages/components/ChatDrawer/GroupInfoDrawer/GroupSecurityContent";
 import {
   ChatReplyPreview,
   type ChatReplyPreviewProps,
@@ -33,14 +28,14 @@ import {
 import {
   ChatFileUploadPreviewOverlay,
   ChatImageUploadPreviewOverlay,
-  ChatImageOverlay,
   ForwardMessageOverlay,
   DeleteMessageOverlay,
-} from "~/frontend/frontend-2/features/chat/pages/components/ChatOverlays";
-import type {
-  ChatInputMode,
-  ChatTextInputProps,
-} from "~/frontend/frontend-2/features/chat/pages/components/ChatTextInput/ChatTextInput";
+} from "~/frontend/frontend-2/features/chat/pages/components2/ChatOverlays";
+import {
+  TextInput,
+  type TextInputProps,
+  type TextInputMode,
+} from "~/frontend/frontend-2/features/chat/pages/components2/TextInput/TextInput";
 import {
   ChatMessageBubbleMenu,
   ChatMessageBubbleMenuItem,
@@ -64,6 +59,7 @@ import {
 
 import { userGroupConversationDisplayMode } from "~/frontend/frontend-2/features/chat/utils";
 import { match } from "ts-pattern";
+import { clsx as cx } from "clsx";
 import useAsyncEffect from "use-async-effect";
 
 const PAGE_SIZE = 24;
@@ -87,7 +83,7 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
     useState(false);
   const [showDeleteMessageOverlay, setShowDeleteMessageOverlay] =
     useState(false);
-  const [inputMode, setInputMode] = useState<ChatInputMode>({
+  const [inputMode, setInputMode] = useState<TextInputMode>({
     type: "message",
   });
   const [showMessageBubbleMenu, setShowMessageBubbleMenu] = useState(false);
@@ -263,7 +259,7 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
     [props.contactId, store.get]
   );
 
-  const onClearMessages: ChatHeaderProps["onClearMessages"] =
+  const onClearMessages: ComponentProps<typeof ChatHeader>["onClearMessages"] =
     useCallback(async () => {
       const r = await client["topic/clear_messages"]({
         topicId: props.contactId,
@@ -310,100 +306,104 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
       store.setContact,
     ]);
 
-  const onChatScrollToTop: ChatConversationProps["onChatScrollToTop"] =
-    useCallback(async () => {
-      if (
-        messagesStore.get().hasEarlierMessages &&
-        !messagesStore.get().isLoadingMoreMessages
-      ) {
-        const result = await messagesStore.loadMessages(
-          PAGE_SIZE,
-          messagesStore.get().messages[0].seqId
+  const onChatScrollToTop: ComponentProps<
+    typeof ChatConversation
+  >["onChatScrollToTop"] = useCallback(async () => {
+    if (
+      messagesStore.get().hasEarlierMessages &&
+      !messagesStore.get().isLoadingMoreMessages
+    ) {
+      const result = await messagesStore.loadMessages(
+        PAGE_SIZE,
+        messagesStore.get().messages[0].seqId
+      );
+      if (result.isOk()) {
+        messagesStore.setMessages(
+          result.value.earlierMessages.concat(messagesStore.get().messages)
         );
-        if (result.isOk()) {
-          messagesStore.setMessages(
-            result.value.earlierMessages.concat(messagesStore.get().messages)
-          );
-        }
-        return "new messages loaded";
+      }
+      return "new messages loaded";
+    }
+
+    return "no new messages loaded";
+  }, [messagesStore.get, messagesStore.loadMessages]);
+
+  const onReplyMessage: ComponentProps<
+    typeof ChatConversation
+  >["onReplyMessage"] = useCallback(
+    async (m: ChatMessageTypeMessage) => {
+      const seqId = m.seqId;
+      const hasMessageInDisplay =
+        messagesStore.get().messages.findIndex((x) => x.seqId === seqId) !== -1;
+      if (hasMessageInDisplay) {
+        conversationUIControl.current?.scrollToMessage(seqId);
+        return;
       }
 
-      return "no new messages loaded";
-    }, [messagesStore.get, messagesStore.loadMessages]);
+      const hasMessagesBeforeReplyInDisplay =
+        messagesStore.get().messages.findIndex((x) => x.seqId < seqId) !== -1;
+      if (hasMessagesBeforeReplyInDisplay) {
+        toast("Message not found");
+        return;
+      }
 
-  const onReplyMessageClick: ChatConversationProps["onReplyMessageClick"] =
-    useCallback(
-      async (seqId) => {
-        const hasMessageInDisplay =
-          messagesStore.get().messages.findIndex((x) => x.seqId === seqId) !==
-          -1;
-        if (hasMessageInDisplay) {
-          conversationUIControl.current?.scrollToMessage(seqId);
-          return;
-        }
-
-        const hasMessagesBeforeReplyInDisplay =
-          messagesStore.get().messages.findIndex((x) => x.seqId < seqId) !== -1;
-        if (hasMessagesBeforeReplyInDisplay) {
+      const result = await messagesStore.loadMessagesUntilReply(
+        messagesStore.get().messages[0].seqId,
+        seqId
+      );
+      if (result.isErr()) {
+        if (result.error.type === "message not found") {
           toast("Message not found");
           return;
-        }
-
-        const result = await messagesStore.loadMessagesUntilReply(
-          messagesStore.get().messages[0].seqId,
-          seqId
-        );
-        if (result.isErr()) {
-          if (result.error.type === "message not found") {
-            toast("Message not found");
-            return;
-          } else {
-            console.error(
-              `Unexpected error in getting replied message:`,
-              result.error.cause
-            );
-            return;
-          }
         } else {
-          conversationUIControl.current?.scrollToMessage(seqId);
-        }
-      },
-      [messagesStore.get, messagesStore.loadMessagesUntilReply]
-    );
-
-  const onMessageBubbleMenuClick: ChatConversationProps["onMessageBubbleMenuClick"] =
-    useCallback(
-      (e, message) => {
-        if (!showMessageBubbleMenu && messageBubbleMenuRef.current) {
-          messageBubbleMenuRef.current.style.setProperty(
-            "--mouse-x",
-            `${e.clientX}px`
+          console.error(
+            `Unexpected error in getting replied message:`,
+            result.error.cause
           );
-          messageBubbleMenuRef.current.style.setProperty(
-            "--mouse-y",
-            `${e.clientY}px`
-          );
+          return;
         }
-        setShowMessageBubbleMenu(true);
-        setMessageSelected(message);
-      },
-      [showMessageBubbleMenu]
-    );
-
-  const onMessageImageClick: ChatConversationProps["onMessageImageClick"] =
-    useCallback(async (messageUrl) => {
-      if (chatImgViewRef.current) {
-        chatImgViewRef.current.src = messageUrl;
+      } else {
+        conversationUIControl.current?.scrollToMessage(seqId);
       }
+    },
+    [messagesStore.get, messagesStore.loadMessagesUntilReply]
+  );
 
-      await new Promise((resolve) => {
-        setTimeout(() => {
-          resolve(undefined);
-        }, 200);
-      });
+  const onMessageBubbleMenuClick: ComponentProps<
+    typeof ChatConversation
+  >["onMessageBubbleMenuClick"] = useCallback(
+    (e, message) => {
+      if (!showMessageBubbleMenu && messageBubbleMenuRef.current) {
+        messageBubbleMenuRef.current.style.setProperty(
+          "--mouse-x",
+          `${e.clientX}px`
+        );
+        messageBubbleMenuRef.current.style.setProperty(
+          "--mouse-y",
+          `${e.clientY}px`
+        );
+      }
+      setShowMessageBubbleMenu(true);
+      setMessageSelected(message);
+    },
+    [showMessageBubbleMenu]
+  );
 
-      setShowMessageImageOverlay(true);
-    }, []);
+  const onMessageImageClick: ComponentProps<
+    typeof ChatConversation
+  >["onMessageImageClick"] = useCallback(async (messageUrl) => {
+    if (chatImgViewRef.current) {
+      chatImgViewRef.current.src = messageUrl;
+    }
+
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(undefined);
+      }, 200);
+    });
+
+    setShowMessageImageOverlay(true);
+  }, []);
 
   const onCloseReplyPreview: ChatReplyPreviewProps["onClose"] =
     useCallback(async () => {
@@ -416,7 +416,7 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
       setToReplyMessage(false);
     }, []);
 
-  const onMessageSubmit: ChatTextInputProps["onMessageSubmit"] = useCallback(
+  const onMessageSubmit: TextInputProps["onMessageSubmit"] = useCallback(
     async (message) => {
       if (toReplyMessage) {
         const replyTo = messageSelected;
@@ -454,7 +454,7 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
     [messageSelected, props.contactId, toReplyMessage]
   );
 
-  const onTyping: ChatTextInputProps["onTyping"] = useCallback(
+  const onTyping: TextInputProps["onTyping"] = useCallback(
     (isTyping) => {
       void client["topic/notify_typing"]({
         action: isTyping ? "typing" : "stop-typing",
@@ -464,7 +464,7 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
     [props.contactId]
   );
 
-  const onLoadFile: ChatTextInputProps["onLoadFile"] = useCallback((file) => {
+  const onLoadFile: TextInputProps["onLoadFile"] = useCallback((file) => {
     setInputMode({
       type: "file",
       filename: file.name,
@@ -473,7 +473,7 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
     });
   }, []);
 
-  const onLoadPhoto: ChatTextInputProps["onLoadPhoto"] = useCallback(
+  const onLoadPhoto: TextInputProps["onLoadPhoto"] = useCallback(
     async (photo) => {
       if (imgUploadPreviewRef.current) {
         imgUploadPreviewRef.current.src = URL.createObjectURL(photo);
@@ -489,5 +489,207 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
     []
   );
 
-  return <div className="relative flex h-screen"></div>;
+  const getAuthorProfileImage: ComponentProps<
+    typeof ChatConversation
+  >["getAuthorProfileImage"] = useCallback(
+    (userId: UserId) => {
+      if (userId === store.get().profile.profile?.userId) {
+        return store.get().profile.profile?.profilePhotoUrl ?? undefined;
+      } else {
+        const profile = membersStore.getMembers().get(userId);
+        return profile?.profilePhotoUrl ?? undefined;
+      }
+    },
+    [store.get, membersStore.getMembers]
+  );
+
+  return (
+    <div className="relative flex h-screen">
+      <div className="w-full">
+        <ChatHeader
+          online={store.grp.status.online}
+          lastSeen={null}
+          typing={
+            store.grp.status.online && store.grp.status.latestTyping !== null
+              ? store.grp.status.latestTyping.fullname
+              : null
+          }
+          contactName={store.grp.profile.name}
+          contactProfilePhotoUrl={
+            store.grp.profile.profilePhotoUrl ?? undefined
+          }
+          onClearMessages={onClearMessages}
+          onInfoClick={() => setShowDrawer(true)}
+          type="grp"
+        />
+        <div className="relative h-[calc(100%-8rem)] w-full">
+          <ChatConversation
+            isNewContact={false}
+            peerName={store.grp.profile.name}
+            ref={conversationUIControl}
+            onReplyMessage={onReplyMessage}
+            onChatScrollToTop={onChatScrollToTop}
+            toReplyMessage={toReplyMessage ? messageSelected : null}
+            showReplyPreview={toReplyMessage}
+            onCloseReplyPreview={onCloseReplyPreview}
+            onMessageBubbleMenuClick={onMessageBubbleMenuClick}
+            getAuthorProfileImage={getAuthorProfileImage}
+            chatItems={messagesStore.messages}
+            mode={conversationDisplayMode}
+            onMessageImageClick={onMessageImageClick}
+          />
+          <div
+            className={cx("absolute left-0 top-0 h-full w-full bg-white", {
+              hidden: inputMode.type != "photo",
+            })}
+          >
+            <ChatImageUploadPreviewOverlay
+              ref={imgUploadPreviewRef}
+              filename={inputMode.type === "photo" ? inputMode.filename : ""}
+              onCloseOverlay={() => setInputMode({ type: "message" })}
+            />
+          </div>
+
+          <div
+            className={cx("absolute left-0 top-0 h-full w-full bg-white", {
+              hidden: inputMode.type != "file",
+            })}
+          >
+            <ChatFileUploadPreviewOverlay
+              filename={inputMode.type == "file" ? inputMode.filename : ""}
+              contentType={
+                inputMode.type == "file" ? inputMode.contentType : ""
+              }
+              size={inputMode.type == "file" ? inputMode.size : 0}
+              onCloseOverlay={() => {
+                setInputMode({ type: "message" });
+              }}
+            />
+          </div>
+        </div>
+        <TextInput
+          inputMode={inputMode}
+          onTyping={onTyping}
+          onMessageSubmit={onMessageSubmit}
+          onLoadFile={onLoadFile}
+          onLoadPhoto={onLoadPhoto}
+          disabled={conversationDisplayMode.type !== "normal"}
+        />
+      </div>
+
+      <ChatMessageBubbleMenu
+        showMenu={showMessageBubbleMenu}
+        onClose={() => setShowMessageBubbleMenu(false)}
+        ref={messageBubbleMenuRef}
+      >
+        {!messageSelected?.deleted && (
+          <>
+            <ChatMessageBubbleMenuItem
+              onClick={() => {
+                setShowForwardMessageOverlay(true);
+                setShowMessageBubbleMenu(false);
+              }}
+              content="Forward"
+            />
+
+            <ChatMessageBubbleMenuItem
+              onClick={() => {
+                setToReplyMessage(true);
+                setShowMessageBubbleMenu(false);
+              }}
+              content="Reply"
+            />
+          </>
+        )}
+
+        <ChatMessageBubbleMenuItem
+          onClick={() => {
+            setShowDeleteMessageOverlay(true);
+            setShowMessageBubbleMenu(false);
+          }}
+          content="Delete"
+        />
+      </ChatMessageBubbleMenu>
+
+      {showForwardMessageOverlay && (
+        <ForwardMessageOverlay
+          contacts={[
+            ...Array.from(store.p2pList).map(([id, p]) => ({
+              topicId: id,
+              name: p.profile.name,
+            })),
+            ...Array.from(store.groupList).map(([id, g]) => ({
+              topicId: id,
+              name: g.profile.name,
+            })),
+          ]}
+          onForwardMessage={async (forwardTo) => {
+            if (messageSelected == null) {
+              setShowForwardMessageOverlay(false);
+              return;
+            }
+
+            const result = await client["topic/forward_message"]({
+              message: {
+                seqId: messageSelected.seqId,
+                topicId: props.contactId,
+              },
+              forwardTo,
+            });
+            if (result.isOk()) {
+              router.push(location.pathname + `?topic=${forwardTo}`);
+            }
+            setShowForwardMessageOverlay(false);
+          }}
+          onClose={() => {
+            setShowForwardMessageOverlay(false);
+          }}
+        />
+      )}
+
+      {showDeleteMessageOverlay && (
+        <DeleteMessageOverlay
+          onDeleteForEveryone={
+            messageSelected?.userIsAuthor ||
+            permission(store.grp.profile.userPermissions).canDelete()
+              ? async () => {
+                  setShowDeleteMessageOverlay(false);
+                  if (messageSelected === null) {
+                    throw new Error("No message is selected for deletion");
+                  }
+                  const r = await client["topic/delete_message"]({
+                    topicId: props.contactId,
+                    messageSeqId: messageSelected.seqId,
+                    deleteFor: "everyone",
+                  });
+                  if (r.isErr()) {
+                    alert(`Failed to delete message: ${r.error.message}`);
+                    return;
+                  }
+                }
+              : undefined
+          }
+          onDeleteForMe={async () => {
+            setShowDeleteMessageOverlay(false);
+            const message = messageSelected;
+            if (message === null) {
+              throw new Error("No message is selected for deletion");
+            }
+            const r = await client["topic/delete_message"]({
+              topicId: props.contactId,
+              messageSeqId: message.seqId,
+              deleteFor: "self",
+            });
+            if (r.isErr()) {
+              alert(`Failed to delete message: ${r.error.message}`);
+              return;
+            }
+          }}
+          onCancel={() => setShowDeleteMessageOverlay(false)}
+        />
+      )}
+
+      <Toaster position="bottom-left" />
+    </div>
+  );
 }

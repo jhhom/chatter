@@ -3,6 +3,7 @@ import {
   IconPerson,
   IconEllipsisVertical,
 } from "~/frontend/frontend-2/features/common/icons";
+import { isToday, format, isYesterday } from "date-fns";
 import { clsx as cx } from "clsx";
 
 const MenuItem = (props: { content: string; onClick?: () => void }) => {
@@ -16,6 +17,30 @@ const MenuItem = (props: { content: string; onClick?: () => void }) => {
       </button>
     </div>
   );
+};
+
+const indicatorText = (
+  online: boolean,
+  typing: string | null,
+  lastSeen: Date | null
+): string | undefined => {
+  if (online) {
+    if (typing) {
+      return `${typing} is typing...`;
+    } else {
+      return "online";
+    }
+  } else if (lastSeen !== null) {
+    if (isToday(lastSeen)) {
+      return `last seen today at ${format(lastSeen, "h:mm aa")}`;
+    } else if (isYesterday(lastSeen)) {
+      return `last seen yesterday at ${format(lastSeen, "h:mm aa")}`;
+    } else {
+      return `last seen ${format(lastSeen, "MMM dd, yyyy")}`;
+    }
+  } else {
+    return undefined;
+  }
 };
 
 export function ChatHeader(props: {
@@ -45,6 +70,12 @@ export function ChatHeader(props: {
     return () => document.body.addEventListener("click", onClick);
   }, []);
 
+  const profileDescription = indicatorText(
+    props.online,
+    props.typing,
+    props.lastSeen
+  );
+
   return (
     <div className="flex h-16 w-full items-center justify-between border-b-[1.5px] border-gray-200 px-5">
       <div className="flex items-center">
@@ -67,7 +98,12 @@ export function ChatHeader(props: {
           )}
         </div>
 
-        <p className="pl-3 font-medium">{props.contactName}</p>
+        <div className="pl-3">
+          <p className="font-medium">{props.contactName}</p>
+          {profileDescription && (
+            <p className="text-xs text-gray-600">{profileDescription}</p>
+          )}
+        </div>
       </div>
 
       <div className="pr-2">
