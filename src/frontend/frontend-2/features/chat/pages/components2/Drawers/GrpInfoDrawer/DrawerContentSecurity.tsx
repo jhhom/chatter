@@ -1,10 +1,36 @@
+import { useState, useEffect } from "react";
 import { clsx as cx } from "clsx";
-import { PermissionSetting } from "../Permission";
+import { type PermissionId, PermissionSetting } from "../Permission";
+import { permission } from "~/backend/service/common/permissions";
 
 export function DrawerContentSecurity(props: {
-  hasPermissionToEdit: boolean;
+  userPermission: string;
+  groupDefaultPermission: string;
+  editable: boolean;
+  onSubmitPermissionChange: (permission: string) => void;
   onBack: () => void;
 }) {
+  const [permissionStr, setPermissionStr] = useState(
+    props.groupDefaultPermission
+  );
+
+  const groupDefaultPermission = () => permission(permissionStr);
+
+  const onCheckboxChange = (id: PermissionId, checked: boolean) => {
+    let newPermissionString = permissionStr;
+    if (checked) {
+      newPermissionString = newPermissionString + id;
+    } else {
+      newPermissionString = newPermissionString.replace(id, "");
+    }
+    setPermissionStr(newPermissionString);
+  };
+
+  // synchronize the updates of group default permission on the server with the permissions displayed
+  useEffect(() => {
+    setPermissionStr(props.groupDefaultPermission);
+  }, [props]);
+
   return (
     <div className="px-4 pt-6">
       <div>
@@ -13,85 +39,76 @@ export function DrawerContentSecurity(props: {
         <PermissionSetting
           name="Join (J)"
           permissionId="J"
-          checked={true}
+          checked={groupDefaultPermission().canJoin()}
           onChange={() => {
             console.log("bom");
           }}
-          editable={props.hasPermissionToEdit}
+          editable={props.editable}
         />
         <PermissionSetting
           name="Read (R)"
           permissionId="R"
-          checked={true}
-          onChange={() => {
-            console.log("bom");
-          }}
-          editable={props.hasPermissionToEdit}
+          checked={groupDefaultPermission().canRead()}
+          onChange={onCheckboxChange}
+          editable={props.editable}
         />
         <PermissionSetting
           name="Write (W)"
           permissionId="W"
-          checked={true}
-          onChange={() => {
-            console.log("bom");
-          }}
-          editable={props.hasPermissionToEdit}
+          checked={groupDefaultPermission().canWrite()}
+          onChange={onCheckboxChange}
+          editable={props.editable}
         />
         <PermissionSetting
           name="Get notified (P)"
           permissionId="P"
-          checked={true}
-          onChange={() => {
-            console.log("bom");
-          }}
-          editable={props.hasPermissionToEdit}
+          checked={groupDefaultPermission().canGetNotifiedOfPresence()}
+          onChange={onCheckboxChange}
+          editable={props.editable}
         />
         <PermissionSetting
           name="Share (S)"
           permissionId="P"
-          checked={true}
-          onChange={() => {
-            console.log("bom");
-          }}
-          editable={props.hasPermissionToEdit}
+          checked={groupDefaultPermission().canShare()}
+          onChange={onCheckboxChange}
+          editable={props.editable}
         />
         <PermissionSetting
           name="Delete (D)"
           permissionId="P"
-          checked={true}
-          onChange={() => {
-            console.log("bom");
-          }}
-          editable={props.hasPermissionToEdit}
+          checked={groupDefaultPermission().canDelete()}
+          onChange={onCheckboxChange}
+          editable={props.editable}
         />
         <PermissionSetting
           name="Administer (A)"
           permissionId="P"
-          checked={true}
-          onChange={() => {
-            console.log("bom");
-          }}
-          editable={props.hasPermissionToEdit}
+          checked={groupDefaultPermission().canAdminister()}
+          onChange={onCheckboxChange}
+          editable={props.editable}
         />
       </div>
 
       <div className="text-sm">
         <p className="mb-3 mt-9 font-medium">Permissions given to you:</p>
-        <p className="">JRWPSDA</p>
+        <p className="">{props.userPermission}</p>
       </div>
 
       <div className="mt-8 flex justify-between text-sm">
         <button
           onClick={props.onBack}
           className={cx("rounded-md border-2 border-gray-200 px-4 py-1.5", {
-            "ml-auto": !props.hasPermissionToEdit,
+            "ml-auto": !props.editable,
           })}
         >
-          {props.hasPermissionToEdit ? "Cancel" : "Back"}
+          {props.editable ? "Cancel" : "Back"}
         </button>
 
-        {props.hasPermissionToEdit && (
-          <button className="rounded-md bg-green-600 px-4 py-1.5 font-medium text-white">
+        {props.editable && (
+          <button
+            onClick={() => props.onSubmitPermissionChange(permissionStr)}
+            className="rounded-md bg-green-600 px-4 py-1.5 font-medium text-white"
+          >
             Save changes
           </button>
         )}

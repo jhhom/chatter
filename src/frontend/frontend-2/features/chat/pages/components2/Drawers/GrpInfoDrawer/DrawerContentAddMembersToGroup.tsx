@@ -1,80 +1,33 @@
-import { useState } from "react";
-import { IconX } from "~/frontend/frontend-2/features/common/icons";
+import { useState, useEffect } from "react";
 import { ContactSearch } from "~/frontend/frontend-2/features/common/components";
+import { GroupTopicId, UserId } from "~/api-contract/subscription/subscription";
 
-type Contact = {
-  id: string;
-  name: string;
-  picture: string;
+export type NewMember = {
+  userId: UserId;
+  userFullname: string;
+  profilePhotoUrl: string | null;
 };
 
-const contactList: Contact[] = [
-  {
-    id: "1",
-    name: "John Graham",
-    picture: "./assets/man-1-[white].jpg",
-  },
-  {
-    id: "2",
-    name: "Designer team",
-    picture: "./assets/abstract-art.jpg",
-  },
-  {
-    id: "3",
-    name: "Denis Jakubow",
-    picture: "./assets/man-6-[white].jpg",
-  },
-  {
-    id: "4",
-    name: "Samantha Mathew",
-    picture: "./assets/girl-1.jpg",
-  },
-  {
-    id: "4",
-    name: "Samantha Mathew",
-    picture: "./assets/girl-1.jpg",
-  },
-  {
-    id: "4",
-    name: "Samantha Mathew",
-    picture: "./assets/girl-1.jpg",
-  },
-  {
-    id: "4",
-    name: "Samantha Mathew",
-    picture: "./assets/girl-1.jpg",
-  },
-  {
-    id: "4",
-    name: "Samantha Mathew",
-    picture: "./assets/girl-1.jpg",
-  },
-  {
-    id: "4",
-    name: "Samantha Mathew",
-    picture: "./assets/girl-1.jpg",
-  },
-  {
-    id: "4",
-    name: "Samantha Mathew",
-    picture: "./assets/girl-1.jpg",
-  },
-  {
-    id: "3",
-    name: "Denis Jakubow",
-    picture: "./assets/man-6-[white].jpg",
-  },
-];
+export function DrawerContentAddMembersToGroup(props: {
+  groupTopicId: GroupTopicId;
+  onAddMembers: (membersToAdd: UserId[]) => void;
+  searchNewMembersByName: (query: string) => Promise<NewMember[]>;
+  onCancelClick: () => void;
+  onAfterMembersAdded: () => void;
+}) {
+  const [addedMembers, setAddedMembers] = useState<
+    { userId: UserId; userFullname: string; profilePhotoUrl: string | null }[]
+  >([]);
+  const [searchInput, setSearchInput] = useState("");
+  const [newMemberSearchList, setNewMemberSearchList] = useState<NewMember[]>(
+    []
+  );
 
-export function DrawerContentAddMembersToGroup() {
-  const [search, setSearch] = useState("");
-  const [addedContacts, setAddedContacts] = useState<Contact[]>([]);
-
-  const filteredContacts = contactList
-    .filter((x) => x.name.toLowerCase().includes(search.toLowerCase()))
-    .filter(
-      (x) => addedContacts.findIndex((added) => added.id === x.id) === -1
-    );
+  useEffect(() => {
+    void props
+      .searchNewMembersByName(searchInput)
+      .then((v) => setNewMemberSearchList(v));
+  }, [searchInput, props]);
 
   // 1.5rem + 1.25rem + 10rem + 2rem + 1.25rem + 0.75rem + 1.5rem + 2rem + 1.25rem + 0.25rem +
 
@@ -85,13 +38,15 @@ export function DrawerContentAddMembersToGroup() {
           <p className="font-medium">Add participant</p>
 
           <div className="mt-3 flex h-40 w-full flex-wrap content-start justify-start gap-y-2 overflow-y-auto rounded-md border  border-gray-400 px-2 py-2">
-            {addedContacts.map((c) => (
+            {addedMembers.map((c) => (
               <AddedContactPill
-                id={c.id}
-                name={c.name}
-                picture={c.picture}
+                userId={c.userId}
+                userFullname={c.userFullname}
+                profilePhotoUrl={c.profilePhotoUrl}
                 onRemove={() =>
-                  setAddedContacts(addedContacts.filter((x) => x.id !== c.id))
+                  setAddedMembers(
+                    addedMembers.filter((x) => x.userId !== c.userId)
+                  )
                 }
               />
             ))}
@@ -103,24 +58,26 @@ export function DrawerContentAddMembersToGroup() {
             <p className="font-medium">Contact Search</p>
 
             <div className="mt-3">
-              <ContactSearch onInput={(e) => setSearch(e.target.value)} />
+              <ContactSearch onInput={(e) => setSearchInput(e.target.value)} />
             </div>
           </div>
         </div>
 
-        <p className="mb-4 mt-8 px-4">Contacts ({filteredContacts.length})</p>
+        <p className="mb-4 mt-8 px-4">
+          Contacts ({newMemberSearchList.length})
+        </p>
         <div className="pl-20 pr-4 pt-1">
           <hr />
         </div>
       </div>
 
       <div className="h-[calc(100%-(24.375rem+4rem))] overflow-y-auto">
-        {filteredContacts.map((c) => (
+        {newMemberSearchList.map((c) => (
           <div
-            onClick={() => setAddedContacts([...addedContacts, c])}
+            onClick={() => setAddedMembers([...addedMembers, c])}
             className="group hover:bg-gray-100"
           >
-            <Contact name={c.name} picture={c.picture} />
+            <Contact name={c.userFullname} picture={c.profilePhotoUrl ?? ""} />
 
             <div className="pl-20 pr-4 pt-1">
               <hr />
@@ -130,11 +87,24 @@ export function DrawerContentAddMembersToGroup() {
       </div>
 
       <div className="flex h-16 w-full items-center justify-around border-t-2 border-gray-200">
-        <button className="block rounded-md border border-gray-300 px-4 py-2 hover:bg-gray-50">
+        <button
+          onClick={props.onCancelClick}
+          className="block rounded-md border border-gray-300 px-4 py-2 hover:bg-gray-50"
+        >
           Cancel
         </button>
 
-        <button className="block rounded-md bg-green-600/80 px-4 py-2 font-medium text-white hover:bg-green-600">
+        <button
+          onClick={() => {
+            const added = addedMembers;
+            if (added.length == 0) {
+              return;
+            }
+            props.onAddMembers(added.map((u) => u.userId));
+            props.onAfterMembersAdded();
+          }}
+          className="block rounded-md bg-green-600/80 px-4 py-2 font-medium text-white hover:bg-green-600"
+        >
           Add members
         </button>
       </div>
@@ -143,7 +113,7 @@ export function DrawerContentAddMembersToGroup() {
 }
 
 function AddedContactPill(
-  props: Contact & {
+  props: NewMember & {
     onRemove: () => void;
   }
 ) {
@@ -151,12 +121,12 @@ function AddedContactPill(
     <div className="ml-1.5 flex h-6 rounded-md border border-gray-300 bg-gray-100">
       <div className="h-full w-8 rounded-l-md">
         <img
-          src={props.picture}
+          src={props.profilePhotoUrl ?? ""}
           className="h-full w-full rounded-l-md object-cover"
         />
       </div>
       <div className="ml-1.5 flex items-center whitespace-nowrap pr-1 text-xs">
-        {props.name}
+        {props.userFullname}
       </div>
       <div className="group p-0.5">
         <button

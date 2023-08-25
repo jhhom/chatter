@@ -621,13 +621,67 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
           <GroupInfoDrawer3 onClose={() => setShowDrawer(false)}>
             {(p) => {
               return match(p.content)
-                .with("security", () => (
-                  <DrawerContentSecurity
-                    onBack={() => p.setContent("info")}
-                    hasPermissionToEdit={false}
+                .with("security", () => {
+                  if (store.grp === undefined) {
+                    throw new Error("Group is undefined");
+                  }
+
+                  return (
+                    <DrawerContentSecurity
+                      userPermission={store.grp?.profile.userPermissions}
+                      groupDefaultPermission={
+                        store.grp?.profile.defaultPermissions
+                      }
+                      onBack={() => p.setContent("info")}
+                      editable={permission(
+                        store.grp.profile.userPermissions
+                      ).canAdminister()}
+                      onSubmitPermissionChange={async (permission) => {
+                        const r = await client[
+                          "permissions/update_group_default_permission"
+                        ]({
+                          groupTopicId: props.contactId,
+                          newDefaultPermission: permission,
+                        });
+                        if (r.isErr()) {
+                          alert(
+                            "Failed to update group default permission: " +
+                              r.error.message
+                          );
+                          return;
+                        }
+                        p.setContent("info");
+                      }}
+                    />
+                  );
+                })
+                .with("invite-link", () => (
+                  <DrawerContentInviteLink
+                    groupId={props.contactId}
+                    groupName={store.grp?.profile.name ?? ""}
+                    groupProfilePhotoUrl={
+                      store.grp?.profile.profilePhotoUrl ?? undefined
+                    }
+                    getInviteLink={async () => {
+                      const r = await client["group/invite_link"]({
+                        groupTopicId: props.contactId,
+                      });
+                      if (r.isErr()) {
+                        console.error(
+                          `Failed to get group invite link: ` + r.error.message
+                        );
+                        return "";
+                      }
+                      return r.value.inviteLink;
+                    }}
+                    resetInviteLink={() => {
+                      //
+                    }}
+                    onCopyInviteLink={() => {
+                      toast("Link copied to clipboard");
+                    }}
                   />
                 ))
-                .with("invite-link", () => <DrawerContentInviteLink />)
                 .with("add-member", () => <DrawerContentAddMembersToGroup />)
                 .otherwise(() => (
                   <DrawerContentInfo
@@ -730,7 +784,7 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
         />
       )}
 
-      <Toaster position="bottom-left" />
+      <Toaster position="top-right" />
     </div>
   );
 }

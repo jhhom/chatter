@@ -1,30 +1,55 @@
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
 import {
   IconCopy,
   IconExclamationCircle,
   IconStop,
+  IconPerson,
 } from "~/frontend/frontend-2/features/common/icons";
 import { DrawerButton } from "./components";
 
-export function DrawerContentInviteLink() {
+export function DrawerContentInviteLink(props: {
+  groupProfilePhotoUrl: string | undefined;
+  groupId: string;
+  groupName: string;
+  getInviteLink: () => Promise<string>;
+  resetInviteLink: () => void;
+  onCopyInviteLink: () => void;
+}) {
+  const [inviteLink, setInviteLink] = useState("");
+
+  useEffect(() => {
+    void props.getInviteLink().then((l) => {
+      setInviteLink(`http://localhost:4000/join_group/${l}`);
+    });
+  }, [props.getInviteLink]);
+
   return (
-    <div className="px-6 pt-4">
-      <div className="bg-white pb-3">
+    <div className="h-full bg-white px-6 pt-4">
+      <div className="pb-3">
         <div className="flex py-2">
           <div className="h-14 w-14">
-            <img
-              className="h-full w-full rounded-lg"
-              src="./assets/abstract-art.jpg"
-            />
+            {props.groupProfilePhotoUrl ? (
+              <img
+                className="h-full w-full rounded-lg"
+                src={props.groupProfilePhotoUrl}
+              />
+            ) : (
+              <div className="flex h-full w-full items-end justify-center rounded-lg bg-gray-100 pb-1">
+                <IconPerson className="h-10 w-10 text-gray-400" />
+              </div>
+            )}
           </div>
 
           <div className="w-[calc(100%-3.5rem)] pl-4 text-sm">
-            <p className="font-medium">Designers Team</p>
-            <a
+            <p className="font-medium">{props.groupName}</p>
+            <Link
               className="mt-1.5 block text-[0.8rem] text-blue-600 hover:text-blue-700 hover:underline"
-              href="http://localhost:4000/join_group/8y3a8505rgeory8"
+              href={inviteLink}
             >
-              http://localhost:4000/join_group/8y3a8505rgeory8
-            </a>
+              {inviteLink}
+            </Link>
           </div>
         </div>
 
@@ -42,7 +67,8 @@ export function DrawerContentInviteLink() {
             icon={<IconCopy className="text-gray-400" />}
             iconPadding="px-2.5"
             onClick={() => {
-              console.log("bom");
+              void navigator.clipboard.writeText(inviteLink);
+              props.onCopyInviteLink();
             }}
           />
         </div>
@@ -52,9 +78,7 @@ export function DrawerContentInviteLink() {
             content="Reset link"
             icon={<IconStop className="text-gray-400" />}
             iconPadding="px-2.5"
-            onClick={() => {
-              console.log("bom");
-            }}
+            onClick={props.resetInviteLink}
           />
         </div>
       </div>
