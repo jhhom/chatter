@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { ContactSearch } from "~/frontend/frontend-2/features/common/components";
-import { GroupTopicId, UserId } from "~/api-contract/subscription/subscription";
+import { IconPerson } from "~/frontend/frontend-2/features/common/icons";
+import type {
+  GroupTopicId,
+  UserId,
+} from "~/api-contract/subscription/subscription";
 
 export type NewMember = {
   userId: UserId;
@@ -28,8 +32,6 @@ export function DrawerContentAddMembersToGroup(props: {
       .searchNewMembersByName(searchInput)
       .then((v) => setNewMemberSearchList(v));
   }, [searchInput, props]);
-
-  // 1.5rem + 1.25rem + 10rem + 2rem + 1.25rem + 0.75rem + 1.5rem + 2rem + 1.25rem + 0.25rem +
 
   return (
     <div className="h-full text-sm">
@@ -72,21 +74,28 @@ export function DrawerContentAddMembersToGroup(props: {
       </div>
 
       <div className="h-[calc(100%-(24.375rem+4rem))] overflow-y-auto">
-        {newMemberSearchList.map((c) => (
-          <div
-            onClick={() => setAddedMembers([...addedMembers, c])}
-            className="group hover:bg-gray-100"
-          >
-            <Contact name={c.userFullname} picture={c.profilePhotoUrl ?? ""} />
+        {newMemberSearchList
+          .filter(
+            (m) => addedMembers.findIndex((x) => x.userId === m.userId) === -1
+          )
+          .map((c) => (
+            <div
+              onClick={() => setAddedMembers([...addedMembers, c])}
+              className="group hover:bg-gray-100"
+            >
+              <Contact
+                name={c.userFullname}
+                picture={c.profilePhotoUrl ?? undefined}
+              />
 
-            <div className="pl-20 pr-4 pt-1">
-              <hr />
+              <div className="pl-20 pr-4 pt-1">
+                <hr />
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
 
-      <div className="flex h-16 w-full items-center justify-around border-t-2 border-gray-200">
+      <div className="flex h-16 w-full items-center justify-around border-l border-t-2 border-gray-200">
         <button
           onClick={props.onCancelClick}
           className="block rounded-md border border-gray-300 px-4 py-2 hover:bg-gray-50"
@@ -120,10 +129,16 @@ function AddedContactPill(
   return (
     <div className="ml-1.5 flex h-6 rounded-md border border-gray-300 bg-gray-100">
       <div className="h-full w-8 rounded-l-md">
-        <img
-          src={props.profilePhotoUrl ?? ""}
-          className="h-full w-full rounded-l-md object-cover"
-        />
+        {props.profilePhotoUrl ? (
+          <img
+            className="h-full w-full rounded-l-md object-cover"
+            src={props.profilePhotoUrl}
+          />
+        ) : (
+          <div className="flex h-full items-end justify-center rounded-l-md object-cover">
+            <IconPerson className="h-5 w-5 text-gray-400" />
+          </div>
+        )}
       </div>
       <div className="ml-1.5 flex items-center whitespace-nowrap pr-1 text-xs">
         {props.userFullname}
@@ -140,14 +155,20 @@ function AddedContactPill(
   );
 }
 
-function Contact(props: { name: string; picture: string }) {
+function Contact(props: { name: string; picture: string | undefined }) {
   return (
     <div className="flex cursor-pointer items-center px-4 py-2 ">
       <div className="relative w-10">
-        <img
-          className="inline-block h-10 w-10 rounded-lg object-cover"
-          src={props.picture}
-        />
+        {props.picture ? (
+          <img
+            className="inline-block h-10 w-10 rounded-lg object-cover"
+            src={props.picture}
+          />
+        ) : (
+          <div className="flex h-10 w-10 items-end justify-center rounded-lg bg-gray-100 pb-1">
+            <IconPerson className="h-7 w-7 text-gray-400" />
+          </div>
+        )}
       </div>
 
       <div className="flex h-10 w-[calc(100%-2.5rem)] items-center pl-6">

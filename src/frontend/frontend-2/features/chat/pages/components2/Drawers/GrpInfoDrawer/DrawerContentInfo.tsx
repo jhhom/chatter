@@ -15,17 +15,28 @@ import { DrawerContentInviteLink } from "./DrawerContentInviteLink";
 import { DrawerButton } from "./components";
 import { DrawerContentAddMembersToGroup } from "./DrawerContentAddMembersToGroup";
 
+import { permission } from "~/backend/service/common/permissions";
+
 import {
   Popover,
   OverlayArrow,
   Dialog,
   TooltipTrigger,
   Tooltip,
+  Button,
+  DialogTrigger,
 } from "react-aria-components";
-import type { UserId } from "~/api-contract/subscription/subscription";
-import { DialogTrigger } from "@adobe/react-spectrum";
+import type {
+  GroupTopicId,
+  UserId,
+} from "~/api-contract/subscription/subscription";
 
 export function DrawerContentInfo(props: {
+  groupName: string;
+  groupId: GroupTopicId;
+  groupOwnerId: UserId;
+  userId: UserId;
+  userPermissions: string;
   profilePhotoUrl: string | null;
   memberList: {
     name: string;
@@ -33,10 +44,17 @@ export function DrawerContentInfo(props: {
     userId: UserId;
     profilePhotoUrl: string | null;
   }[];
+  onLeaveGroup: () => void;
   onSecurityClick: () => void;
   onInviteLinkClick: () => void;
   onAddMemberClick: () => void;
+  onContactRemove: (removedUserId: UserId) => void;
+  onEditPermissions: (userId: UserId) => void;
+  onViewPermissions: (userId: UserId) => void;
+  canInvite: boolean;
 }) {
+  const canAdminister = permission(props.userPermissions).canAdminister();
+
   return (
     <div>
       <div className="pb-3 pt-4">
@@ -57,9 +75,9 @@ export function DrawerContentInfo(props: {
       </div>
 
       <div className="pt-1">
-        <p className="text-center font-medium">Designers Team</p>
+        <p className="text-center font-medium">{props.groupName}</p>
         <p className="mt-3 text-center text-sm text-gray-500">
-          ID: grpv0gv99eytynq
+          ID: {props.groupId}
         </p>
       </div>
 
@@ -93,51 +111,31 @@ export function DrawerContentInfo(props: {
 
         <div className="mt-5">
           <ul className="space-y-5">
-            {props.memberList.map((m) => (
-              <li className="group flex cursor-pointer items-center justify-between rounded-lg">
-                <div className="flex items-center">
-                  <div className="h-9 w-9">
-                    {m.profilePhotoUrl ? (
-                      <img
-                        className="h-full w-full rounded-lg object-cover"
-                        src={m.profilePhotoUrl}
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-end justify-center rounded-lg bg-gray-100 pb-1">
-                        <IconPerson className="h-6 w-6 text-gray-400" />
-                      </div>
-                    )}
-                  </div>
-                  <p className="pl-3">{m.name}</p>
-                </div>
-
-                <DialogTrigger>
-                  <TooltipTrigger>
-                    <button className="block h-8 w-8 rounded-md  px-2 hover:border-2 hover:bg-gray-50">
-                      <IconChevronDown className="text-gray-500" />
-                    </button>
-                    <Tooltip>
-                      <p className="px-1 py-0.5 text-xs text-gray-600">Menu</p>
-                    </Tooltip>
-                  </TooltipTrigger>
-                  <Popover>
-                    <OverlayArrow>
-                      <svg width={12} height={12}>
-                        <path d="M0 0,L6 6,L12 0" />
-                      </svg>
-                    </OverlayArrow>
-                    <Dialog>
-                      <button className="block w-full px-4 py-2 text-left hover:bg-gray-100">
-                        Remove
-                      </button>
-                      <button className="block w-full px-4 py-2 text-left hover:bg-gray-100">
-                        Edit permissions
-                      </button>
-                    </Dialog>
-                  </Popover>
-                </DialogTrigger>
-              </li>
-            ))}
+            {props.memberList.map((m) => {
+              return (
+                <MemberListContact
+                  key={m.userId}
+                  name={m.name}
+                  online={m.online}
+                  profilePhotoUrl={m.profilePhotoUrl}
+                  userId={m.userId}
+                  isOwnSelf={m.userId === props.userId}
+                  onViewPermissions={() => props.onViewPermissions(m.userId)}
+                  onEditPermissions={
+                    m.userId !== props.userId && canAdminister
+                      ? () => props.onEditPermissions(m.userId)
+                      : undefined
+                  }
+                  onRemove={
+                    m.userId !== props.userId && canAdminister
+                      ? () => props.onContactRemove(m.userId)
+                      : undefined
+                  }
+                  isOwner={props.groupOwnerId === m.userId}
+                  canEditPermission={canAdminister}
+                />
+              );
+            })}
           </ul>
         </div>
       </div>
@@ -157,5 +155,94 @@ export function DrawerContentInfo(props: {
         </button>
       </div>
     </div>
+  );
+}
+
+function MemberListContact(props: {
+  name: string;
+  online: boolean;
+  userId: UserId;
+  isOwnSelf: boolean;
+  profilePhotoUrl: string | null;
+  canEditPermission: boolean;
+  onViewPermissions: () => void;
+  onRemove?: () => void;
+  onEditPermissions?: () => void;
+  isOwner: boolean;
+}) {
+  return (
+    <li className="group flex cursor-pointer items-center justify-between rounded-lg">
+      <div className="flex items-center">
+        <div className="h-9 w-9">
+          {props.profilePhotoUrl ? (
+            <img
+              className="h-full w-full rounded-lg object-cover"
+              src={props.profilePhotoUrl}
+            />
+          ) : (
+            <div className="flex h-full w-full items-end justify-center rounded-lg bg-gray-100 pb-1">
+              <IconPerson className="h-6 w-6 text-gray-400" />
+            </div>
+          )}
+        </div>
+        <p className="pl-3">{props.name}</p>
+      </div>
+
+      <DialogTrigger>
+        <TooltipTrigger>
+          <Button className="block h-8 w-8 rounded-md  px-2 hover:bg-gray-50 hover:outline hover:outline-2 hover:outline-gray-200">
+            <IconChevronDown className="text-gray-500" />
+          </Button>
+          <Tooltip offset={5}>
+            <p className="rounded-md border bg-white px-1 py-0.5 text-xs text-gray-600">
+              Menu
+            </p>
+          </Tooltip>
+        </TooltipTrigger>
+        <Popover arrowSize={10}>
+          <OverlayArrow>
+            <svg width={12} height={12}>
+              <path d="M0 0,L6 6,L12 0" />
+            </svg>
+          </OverlayArrow>
+          <Dialog className="rounded-md border border-gray-200 bg-white py-2 text-sm">
+            {props.canEditPermission &&
+            props.onEditPermissions &&
+            !props.isOwner &&
+            !props.isOwnSelf ? (
+              <>
+                <MemberListContactMenuItem
+                  content="Edit permissions"
+                  onClick={props.onEditPermissions}
+                />
+                <MemberListContactMenuItem
+                  content="Remove"
+                  onClick={props.onRemove}
+                />
+              </>
+            ) : (
+              <MemberListContactMenuItem
+                content="View permissions"
+                onClick={props.onViewPermissions}
+              />
+            )}
+          </Dialog>
+        </Popover>
+      </DialogTrigger>
+    </li>
+  );
+}
+
+function MemberListContactMenuItem(props: {
+  content: string;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      onClick={props.onClick}
+      className="block w-full px-4 py-2 text-left hover:bg-gray-100"
+    >
+      {props.content}
+    </button>
   );
 }

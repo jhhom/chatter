@@ -92,6 +92,7 @@ export function GroupInfoDrawer3(props: {
           if (content !== "info") {
             setContent("info");
           } else {
+            props.onClose();
           }
         }}
       />

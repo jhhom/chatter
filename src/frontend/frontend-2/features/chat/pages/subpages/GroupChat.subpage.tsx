@@ -66,6 +66,7 @@ import {
   DrawerContentInfo,
   DrawerContentAddMembersToGroup,
 } from "~/frontend/frontend-2/features/chat/pages/components2/Drawers/GrpInfoDrawer/GrpInfoDrawer2";
+import { DrawerContentMemberSecurity } from "~/frontend/frontend-2/features/chat/pages/components2/Drawers/GrpInfoDrawer/DrawerContentMemberSecurity";
 
 const PAGE_SIZE = 24;
 const INITIAL_PAGE_SIZE = 64;
@@ -682,25 +683,157 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
                     }}
                   />
                 ))
-                .with("add-member", () => <DrawerContentAddMembersToGroup />)
-                .otherwise(() => (
-                  <DrawerContentInfo
-                    memberList={Array.from(membersStore.members.entries()).map(
-                      ([uId, uProfile]) => {
+                .with("add-member", () => (
+                  <DrawerContentAddMembersToGroup
+                    groupTopicId={props.contactId}
+                    onCancelClick={() => setShowDrawer(false)}
+                    onAfterMembersAdded={() => setShowDrawer(false)}
+                    onAddMembers={async (membersToAdd) => {
+                      const r = await client["group/add_members"]({
+                        groupTopicId: props.contactId,
+                        membersToAdd: membersToAdd,
+                      });
+                      if (r.isErr()) {
+                        return err(r.error);
+                      }
+                      return ok(r.value);
+                    }}
+                    searchNewMembersByName={async (query) => {
+                      const result = await client["group/find_new_members"]({
+                        searchQueryUsername: query,
+                        groupTopicId: props.contactId,
+                      });
+                      if (result.isErr()) {
+                        alert(result.error);
+                        return [];
+                      }
+                      return result.value;
+                    }}
+                  />
+                ))
+                .with("member-security", () => (
+                  <DrawerContentMemberSecurity
+                    username={
+                      p.checkingOutMember
+                        ? membersStore.members.get(p.checkingOutMember)?.name ??
+                          ""
+                        : ""
+                    }
+                    editable={p.memberSecurityContentEditable}
+                    onCancel={() => p.setContent("info")}
+                    getMemberPermission={async () => {
+                      if (p.checkingOutMember === null) {
+                        return "";
+                      }
+                      const r = await client[
+                        "permissions/get_group_member_permission"
+                      ]({
+                        groupTopicId: props.contactId,
+                        memberUserId: p.checkingOutMember,
+                      });
+                      if (r.isErr()) {
+                        console.error(
+                          `Failed to get member permission in group`,
+                          r.error
+                        );
+                        return "";
+                      }
+
+                      return r.value;
+                    }}
+                    onSubmitPermissionChange={async (permission) => {
+                      if (p.checkingOutMember === null) {
+                        return "";
+                      }
+                      const updatedPermission = await client[
+                        "permissions/update_group_member_permission"
+                      ]({
+                        groupTopicId: props.contactId,
+                        memberUserId: p.checkingOutMember,
+                        newPermission: permission,
+                      });
+                      p.setContent("info");
+                      if (updatedPermission.isErr()) {
+                        console.error(
+                          `Failed to update member permission in group`,
+                          updatedPermission.error
+                        );
+                        return "";
+                      }
+                      return updatedPermission.value;
+                    }}
+                  />
+                ))
+                .otherwise(() => {
+                  const grp = store.grp;
+                  if (grp === undefined) {
+                    throw new Error("Group is undefined");
+                  }
+
+                  if (!store.profile.profile) {
+                    throw new Error("User profile is undefined");
+                  }
+
+                  return (
+                    <DrawerContentInfo
+                      groupId={props.contactId}
+                      groupName={grp.profile.name}
+                      groupOwnerId={grp.profile.ownerId}
+                      userId={store.profile.profile.userId}
+                      userPermissions={grp.profile.userPermissions}
+                      canInvite={permission(
+                        grp.profile.userPermissions
+                      ).canShare()}
+                      memberList={Array.from(
+                        membersStore.members.entries()
+                      ).map(([uId, uProfile]) => {
                         return {
                           userId: uId,
                           name: uProfile.name,
                           online: uProfile.online,
                           profilePhotoUrl: uProfile.profilePhotoUrl,
                         };
+                      })}
+                      profilePhotoUrl={
+                        store.grp?.profile.profilePhotoUrl ?? null
                       }
-                    )}
-                    profilePhotoUrl={store.grp?.profile.profilePhotoUrl ?? null}
-                    onSecurityClick={() => p.setContent("security")}
-                    onInviteLinkClick={() => p.setContent("invite-link")}
-                    onAddMemberClick={() => p.setContent("add-member")}
-                  />
-                ));
+                      onLeaveGroup={async () => {
+                        const r = await client["group/leave_group"]({
+                          groupTopicId: props.contactId,
+                        });
+                        if (r.isErr()) {
+                          alert(`Failed to leave group: ${r.error.message}`);
+                          return;
+                        }
+                      }}
+                      onContactRemove={async (removedUserId) => {
+                        const r = await client["group/remove_member"]({
+                          groupTopicId: props.contactId,
+                          memberId: removedUserId,
+                        });
+                        if (r.isErr()) {
+                          alert(
+                            "error removing from group: " + r.error.message
+                          );
+                          return;
+                        }
+                      }}
+                      onEditPermissions={(userId) => {
+                        p.setCheckingOutMember(userId);
+                        p.setContent("member-security");
+                        p.setMemberSecurityContentEditable(true);
+                      }}
+                      onViewPermissions={(userId) => {
+                        p.setCheckingOutMember(userId);
+                        p.setContent("member-security");
+                        p.setMemberSecurityContentEditable(false);
+                      }}
+                      onSecurityClick={() => p.setContent("security")}
+                      onInviteLinkClick={() => p.setContent("invite-link")}
+                      onAddMemberClick={() => p.setContent("add-member")}
+                    />
+                  );
+                });
             }}
           </GroupInfoDrawer3>
         </div>
