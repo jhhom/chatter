@@ -34,7 +34,7 @@ export function DrawerContentAddMembersToGroup(props: {
   }, [searchInput, props]);
 
   return (
-    <div className="h-full text-sm">
+    <div className="h-full bg-white text-sm">
       <div className="pt-6">
         <div className="px-4">
           <p className="font-medium">Add participant</p>

@@ -56,7 +56,7 @@ export function DrawerContentInfo(props: {
   const canAdminister = permission(props.userPermissions).canAdminister();
 
   return (
-    <div>
+    <div className="h-full bg-white">
       <div className="pb-3 pt-4">
         <div className="flex justify-center py-2">
           <div className="h-14 w-14">

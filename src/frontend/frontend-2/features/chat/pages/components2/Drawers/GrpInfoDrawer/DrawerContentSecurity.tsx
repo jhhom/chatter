@@ -32,7 +32,7 @@ export function DrawerContentSecurity(props: {
   }, [props]);
 
   return (
-    <div className="px-4 pt-6">
+    <div className="h-full bg-white px-4 pt-6">
       <div>
         <p className="mb-3 text-sm font-medium">Group default permissions</p>
 

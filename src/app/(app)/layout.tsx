@@ -95,9 +95,9 @@ function Layout({ children }: { children: React.ReactNode }) {
     .with("logged-in", () => {
       return (
         <div className="flex h-screen w-screen">
-          <div className="w-[22rem] border-r">
+          <div className="h-full w-[22rem] border-r">
             <Header />
-            <div>{children}</div>
+            <div className="h-[calc(100%-4rem)]">{children}</div>
           </div>
           <div className=" w-[calc(100vw-22rem)]">
             <ChatPage />

@@ -34,10 +34,10 @@ export function DrawerContentMemberSecurity(props: {
   };
 
   return (
-    <div>
-      <div className="bg-gray-200">
-        <div className="bg-white px-4 pb-3 pt-4">
-          <p className="text-blue-600">{props.username}</p>
+    <div className="h-full bg-white">
+      <div>
+        <div className="px-4 pb-3 pt-4">
+          <p className="text-green-700">{props.username}</p>
           <div className="mt-4">
             <PermissionSetting
               name="Join (J)"
@@ -97,12 +97,12 @@ export function DrawerContentMemberSecurity(props: {
         </div>
       </div>
 
-      <div className="mt-4 flex h-8 justify-end px-4">
+      <div className="mt-4 flex h-9 justify-between px-4">
         <button
           onClick={props.onCancel}
-          className="rounded-md border-2 border-gray-300 bg-white px-4 text-blue-500"
+          className="rounded-md border-2 border-gray-200 bg-white px-4"
         >
-          CANCEL
+          Cancel
         </button>
         <button
           onClick={async () => {
@@ -112,9 +112,9 @@ export function DrawerContentMemberSecurity(props: {
             setPermissionStr(permission);
             setEditingPermissionStr(permission);
           }}
-          className="ml-2 rounded-md bg-blue-500 px-8 text-white"
+          className="ml-2 rounded-md bg-green-600 px-4 text-white"
         >
-          OK
+          Save changes
         </button>
       </div>
     </div>

@@ -42,7 +42,7 @@ export function SidePanelSettings() {
   };
 
   return (
-    <div className="pt-4">
+    <div className="h-full bg-white pt-4">
       <div className="flex">
         <div className="pl-4">
           <button
