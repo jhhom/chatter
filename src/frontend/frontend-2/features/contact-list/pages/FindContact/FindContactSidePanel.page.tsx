@@ -17,7 +17,7 @@ export function SidePanelAddContacts() {
   const [search, setSearch] = useState("");
 
   return (
-    <div className="h-[calc(100vh-4rem)] pt-4">
+    <div className="h-[calc(100vh-4rem)] bg-white pt-4">
       <div className="flex h-9">
         <div className="pl-4">
           <button
