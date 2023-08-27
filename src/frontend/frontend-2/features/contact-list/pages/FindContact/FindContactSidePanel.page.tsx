@@ -9,12 +9,25 @@ import { TabByID } from "./components/TabByID";
 import { clsx as cx } from "clsx";
 import { useRouter } from "next/navigation";
 
+import { useAppStore } from "~/frontend/stores/stores";
+import { client } from "~/frontend/external/api-client/client";
+import { ServiceInput } from "~/api-contract/types";
+
 export function SidePanelAddContacts() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"find" | "new-group" | "by-id">(
     "find"
   );
-  const [search, setSearch] = useState("");
+  const store = useAppStore((s) => ({
+    contact: {
+      grp: s.grp,
+      p2p: s.p2p,
+      newContacts: s.newContacts,
+      set: s.setContact,
+    },
+    profile: s.profile,
+    get: s.get,
+  }));
 
   return (
     <div className="h-[calc(100vh-4rem)] bg-white pt-4">
@@ -56,11 +69,37 @@ export function SidePanelAddContacts() {
       <div className="h-[calc(100%-(4.4rem+2.25rem))]">
         {match(activeTab)
           .with("new-group", () => <TabNewGroup />)
-          .with("find", () => (
-            <div className="h-full">
-              <TabFindContact search={search} setSearch={(s) => setSearch(s)} />
-            </div>
-          ))
+          .with("find", () => {
+            if (store.profile.profile === null) {
+              throw new Error("User profile is null");
+            }
+
+            return (
+              <div className="h-full">
+                <TabFindContact
+                  findUsersToAddAsContact={(
+                    props: ServiceInput<"users/find_users_to_add_as_contact">
+                  ) => client["users/find_users_to_add_as_contact"](props)}
+                  existingContacts={Array.from(store.contact.p2p.keys()).concat(
+                    Array.from(store.contact.newContacts.keys())
+                  )}
+                  userId={store.profile.profile.userId}
+                  onAddContact={(c) => {
+                    store.contact.set((s) => {
+                      s.newContacts.set(c.id, {
+                        name: c.fullname,
+                        description: c.email,
+                        touchedAt: new Date(),
+                        userPermissions: c.defaultPermissions,
+                        profilePhotoUrl: c.profilePhotoUrl,
+                        lastMessage: null,
+                      });
+                    });
+                  }}
+                />
+              </div>
+            );
+          })
           .with("by-id", () => (
             <div>
               <TabByID />

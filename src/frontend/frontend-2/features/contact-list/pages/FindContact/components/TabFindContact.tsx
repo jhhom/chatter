@@ -1,79 +1,58 @@
-import { ContactSearch } from "~/frontend/frontend-2/features/common/components";
-import { useRef, useState, forwardRef, createRef } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAppStore } from "~/frontend/stores/stores";
-import type { ServiceOutput, ServiceResult } from "~/api-contract/types";
-import { client } from "~/frontend/external/api-client/client";
+import type { ServiceOutput } from "~/api-contract/types";
+import type { IApiClient } from "~/api-contract/client";
+import type { UserId } from "~/api-contract/subscription/subscription";
+
+import { ContactSearch } from "~/frontend/frontend-2/features/common/components";
 import { IconPerson } from "~/frontend/frontend-2/features/common/icons";
 
 export function TabFindContact(props: {
-  search: string;
-  setSearch: (s: string) => void;
+  userId: UserId;
+  existingContacts: UserId[];
+  findUsersToAddAsContact: IApiClient["users/find_users_to_add_as_contact"];
+  onAddContact: (
+    contact: ServiceOutput<"users/find_users_to_add_as_contact">[number]
+  ) => void;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
-  const store = useAppStore((s) => ({
-    contact: {
-      grp: s.grp,
-      p2p: s.p2p,
-      newContacts: s.newContacts,
-      set: s.setContact,
-    },
-    profile: s.profile,
-    get: s.get,
-  }));
 
   const query = useQuery({
     queryKey: ["contacts", searchQuery],
     queryFn: async () => {
-      const result = await client["users/find_users_to_add_as_contact"]({
+      const result = await props.findUsersToAddAsContact({
         email: searchQuery,
       });
       if (result.isErr()) {
         throw result.error;
       }
 
-      return result.value;
+      // filter out the users who are already our existing contact, and also filter out ourself
+      // the reason we cannot perform this filter on the server
+      // is because new contacts is only added on the client-side, and doesn't store anything on the server
+      return (
+        result.value.filter((u) => {
+          return (
+            props.existingContacts.find((t) => t === u.id) === undefined &&
+            u.id !== props.userId
+          );
+        }) ?? []
+      );
     },
   });
-
-  const filteredUsers = (() => {
-    const topics = Array.from(store.contact.p2p.keys()).concat(
-      Array.from(store.contact.newContacts.keys())
-    );
-
-    return (
-      query.data?.filter((u) => {
-        return (
-          topics.find((t) => t === u.id) === undefined &&
-          u.id !== store.profile.profile?.userId
-        );
-      }) ?? []
-    );
-  })();
 
   return (
     <div className="h-full">
       <div className="h-9 px-4">
-        <ContactSearch onInput={(e) => props.setSearch(e.target.value)} />
+        <ContactSearch onInput={(e) => setSearchQuery(e.target.value)} />
       </div>
 
       <div className="mt-4 h-[calc(100%-(3.25rem))] space-y-3 overflow-y-auto">
-        {filteredUsers
-          .filter((c) => c.fullname.toLowerCase().includes(props.search))
+        {query.data
+          ?.filter((c) => c.fullname.toLowerCase().includes(searchQuery))
           .map((c) => (
             <Contact
-              onClick={() =>
-                store.contact.set((s) => {
-                  s.newContacts.set(c.id, {
-                    name: c.fullname,
-                    description: c.email,
-                    touchedAt: new Date(),
-                    userPermissions: c.defaultPermissions,
-                    profilePhotoUrl: c.profilePhotoUrl,
-                    lastMessage: null,
-                  });
-                })
-              }
+              onClick={() => props.onAddContact(c)}
               key={c.id}
               name={c.fullname}
               picture={c.profilePhotoUrl}
