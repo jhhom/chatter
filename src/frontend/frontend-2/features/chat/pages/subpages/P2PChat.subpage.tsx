@@ -675,7 +675,7 @@ export function P2PChatPage(props: { contactId: UserId }) {
       </div>
 
       {showDrawer && peer.type === "old-contact" && (
-        <div className="w-[660px] border-l border-gray-300">
+        <div className="h-full w-[660px] border-l border-gray-300 bg-white">
           <P2PInfoDrawer
             userPermission={peer.profile.userPermissions}
             peerPermission={peer.profile.peerPermissions}

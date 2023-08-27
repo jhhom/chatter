@@ -35,7 +35,7 @@ const groupMembers: {
 
 export function GrpInfoDrawer() {
   return (
-    <div className="h-full overflow-y-auto pb-4">
+    <div className="h-full overflow-y-auto border-l border-gray-300 pb-4">
       <DrawerHeader
         onClose={() => {
           console.log("header");

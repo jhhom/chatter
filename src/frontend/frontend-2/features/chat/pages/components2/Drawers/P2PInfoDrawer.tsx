@@ -32,7 +32,7 @@ export function P2PInfoDrawer(props: {
     <div>
       <DrawerHeader onClose={props.onClose} />
 
-      <div className="bg-white pb-3 pt-4">
+      <div className="h-full bg-white pb-3 pt-4">
         <div className="flex justify-center py-2">
           <div className="h-14 w-14">
             {props.userProfilePhotoUrl ? (
@@ -118,7 +118,7 @@ export function P2PInfoDrawer(props: {
 
 function DrawerHeader(props: { onClose: () => void }) {
   return (
-    <div className="flex h-16 items-center justify-between border-b border-gray-300 px-4">
+    <div className="flex h-16 items-center justify-between border-b border-gray-300 bg-gray-50 px-4">
       <p>Info</p>
       <button
         onClick={props.onClose}
