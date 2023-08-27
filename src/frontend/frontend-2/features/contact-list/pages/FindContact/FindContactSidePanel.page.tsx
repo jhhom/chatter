@@ -11,7 +11,8 @@ import { useRouter } from "next/navigation";
 
 import { useAppStore } from "~/frontend/stores/stores";
 import { client } from "~/frontend/external/api-client/client";
-import { ServiceInput } from "~/api-contract/types";
+import type { ServiceInput } from "~/api-contract/types";
+import { toast, Toaster } from "react-hot-toast";
 
 export function SidePanelAddContacts() {
   const router = useRouter();
@@ -95,6 +96,7 @@ export function SidePanelAddContacts() {
                         lastMessage: null,
                       });
                     });
+                    toast("Contact added");
                   }}
                 />
               </div>

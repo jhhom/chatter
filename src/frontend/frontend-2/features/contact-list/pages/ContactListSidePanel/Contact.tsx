@@ -139,16 +139,19 @@ export function ContactListNewContact(props: {
   return (
     <div
       onClick={props.onClick}
-      className="flex cursor-pointer items-center border-b border-gray-200 py-2 pl-1.5 hover:bg-gray-100"
+      className="flex cursor-pointer items-center px-5 py-2 hover:bg-gray-100"
     >
       <div className="h-10 w-10 rounded-full">
-        <img
-          src={
-            props.profilePhotoUrl ??
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Google_Images_2015_logo.svg/2880px-Google_Images_2015_logo.svg.png"
-          }
-          className="h-10 w-10 rounded-full object-cover"
-        />
+        {props?.profilePhotoUrl ? (
+          <img
+            className="inline-block h-10 w-10 rounded-lg object-cover"
+            src={props?.profilePhotoUrl ?? ""}
+          />
+        ) : (
+          <div className="flex h-10 w-10 items-end justify-center rounded-lg bg-gray-100 pb-1">
+            <IconPerson className="h-7 w-7 text-gray-400" />
+          </div>
+        )}
       </div>
       <div className="pl-2 text-sm">
         <div className="flex items-center">

@@ -789,8 +789,6 @@ export function P2PChatPage(props: { contactId: UserId }) {
           onCancel={() => setShowDeleteMessageOverlay(false)}
         />
       )}
-
-      <Toaster position="bottom-left" />
     </div>
   );
 }

@@ -27,19 +27,23 @@ export function TabFindContact(props: {
         throw result.error;
       }
 
-      // filter out the users who are already our existing contact, and also filter out ourself
-      // the reason we cannot perform this filter on the server
-      // is because new contacts is only added on the client-side, and doesn't store anything on the server
-      return (
-        result.value.filter((u) => {
-          return (
-            props.existingContacts.find((t) => t === u.id) === undefined &&
-            u.id !== props.userId
-          );
-        }) ?? []
-      );
+      return result.value;
     },
   });
+
+  // filter out the users who are already our existing contact, and also filter out ourself
+  // the reason we cannot perform this filter on the server
+  // is because new contacts is only added on the client-side, and doesn't store anything on the server
+  const filteredUsers = (() => {
+    return (
+      query.data?.filter((u) => {
+        return (
+          props.existingContacts.find((t) => t === u.id) === undefined &&
+          u.id !== props.userId
+        );
+      }) ?? []
+    );
+  })();
 
   return (
     <div className="h-full">
@@ -48,8 +52,8 @@ export function TabFindContact(props: {
       </div>
 
       <div className="mt-4 h-[calc(100%-(3.25rem))] space-y-3 overflow-y-auto">
-        {query.data
-          ?.filter((c) => c.fullname.toLowerCase().includes(searchQuery))
+        {filteredUsers
+          .filter((c) => c.fullname.toLowerCase().includes(searchQuery))
           .map((c) => (
             <Contact
               onClick={() => props.onAddContact(c)}

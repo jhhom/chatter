@@ -916,8 +916,6 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
           onCancel={() => setShowDeleteMessageOverlay(false)}
         />
       )}
-
-      <Toaster position="top-right" />
     </div>
   );
 }

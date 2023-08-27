@@ -133,7 +133,7 @@ export function SidePanelContactList() {
   });
 
   return (
-    <div>
+    <div className="h-full bg-white">
       <Header />
 
       <div className="mt-6 px-5">

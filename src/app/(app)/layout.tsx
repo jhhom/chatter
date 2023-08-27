@@ -19,6 +19,8 @@ import ChatPage from "~/frontend/frontend-2/features/chat/pages/Chat.page";
 
 import { defaultTheme, Provider } from "@adobe/react-spectrum";
 
+import { Toaster } from "react-hot-toast";
+
 const queryClient = new QueryClient();
 
 enableMapSet();
@@ -102,6 +104,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           <div className=" w-[calc(100vw-22rem)]">
             <ChatPage />
           </div>
+          <Toaster position="top-right" />
         </div>
       );
     })
