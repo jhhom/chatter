@@ -62,9 +62,9 @@ export function ContactListContact(
 
   const contactDescription = () => {
     if (props.type === "p2p" && props.isTyping) {
-      return <p>{props.fullname} is typing...</p>;
+      return `${props.fullname} is typing...`;
     } else if (props.type === "grp" && props.typingUserFullname) {
-      return <p>{props.typingUserFullname} is typing...</p>;
+      return `${props.typingUserFullname} is typing...`;
     } else if (props.lastMessage === null || props.lastMessage === undefined) {
       return "";
     } else {

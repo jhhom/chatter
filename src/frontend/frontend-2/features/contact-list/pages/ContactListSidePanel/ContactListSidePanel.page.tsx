@@ -136,11 +136,11 @@ export function SidePanelContactList() {
     <div className="h-full bg-white">
       <Header />
 
-      <div className="mt-6 px-5">
+      <div className="mt-4 h-12 px-5 pt-1">
         <ContactSearch />
       </div>
 
-      <div className="space-y-4 pt-4">
+      <div className="mt-4 h-[calc(100%-5rem-5rem)] space-y-4 overflow-y-auto pb-2">
         {topicListItems.map((t) => {
           if (store.profile.profile === null) {
             throw new Error("User profile is not defined");
@@ -230,7 +230,7 @@ function Header() {
   const router = useRouter();
 
   return (
-    <div className="px-5 pt-4">
+    <div className="h-20 px-5 pt-4">
       <div className="flex items-end justify-between">
         <div>
           <p className="text-xl font-semibold">Chats</p>

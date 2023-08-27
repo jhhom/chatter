@@ -192,7 +192,7 @@ export const useLoginHandler = () => {
         }))
       );
 
-      await dexie.topicEventLogs.bulkAdd(
+      await dexie.topicEventLogs.bulkPut(
         topic.eventLogs.map((l) => ({
           seqId: l.sequenceId,
           topicId: topic.topic.id,
@@ -202,7 +202,7 @@ export const useLoginHandler = () => {
     }
 
     for (const topic of unreadMessages.value.grpTopics) {
-      await dexie.messages.bulkAdd(
+      await dexie.messages.bulkPut(
         topic.messages.map((m) => ({
           content: m.content,
           seqId: m.sequenceId,
@@ -216,7 +216,7 @@ export const useLoginHandler = () => {
         }))
       );
 
-      await dexie.messages.bulkAdd(
+      await dexie.messages.bulkPut(
         topic.eventLogs.map((l) => ({
           content: { ...l.content, replyTo: null } as {
             type: "text";
@@ -235,7 +235,7 @@ export const useLoginHandler = () => {
         }))
       );
 
-      await dexie.topicEventLogs.bulkAdd(
+      await dexie.topicEventLogs.bulkPut(
         topic.eventLogs.map((l) => ({
           seqId: l.sequenceId,
           topicId: topic.topic.id,
@@ -310,7 +310,7 @@ export const useLoginHandler = () => {
       });
     },
     ["notification.topic-event"]: async (payload) => {
-      await dexie.messages.add({
+      await dexie.messages.put({
         seqId: payload.seqId,
         topicId: payload.topicId,
         content: {
@@ -325,7 +325,7 @@ export const useLoginHandler = () => {
         createdAt: payload.createdAt,
         deleted: false,
       });
-      await dexie.topicEventLogs.add({
+      await dexie.topicEventLogs.put({
         seqId: payload.seqId,
         topicEvent: payload.event.event,
         topicId: payload.topicId,
@@ -589,7 +589,7 @@ export const useLoginHandler = () => {
       }
     },
     message: async (payload) => {
-      await dexie.messages.add({
+      await dexie.messages.put({
         seqId: payload.seqId,
         topicId: payload.topicId,
         content: payload.content,
@@ -652,7 +652,9 @@ export const useLoginHandler = () => {
       });
     },
     ["message.from-new-topic"]: async (payload) => {
-      await dexie.messages.add({
+      console.log("RECEIVED MESSAGE FROM NEW TOPIC", payload);
+
+      await dexie.messages.put({
         seqId: payload.seqId,
         topicId: payload.topicId,
         content: payload.content,
