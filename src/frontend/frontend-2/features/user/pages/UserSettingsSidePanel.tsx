@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   type PermissionId,
   PermissionSetting,
@@ -27,6 +27,8 @@ export function SidePanelSettings() {
     profile?.defaultPermissions ?? ""
   );
 
+  const currentTopic = useSearchParams().get("topic");
+
   if (profile === null) {
     throw new Error("Profile is null");
   }
@@ -46,7 +48,11 @@ export function SidePanelSettings() {
       <div className="flex">
         <div className="pl-4">
           <button
-            onClick={() => router.push("/")}
+            onClick={() =>
+              router.push(
+                `/${currentTopic !== null ? `?topic=${currentTopic}` : ""}`
+              )
+            }
             className="rounded-lg border border-gray-300 px-2 py-2 hover:bg-gray-100"
           >
             <IconBackArrow className="h-4 w-4 text-gray-600" />
@@ -119,7 +125,11 @@ export function SidePanelSettings() {
 
         <div className="mt-8 flex justify-between px-4 text-sm">
           <button
-            onClick={() => router.push("/")}
+            onClick={() =>
+              router.push(
+                `/${currentTopic !== null ? `?topic=${currentTopic}` : ""}`
+              )
+            }
             className="rounded-md border-2 border-gray-200 px-4 py-1.5"
           >
             Cancel
@@ -145,7 +155,9 @@ export function SidePanelSettings() {
             storage.clearToken();
             setAuthStatus("logged-out");
             await dexie.delete().then(() => dexie.open());
-            router.push("/");
+            router.push(
+              `/${currentTopic !== null ? `?topic=${currentTopic}` : ""}`
+            );
           }}
           className="group mt-3 flex h-10 w-full cursor-pointer items-center justify-between rounded-md bg-red-500 pl-4 text-left text-gray-600 hover:bg-red-600"
         >

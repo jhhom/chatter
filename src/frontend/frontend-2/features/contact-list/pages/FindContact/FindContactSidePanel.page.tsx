@@ -7,7 +7,7 @@ import { TabNewGroup } from "./components/TabNewGroup";
 import { TabByID } from "./components/TabByID";
 
 import { clsx as cx } from "clsx";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { ok } from "neverthrow";
 import { IsGroupTopicId, IsUserId } from "~/backend/service/common/topics";
@@ -34,13 +34,18 @@ export function SidePanelAddContacts() {
     profile: s.profile,
     get: s.get,
   }));
+  const currentTopic = useSearchParams().get("topic");
 
   return (
     <div className="h-[calc(100vh-4rem)] bg-white pt-4">
       <div className="flex h-9">
         <div className="pl-4">
           <button
-            onClick={() => router.push("/")}
+            onClick={() =>
+              router.push(
+                `/${currentTopic !== null ? `?topic=${currentTopic}` : ""}`
+              )
+            }
             className="rounded-lg border border-gray-300 px-2 py-2 hover:bg-gray-100"
           >
             <IconBackArrow className="h-4 w-4 text-gray-600" />

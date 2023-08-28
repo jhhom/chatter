@@ -30,8 +30,29 @@ export function ConversationItem(props: {
   onMenuClick: React.MouseEventHandler<HTMLButtonElement>;
   onMessageImageClick: (imgUrl: string) => void;
 }) {
+  const itemContainerRef = useRef<HTMLDivElement | null>(null);
+
   const [isUserHovering, setIsUserHovering] = useState(false);
   const [openChatMessageMenu, setOpenChatMessageMenu] = useState(false);
+  const [menuTriggerPositioning, setMenuTriggerPositioning] = useState<
+    "side-by-side" | "vertical"
+  >("vertical");
+
+  useEffect(() => {
+    if (props.item.text.type === "text") {
+      console.log(
+        `${props.item.text.content}: ${
+          itemContainerRef.current?.clientHeight ?? "undefined"
+        }`
+      );
+      if (
+        itemContainerRef.current &&
+        itemContainerRef.current.clientHeight < 70
+      ) {
+        setMenuTriggerPositioning("side-by-side");
+      }
+    }
+  }, [props.item.text.type]);
 
   return (
     <>
@@ -64,12 +85,13 @@ export function ConversationItem(props: {
           })}
         >
           <div
-            className={cx("flex", {
+            ref={itemContainerRef}
+            className={cx("flex  outline-2 outline-red-400", {
               "justify-end":
                 props.item.type === "message" &&
                 props.item.userIsAuthor &&
                 props.item.text.type === "text",
-              "max-w-[280px] sm:max-w-[80%] md:max-w-[60%]":
+              "max-w-[280px] sm:max-w-[320px] md:max-w-[540px]":
                 props.item.type === "message" &&
                 props.item.text.type === "text",
             })}
@@ -156,8 +178,10 @@ export function ConversationItem(props: {
 
             <div
               className={cx(
-                "flex flex-col justify-between text-[11px] text-gray-500",
+                "flex justify-between text-[11px] text-gray-500  outline-2 outline-blue-400",
                 {
+                  "items-center": menuTriggerPositioning === "side-by-side",
+                  "flex-col": menuTriggerPositioning === "vertical",
                   "order-first pr-2": props.item.userIsAuthor,
                   "pl-2": !props.item.userIsAuthor,
                 }
@@ -166,6 +190,15 @@ export function ConversationItem(props: {
               <div
                 className={cx("flex", {
                   "justify-end": props.item.userIsAuthor,
+                  "order-last":
+                    menuTriggerPositioning === "side-by-side" &&
+                    !props.item.userIsAuthor,
+                  "mr-2":
+                    menuTriggerPositioning === "side-by-side" &&
+                    props.item.userIsAuthor,
+                  "ml-2":
+                    menuTriggerPositioning === "side-by-side" &&
+                    !props.item.userIsAuthor,
                 })}
               >
                 {(isUserHovering || openChatMessageMenu) && (
@@ -182,7 +215,11 @@ export function ConversationItem(props: {
                   </TooltipTrigger>
                 )}
               </div>
-              <div>
+              <div
+                className={cx({
+                  "mt-auto": menuTriggerPositioning === "side-by-side",
+                })}
+              >
                 {props.item.userIsAuthor && props.item.read && (
                   <p className="text-right">Read</p>
                 )}

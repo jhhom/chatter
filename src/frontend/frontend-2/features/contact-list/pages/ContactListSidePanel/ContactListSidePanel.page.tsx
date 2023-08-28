@@ -5,7 +5,7 @@ import {
   IconAddPerson,
 } from "~/frontend/frontend-2/features/common/icons";
 import { Tooltip, TooltipTrigger } from "@adobe/react-spectrum";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAppStore } from "~/frontend/stores/stores";
 
 import {
@@ -228,6 +228,7 @@ export function SidePanelContactList() {
 
 function Header() {
   const router = useRouter();
+  const currentTopic = useSearchParams().get("topic");
 
   return (
     <div className="h-20 px-5 pt-4">
@@ -240,14 +241,20 @@ function Header() {
             icon={<IconSettings2 className="w-5 text-gray-500" />}
             tooltip="Settings"
             onClick={() => {
-              void router.push(`settings`);
+              void router.push(
+                `settings${
+                  currentTopic !== null ? `?topic=${currentTopic}` : ""
+                }`
+              );
             }}
           />
           <HeaderButton
             icon={<IconAddPerson className="w-5 text-gray-500" />}
             tooltip="Add contact"
             onClick={() => {
-              void router.push(`newtpk`);
+              void router.push(
+                `newtpk${currentTopic !== null ? `?topic=${currentTopic}` : ""}`
+              );
             }}
           />
         </div>

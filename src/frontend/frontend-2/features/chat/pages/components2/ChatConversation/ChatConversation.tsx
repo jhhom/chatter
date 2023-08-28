@@ -1,6 +1,6 @@
 import { useRef, forwardRef, useEffect, useImperativeHandle } from "react";
 
-import { ConversationItem } from "~/frontend/frontend-2/features/chat/pages/components2/ChatConversation/ChatMessage";
+import { ConversationItem } from "~/frontend/frontend-2/features/chat/pages/components2/ChatConversation/ConversationItem";
 import { type ChatMessageTypeMessage } from "~/frontend/frontend-2/features/chat/pages/components/ChatConversation/ChatMessage";
 import {
   IconFile,
