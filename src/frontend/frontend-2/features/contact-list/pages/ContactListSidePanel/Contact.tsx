@@ -51,14 +51,15 @@ export function ContactListContact(
     userId: UserId;
   }
 ) {
-  const unreadMessageCount = useLiveQuery(() =>
-    dexie.messages
-      .filter(
-        (m) =>
-          m.topicId == props.topicId && !m.read && !(m.author == props.userId)
-      )
-      .count()
-  );
+  const unreadMessageCount =
+    useLiveQuery(() =>
+      dexie.messages
+        .filter(
+          (m) =>
+            m.topicId == props.topicId && !m.read && !(m.author == props.userId)
+        )
+        .count()
+    ) ?? 0;
 
   const contactDescription = () => {
     if (props.type === "p2p" && props.isTyping) {
@@ -111,19 +112,36 @@ export function ContactListContact(
       <div className="flex h-10 w-[calc(100%-2.5rem)] flex-col justify-between pl-3.5">
         <div className="flex items-end justify-between">
           <p className="text-sm font-medium">{props.fullname}</p>
-          <p className="text-xs font-medium text-gray-500">
+          <p
+            className={cx("text-xs font-medium text-gray-500", {
+              "font-medium text-green-500": unreadMessageCount > 0,
+            })}
+          >
             {match(props.lastMessage)
               .with(null, () => "")
-              .with({ type: "deleted" }, (m) => "12:07")
+              .with({ type: "deleted" }, (m) => "")
               .with({ type: "message" }, (m) => "12:07")
               .run()}
           </p>
         </div>
 
-        <div>
-          <p className="overflow-hidden text-ellipsis whitespace-nowrap text-xs text-gray-500">
+        <div className="flex justify-between">
+          <p
+            className={cx(
+              "overflow-hidden text-ellipsis whitespace-nowrap text-xs text-gray-500",
+              {
+                "pr-2": unreadMessageCount > 0,
+              }
+            )}
+          >
             {contactDescription()}
           </p>
+
+          {unreadMessageCount > 0 && (
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-green-400 text-center text-[0.64rem] text-white">
+              {unreadMessageCount}
+            </span>
+          )}
         </div>
       </div>
     </div>
