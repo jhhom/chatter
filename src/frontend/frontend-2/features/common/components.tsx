@@ -1,8 +1,9 @@
 export function ContactSearch(props: {
-  onInput?: React.ChangeEventHandler<HTMLInputElement>;
+  value: string;
+  onChange?: React.ChangeEventHandler<HTMLInputElement>;
 }) {
   return (
-    <div>
+    <div className="w-full">
       <div className="relative">
         <div className="pointer-events-none absolute inset-y-0 left-0 z-20 flex w-10 items-center px-3">
           <IconSearch className="text-gray-400" />
@@ -13,7 +14,8 @@ export function ContactSearch(props: {
           name="hs-leading-icon"
           className="block w-full rounded-md border-gray-200 bg-gray-100 py-2 pl-10 pr-3 text-sm shadow-sm focus:z-10 focus:border-blue-500 focus:ring-blue-500"
           placeholder="Search contacts"
-          onChange={props.onInput}
+          onChange={props.onChange}
+          value={props.value}
         />
       </div>
     </div>

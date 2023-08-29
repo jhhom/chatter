@@ -25,8 +25,6 @@ export function useEventLogListener(
 
       const isUserAtBottomOfScroll = chatUiControl.isUserAtTheBottomOfScroll();
 
-      console.log("IS USER AT BOTTOM", isUserAtBottomOfScroll);
-
       // 1. ADD EVENT LOG INTO UI
       chat.addMessage({
         type: "event_log",

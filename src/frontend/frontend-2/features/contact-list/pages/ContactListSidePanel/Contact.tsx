@@ -11,6 +11,7 @@ import type {
 import { dexie } from "~/frontend/external/browser/indexed-db";
 
 import { IconPerson } from "~/frontend/frontend-2/features/common/icons";
+import { format } from "date-fns";
 
 export function ContactListContact(
   props: (
@@ -25,6 +26,7 @@ export function ContactListContact(
         profilePhotoUrl: string | null;
         onClick: () => void;
         lastMessage: LastMessageOfTopic | null;
+        touchedAt: Date | null;
       }
     | {
         type: "grp";
@@ -37,6 +39,7 @@ export function ContactListContact(
         profilePhotoUrl: string | null;
         onClick: () => void;
         lastMessage: LastMessageOfTopic | null;
+        touchedAt: Date | null;
       }
     | {
         type: "past-grp";
@@ -46,6 +49,7 @@ export function ContactListContact(
         profilePhotoUrl: string | null;
         onClick: () => void;
         lastMessage: LastMessageOfTopic | null;
+        touchedAt: Date | null;
       }
   ) & {
     userId: UserId;
@@ -119,8 +123,12 @@ export function ContactListContact(
           >
             {match(props.lastMessage)
               .with(null, () => "")
-              .with({ type: "deleted" }, (m) => "")
-              .with({ type: "message" }, (m) => "12:07")
+              .with({ type: "deleted" }, (m) =>
+                props.touchedAt ? format(props.touchedAt, "hh:mm aaa") : ""
+              )
+              .with({ type: "message" }, (m) =>
+                props.touchedAt ? format(props.touchedAt, "hh:mm aaa") : ""
+              )
               .run()}
           </p>
         </div>

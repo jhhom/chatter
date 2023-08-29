@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ContactSearch } from "~/frontend/frontend-2/features/common/components";
 
 import {
@@ -65,6 +66,7 @@ export function SidePanelContactList() {
     },
     profile: s.profile,
   }));
+  const [contactSearch, setContactSearch] = useState("");
 
   if (store.profile === undefined) {
     throw new Error("User profile is not defined");
@@ -136,91 +138,101 @@ export function SidePanelContactList() {
     <div className="h-full bg-white">
       <Header />
 
-      <div className="mt-4 h-12 px-5 pt-1">
-        <ContactSearch />
+      <div className="flex h-16 items-center px-5 pt-2">
+        <ContactSearch
+          value={contactSearch}
+          onChange={(e) => setContactSearch(e.target.value)}
+        />
       </div>
 
-      <div className="mt-4 h-[calc(100%-5rem-5rem)] space-y-4 overflow-y-auto pb-2">
-        {topicListItems.map((t) => {
-          if (store.profile.profile === null) {
-            throw new Error("User profile is not defined");
-          }
+      <div className="mt-4 h-[calc(100%-3rem-4rem-1rem)] space-y-4 overflow-y-auto pb-2">
+        {topicListItems
+          .filter((t) =>
+            t.name.toLowerCase().includes(contactSearch.toLowerCase())
+          )
+          .map((t) => {
+            if (store.profile.profile === null) {
+              throw new Error("User profile is not defined");
+            }
 
-          if (t.type == "p2p") {
-            return (
-              <ContactListContact
-                key={t.topicId}
-                type={t.type}
-                userId={store.profile.profile?.userId}
-                onClick={() => {
-                  router.push(location.pathname + `?topic=${t.topicId}`);
-                }}
-                topicId={t.topicId}
-                fullname={t.name}
-                isTyping={t.typing}
-                isOnline={t.online}
-                profilePhotoUrl={t.profilePhotoUrl}
-                lastMessage={
-                  t.lastMessage === null || t.lastMessage === undefined
-                    ? null
-                    : t.lastMessage
-                }
-              />
-            );
-          } else if (t.type == "grp") {
-            return (
-              <ContactListContact
-                key={t.topicId}
-                type={t.type}
-                userId={store.profile.profile.userId}
-                onClick={() => {
-                  router.push(location.pathname + `?topic=${t.topicId}`);
-                }}
-                topicId={t.topicId}
-                fullname={t.name}
-                typingUserFullname={t.typing?.fullname}
-                isOnline={t.online}
-                profilePhotoUrl={t.profilePhotoUrl}
-                lastMessage={
-                  t.lastMessage === null || t.lastMessage === undefined
-                    ? null
-                    : t.lastMessage
-                }
-              />
-            );
-          } else if (t.type == "past-grp") {
-            return (
-              <ContactListContact
-                key={t.topicId}
-                type={t.type}
-                userId={store.profile.profile.userId}
-                onClick={() => {
-                  router.push(location.pathname + `?topic=${t.topicId}`);
-                }}
-                topicId={t.topicId}
-                fullname={t.name}
-                profilePhotoUrl={t.profilePhotoUrl}
-                lastMessage={
-                  t.lastMessage === null || t.lastMessage === undefined
-                    ? null
-                    : t.lastMessage
-                }
-              />
-            );
-          } else {
-            return (
-              <ContactListNewContact
-                key={t.topicId}
-                onClick={() => {
-                  router.push(location.pathname + `?topic=${t.topicId}`);
-                }}
-                topicId={t.topicId}
-                fullname={t.name}
-                profilePhotoUrl={t.profilePhotoUrl}
-              />
-            );
-          }
-        })}
+            if (t.type == "p2p") {
+              return (
+                <ContactListContact
+                  key={t.topicId}
+                  type={t.type}
+                  userId={store.profile.profile?.userId}
+                  onClick={() => {
+                    router.push(location.pathname + `?topic=${t.topicId}`);
+                  }}
+                  topicId={t.topicId}
+                  fullname={t.name}
+                  isTyping={t.typing}
+                  isOnline={t.online}
+                  profilePhotoUrl={t.profilePhotoUrl}
+                  lastMessage={
+                    t.lastMessage === null || t.lastMessage === undefined
+                      ? null
+                      : t.lastMessage
+                  }
+                  touchedAt={t.touchedAt}
+                />
+              );
+            } else if (t.type == "grp") {
+              return (
+                <ContactListContact
+                  key={t.topicId}
+                  type={t.type}
+                  userId={store.profile.profile.userId}
+                  onClick={() => {
+                    router.push(location.pathname + `?topic=${t.topicId}`);
+                  }}
+                  topicId={t.topicId}
+                  fullname={t.name}
+                  typingUserFullname={t.typing?.fullname}
+                  isOnline={t.online}
+                  profilePhotoUrl={t.profilePhotoUrl}
+                  lastMessage={
+                    t.lastMessage === null || t.lastMessage === undefined
+                      ? null
+                      : t.lastMessage
+                  }
+                  touchedAt={t.touchedAt}
+                />
+              );
+            } else if (t.type == "past-grp") {
+              return (
+                <ContactListContact
+                  key={t.topicId}
+                  type={t.type}
+                  userId={store.profile.profile.userId}
+                  onClick={() => {
+                    router.push(location.pathname + `?topic=${t.topicId}`);
+                  }}
+                  topicId={t.topicId}
+                  fullname={t.name}
+                  profilePhotoUrl={t.profilePhotoUrl}
+                  lastMessage={
+                    t.lastMessage === null || t.lastMessage === undefined
+                      ? null
+                      : t.lastMessage
+                  }
+                  touchedAt={t.touchedAt}
+                />
+              );
+            } else {
+              return (
+                <ContactListNewContact
+                  key={t.topicId}
+                  onClick={() => {
+                    router.push(location.pathname + `?topic=${t.topicId}`);
+                  }}
+                  topicId={t.topicId}
+                  fullname={t.name}
+                  profilePhotoUrl={t.profilePhotoUrl}
+                />
+              );
+            }
+          })}
       </div>
     </div>
   );
@@ -231,7 +243,7 @@ function Header() {
   const currentTopic = useSearchParams().get("topic");
 
   return (
-    <div className="h-20 px-5 pt-4">
+    <div className="h-12 px-5 pt-4">
       <div className="flex items-end justify-between">
         <div>
           <p className="text-xl font-semibold">Chats</p>
@@ -259,7 +271,6 @@ function Header() {
           />
         </div>
       </div>
-      <p className="mt-3 text-[13px] text-gray-500">26 messages, 3 unread</p>
     </div>
   );
 }
