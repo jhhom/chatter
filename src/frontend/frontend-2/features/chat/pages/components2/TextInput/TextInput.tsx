@@ -68,6 +68,8 @@ export function TextInput(props: TextInputProps) {
       return;
     }
 
+    console.log("INPUT MODE", props.inputMode);
+
     if (
       props.inputMode.type == "message" &&
       messageInputRef.current.value !== ""
@@ -127,24 +129,6 @@ export function TextInput(props: TextInputProps) {
             "cursor-not-allowed": props.disabled,
           })}
         >
-          <input
-            disabled={props.disabled}
-            ref={photoInputRef}
-            type="file"
-            id="photo-input"
-            className="hidden"
-            accept="image/*"
-            onChange={loadPhoto}
-          />
-
-          <input
-            disabled={props.disabled}
-            ref={fileInputRef}
-            type="file"
-            id="file-input"
-            className="hidden"
-            onChange={loadFile}
-          />
           <label
             htmlFor="photo-input"
             className={cx(
@@ -172,6 +156,25 @@ export function TextInput(props: TextInputProps) {
           </label>
         </div>
       )}
+
+      <input
+        disabled={props.disabled}
+        ref={photoInputRef}
+        type="file"
+        id="photo-input"
+        className="hidden"
+        accept="image/*"
+        onChange={loadPhoto}
+      />
+
+      <input
+        disabled={props.disabled}
+        ref={fileInputRef}
+        type="file"
+        id="file-input"
+        className="hidden"
+        onChange={loadFile}
+      />
 
       <div
         className={cx("flex h-8 flex-grow items-center pl-6 pr-4", {

@@ -116,6 +116,10 @@ export const ChatConversation = forwardRef<
           if (r === null) {
             return true;
           }
+          console.log(
+            "IS USER AT BOTTOM OF SCROLL?",
+            Math.abs(r.scrollHeight - r.scrollTop - r.clientHeight) < 5
+          );
           return Math.abs(r.scrollHeight - r.scrollTop - r.clientHeight) < 5;
         },
         scrollChatToTheBottom() {
