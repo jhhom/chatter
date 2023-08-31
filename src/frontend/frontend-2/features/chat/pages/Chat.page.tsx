@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { IsGroupTopicId, IsUserId } from "~/backend/service/common/topics";
 

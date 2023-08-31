@@ -125,6 +125,7 @@ const mainRouter = router({
       if (result.isErr()) {
         throw result.error;
       }
+      console.log("RESULT", result.value);
       return result.value;
     }),
   ["topic/preview_info"]: authProcedure

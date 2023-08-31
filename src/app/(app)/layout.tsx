@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "~/styles/globals.css";
 
 import { useLoginHandler } from "~/frontend/frontend-2/features/auth/hooks/use-login-handler.hook";
@@ -19,7 +19,21 @@ import ChatPage from "~/frontend/frontend-2/features/chat/pages/Chat.page";
 
 import { defaultTheme, Provider } from "@adobe/react-spectrum";
 
+import {
+  DialogTrigger,
+  Button,
+  Dialog,
+  Heading,
+  Input,
+  Label,
+  Modal,
+  TextField,
+} from "react-aria-components";
 import { Toaster } from "react-hot-toast";
+import { useSearchParams, useRouter } from "next/navigation";
+import useAsyncEffect from "use-async-effect";
+import { IsGroupTopicId, IsUserId } from "~/backend/service/common/topics";
+import { type ServiceOutput } from "~/api-contract/types";
 
 const queryClient = new QueryClient();
 
@@ -45,12 +59,22 @@ export default function RootLayout({
 
 function Layout({ children }: { children: React.ReactNode }) {
   const store = useAppStore((s) => ({
+    setContact: s.setContact,
+    setAfterLoginNavigateTo: s.setAfterLoginNavigateTo,
     setAuthStatus: s.setAuthStatus,
     setProfile: s.setProfile,
     authStatus: s.authStatus,
+    get: s.get,
   }));
 
+  const [groupPreview, setGroupPreview] =
+    useState<ServiceOutput<"group/preview_info"> | null>(null);
+
   const { onLoginSuccess } = useLoginHandler();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const joinGroupParam = searchParams.get("join_group");
+  const topicParam = searchParams.get("topic");
 
   useEffect(() => {
     void (async () => {
@@ -86,6 +110,86 @@ function Layout({ children }: { children: React.ReactNode }) {
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    const removeParam = () => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("topic");
+      router.push(url.toString());
+    };
+
+    if (topicParam === null) {
+      return;
+    }
+    if (topicParam === "") {
+      removeParam();
+      return;
+    }
+
+    const contacts = store.get();
+
+    if (
+      (IsUserId(topicParam) &&
+        !contacts.p2p.has(topicParam) &&
+        !contacts.newContacts.has(topicParam)) ||
+      (IsGroupTopicId(topicParam) &&
+        !contacts.grp.has(topicParam) &&
+        !contacts.pastGrp.has(topicParam)) ||
+      (!IsUserId(topicParam) && !IsGroupTopicId(topicParam))
+    ) {
+      removeParam();
+    }
+  });
+
+  useAsyncEffect(async () => {
+    if (joinGroupParam === null) {
+      return;
+    }
+
+    const removeParam = () => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("join_group");
+      router.push(url.toString());
+    };
+
+    if (joinGroupParam === "") {
+      removeParam();
+      return;
+    }
+
+    if (store.authStatus === "logged-in") {
+      const r = await client["group/preview_info"]({
+        groupInviteLinkId: joinGroupParam,
+      });
+      if (r.isErr()) {
+        removeParam();
+        return;
+      }
+      const isUserAMember = await client["group/am_i_group_member_of"]({
+        groupTopicId: r.value.groupId,
+      });
+      if (isUserAMember.isErr()) {
+        removeParam();
+        return;
+      }
+      if (isUserAMember.value) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("join_group");
+        url.searchParams.set("topic", r.value.groupId);
+        router.push(url.toString());
+      } else {
+        setGroupPreview(r.value);
+      }
+    } else {
+      store.setAfterLoginNavigateTo(`?join_group=${joinGroupParam}`);
+      router.push("/");
+    }
+    // check if user is authenticated
+    // if yes:
+    //  check if group is valid, if group is valid, does user belongs to the group,
+    // if no:
+    //  redirect to login, and set to navigate to after login successful
+  }, [joinGroupParam, router, store.authStatus]);
+
   return match(store.authStatus)
     .with("loading", () => {
       return (
@@ -96,7 +200,7 @@ function Layout({ children }: { children: React.ReactNode }) {
     })
     .with("logged-in", () => {
       return (
-        <div className="flex h-screen w-screen">
+        <div className="relative flex h-screen w-screen">
           <div className="h-full w-[22rem] border-r">
             <Header />
             <div className="h-[calc(100%-4rem)]">{children}</div>
@@ -105,6 +209,128 @@ function Layout({ children }: { children: React.ReactNode }) {
             <ChatPage />
           </div>
           <Toaster position="top-right" />
+
+          <DialogTrigger isOpen={groupPreview !== null}>
+            <Modal className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-md border border-gray-300 bg-white shadow-md">
+              <Dialog className="px-5 py-5">
+                {({ close }) => (
+                  <div>
+                    <div className="flex">
+                      <div className="h-16 w-16">
+                        {groupPreview?.profilePhotoUrl ? (
+                          <img src={groupPreview.profilePhotoUrl} />
+                        ) : (
+                          <div className="flex h-full w-full items-end justify-center rounded-lg bg-gray-100 pb-1">
+                            <IconPerson className="h-12 w-12 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-[220px] pl-4 pt-2">
+                        <p>{groupPreview?.groupName ?? ""}</p>
+                        <p className="mt-3 text-sm">
+                          {groupPreview?.numberOfParticipants ?? 0} participants
+                        </p>
+                      </div>
+                    </div>
+
+                    {!groupPreview?.canNewInviteJoin && (
+                      <p>
+                        The group currently doesn't allow joining the group
+                        through invite link.
+                      </p>
+                    )}
+
+                    <div className="mt-12 flex justify-end text-sm uppercase">
+                      <button
+                        onClick={() => {
+                          const url = new URL(window.location.href);
+                          url.searchParams.delete("join_group");
+                          router.push(url.toString());
+                          setGroupPreview(null);
+                          close();
+                        }}
+                        className="rounded-md px-3 py-2 font-semibold text-green-600 hover:bg-gray-100"
+                      >
+                        CANCEL
+                      </button>
+                      {groupPreview?.canNewInviteJoin && (
+                        <button
+                          onClick={async () => {
+                            if (joinGroupParam === null) {
+                              const url = new URL(window.location.href);
+                              url.searchParams.delete("join_group");
+                              router.push(url.toString());
+                              setGroupPreview(null);
+                              close();
+                              return;
+                            }
+                            const r = await client[
+                              "group/join_group_via_invite_link"
+                            ]({
+                              inviteLinkId: joinGroupParam,
+                            });
+                            if (r.isErr()) {
+                              if (
+                                r.error.details.type ==
+                                "GROUP.NO_JOIN_PERMISSION"
+                              ) {
+                                alert(
+                                  "The group doesn't allow any new joiners"
+                                );
+                              } else {
+                                alert(
+                                  "Failed to join group, an unexpected error had occured"
+                                );
+                              }
+                              const url = new URL(window.location.href);
+                              url.searchParams.delete("join_group");
+                              router.push(url.toString());
+                              setGroupPreview(null);
+                              return;
+                            }
+
+                            store.setContact((s) => {
+                              s.pastGrp.delete(r.value.topicId);
+
+                              s.grp.set(r.value.topicId, {
+                                profile: {
+                                  ownerId: r.value.ownerId,
+                                  name: r.value.topicName,
+                                  userPermissions: r.value.userPermissions,
+                                  defaultPermissions:
+                                    r.value.defaultPermissions,
+                                  description: "",
+                                  touchedAt: null,
+                                  profilePhotoUrl: r.value.profilePhotoUrl,
+                                  lastMessage: null,
+                                },
+                                status: {
+                                  online: r.value.online,
+                                  typing: [],
+                                  latestTyping: null,
+                                },
+                              });
+                            });
+
+                            const url = new URL(window.location.href);
+                            url.searchParams.delete("join_group");
+                            url.searchParams.set("topic", r.value.topicId);
+                            router.push(url.toString());
+                            setGroupPreview(null);
+                          }}
+                          className="rounded-md px-3 py-2 font-semibold text-green-600 hover:bg-gray-100"
+                        >
+                          JOIN GROUP
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </Dialog>
+            </Modal>
+          </DialogTrigger>
+
+          {/* TODO: show the group preview here */}
         </div>
       );
     })

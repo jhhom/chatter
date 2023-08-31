@@ -68,8 +68,6 @@ export function TextInput(props: TextInputProps) {
       return;
     }
 
-    console.log("INPUT MODE", props.inputMode);
-
     if (
       props.inputMode.type == "message" &&
       messageInputRef.current.value !== ""

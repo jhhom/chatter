@@ -6,6 +6,7 @@ import type { LastMessageOfTopic } from "~/backend/service/topics/common/get-use
 import type { ProfileSlice } from "~/frontend/stores/profile.store";
 import type { AuthStatusSlice } from "~/frontend/stores/auth-status.store";
 import { ImmerStateCreator } from "~/frontend/stores/types";
+import { AfterLoginNavigateToSlice } from "~/frontend/stores/after-login-navigate-to.store";
 
 type P2PContactStatus =
   | {
@@ -76,7 +77,10 @@ export type ContactSlice = {
       state: Omit<ContactSlice, "setContact" | "get"> & ProfileSlice["profile"]
     ) => void
   ) => void;
-  get: () => ContactSlice & ProfileSlice & AuthStatusSlice;
+  get: () => ContactSlice &
+    ProfileSlice &
+    AuthStatusSlice &
+    AfterLoginNavigateToSlice;
 };
 
 export const createContactSlice: ImmerStateCreator<

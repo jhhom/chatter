@@ -50,6 +50,7 @@ export const contract = {
       groupName: z.string(),
       numberOfParticipants: z.number().int(),
       profilePhotoUrl: z.string().nullable(),
+      canNewInviteJoin: z.boolean(),
     }),
   },
   "group/members": {

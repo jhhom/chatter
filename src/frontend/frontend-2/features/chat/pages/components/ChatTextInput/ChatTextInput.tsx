@@ -51,7 +51,6 @@ export function ChatTextInput({
   const [isTyping, register] = useIsTyping({ timeout: 1500 });
 
   useEffect(() => {
-    console.log("REGISTER!!!");
     register(messageInputRef.current);
   }, [register]);
 

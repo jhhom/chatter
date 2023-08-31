@@ -73,9 +73,7 @@ export const ChatConversation = forwardRef<
       return;
     }
     const onScroll = async (e: Event) => {
-      console.log("SCROLLING...");
       if (r.scrollTop <= 0) {
-        console.log("REACHING TOP !!");
         const messageMarginTop = 4 + 1.75;
         const result = await props.onChatScrollToTop();
         if (result == "no new messages loaded") {
@@ -117,11 +115,6 @@ export const ChatConversation = forwardRef<
           return Math.abs(r.scrollHeight - r.scrollTop - r.clientHeight) < 5;
         },
         scrollChatToTheBottom() {
-          console.log(
-            "SCROLLING TO THE BOTTOM",
-            conversationContainerRef.current?.scrollHeight
-          );
-
           return conversationContainerRef.current?.scrollTo(
             0,
             conversationContainerRef.current.scrollHeight

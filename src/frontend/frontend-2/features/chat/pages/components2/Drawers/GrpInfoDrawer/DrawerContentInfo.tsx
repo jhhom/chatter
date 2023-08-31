@@ -17,6 +17,8 @@ import { DrawerContentAddMembersToGroup } from "./DrawerContentAddMembersToGroup
 
 import { permission } from "~/backend/service/common/permissions";
 
+import { client } from "~/frontend/external/api-client/client";
+
 import {
   Popover,
   OverlayArrow,
@@ -145,7 +147,18 @@ export function DrawerContentInfo(props: {
       </div>
 
       <div className="px-4">
-        <button className="group mt-3 flex h-12 w-full cursor-pointer items-center justify-between rounded-md border border-red-400 pl-4 text-left text-gray-600 hover:bg-red-500">
+        <button
+          onClick={async () => {
+            const r = await client["group/leave_group"]({
+              groupTopicId: props.groupId,
+            });
+            if (r.isErr()) {
+              alert(`Failed to leave group: ${r.error.message}`);
+              return;
+            }
+          }}
+          className="group mt-3 flex h-12 w-full cursor-pointer items-center justify-between rounded-md border border-red-400 pl-4 text-left text-gray-600 hover:bg-red-500"
+        >
           <p className="text-sm text-red-600 group-hover:text-white">
             LEAVE CONVERSATION
           </p>

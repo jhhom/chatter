@@ -18,10 +18,13 @@ import { IconPerson } from "~/frontend/frontend-2/features/common/icons";
 
 export function SidePanelSettings() {
   const router = useRouter();
-  const { profile, setAuthStatus } = useAppStore((s) => ({
-    profile: s.profile.profile,
-    setAuthStatus: s.setAuthStatus,
-  }));
+  const { profile, setAuthStatus, setAfterLoginNavigateTo } = useAppStore(
+    (s) => ({
+      profile: s.profile.profile,
+      setAuthStatus: s.setAuthStatus,
+      setAfterLoginNavigateTo: s.setAfterLoginNavigateTo,
+    })
+  );
 
   const [permissionStr, setPermissionStr] = useState(
     profile?.defaultPermissions ?? ""
@@ -154,10 +157,9 @@ export function SidePanelSettings() {
             }
             storage.clearToken();
             setAuthStatus("logged-out");
+            setAfterLoginNavigateTo(null);
             await dexie.delete().then(() => dexie.open());
-            router.push(
-              `/${currentTopic !== null ? `?topic=${currentTopic}` : ""}`
-            );
+            router.push(`/`);
           }}
           className="group mt-3 flex h-10 w-full cursor-pointer items-center justify-between rounded-md bg-red-500 pl-4 text-left text-gray-600 hover:bg-red-600"
         >

@@ -262,7 +262,6 @@ export function P2PChatPage(props: { contactId: UserId }) {
   const onMessageBubbleMenuClick: ChatConversationProps["onMessageBubbleMenuClick"] =
     useCallback(
       (e, message) => {
-        console.log("SHOW MESSAEG BUBBLE MENU", showMessageBubbleMenu);
         if (!showMessageBubbleMenu) {
           messageBubbleMenuRef.current?.style.setProperty(
             "--mouse-x",
@@ -275,7 +274,6 @@ export function P2PChatPage(props: { contactId: UserId }) {
           setMessageSelected(message);
           setShowMessageBubbleMenu(true);
         } else {
-          console.log("SHOW MESSAGE BUBBLM MENU");
           setMessageSelected(null);
           setShowMessageBubbleMenu(false);
         }

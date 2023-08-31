@@ -17,7 +17,6 @@ const formSchema = z.object({
   groupName: z.string().min(1),
   description: z.string().optional(),
   profileImage: z.custom<FileList>().superRefine((files, ctx) => {
-    console.log("FILES", files);
     if (files.length === 0) {
       return true;
     }

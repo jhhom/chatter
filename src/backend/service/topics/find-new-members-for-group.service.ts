@@ -31,8 +31,6 @@ export async function findNewMembersForGroup(
     return err(subscribedUsersResult.error);
   }
 
-  console.log("SUBSCRIBED USERS", subscribedUsersResult.value);
-
   // 2. ⭐️ GET THE LIST OF USER'S P2P CONTACTS THAT ARE NOT IN THE GROUP MEMBER LIST
   const p2pUserIdsResult = await getUserP2PTopicsNotInSubscriptionList(db, {
     userId: input.requesterUserId,
@@ -69,7 +67,7 @@ function getUserP2PTopicsNotInSubscriptionList(
       "users.profilePhotoUrl",
     ]);
 
-  if (input.searchQueryUsername) {
+  if (input.searchQueryUsername !== undefined) {
     query = query.where(({ and, eb, not }) =>
       and([
         eb("topics.id", "like", "p2p%"),
@@ -84,8 +82,6 @@ function getUserP2PTopicsNotInSubscriptionList(
         not(eb("peer.userId", "in", input.subscriptionList))
       );
   }
-
-  console.log("🔥 BEFORE QUERY");
 
   return fromPromise(
     query.execute(),

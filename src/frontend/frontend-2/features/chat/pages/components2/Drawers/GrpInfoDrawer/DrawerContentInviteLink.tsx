@@ -21,7 +21,7 @@ export function DrawerContentInviteLink(props: {
 
   useEffect(() => {
     void props.getInviteLink().then((l) => {
-      setInviteLink(`http://localhost:4000/join_group/${l}`);
+      setInviteLink(`http://localhost:3000?join_group=${l}`);
     });
   }, [props.getInviteLink]);
 

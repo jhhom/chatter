@@ -1,10 +1,10 @@
 import { fromPromise, ok, err } from "neverthrow";
-import { ServiceResult } from "~/api-contract/types";
+import { type ServiceResult } from "~/api-contract/types";
 import { AppError } from "~/api-contract/errors/errors";
 
-import { KyselyDB } from "~/backend/schema";
-import { GroupTopicId } from "~/api-contract/subscription/subscription";
+import { type KyselyDB } from "~/backend/schema";
 import { completeMediaUrl } from "~/backend/service/common/media";
+import { permission } from "~/backend/service/common/permissions";
 
 export async function getGroupPreviewInfo(
   db: KyselyDB,
@@ -13,7 +13,7 @@ export async function getGroupPreviewInfo(
   const groupResult = await fromPromise(
     db
       .selectFrom("groupTopicMeta")
-      .select(["topicId", "groupName", "profilePhotoUrl"])
+      .select(["topicId", "groupName", "profilePhotoUrl", "defaultPermissions"])
       .where("inviteLink", "=", groupInviteLinkId)
       .executeTakeFirstOrThrow(),
     (e) => new AppError("DATABASE", { cause: e })
@@ -29,12 +29,10 @@ export async function getGroupPreviewInfo(
       : null,
   };
 
-  const { count } = db.fn;
-
   const numOfSubs = await fromPromise(
     db
       .selectFrom("subscriptions")
-      .select(count<number>("id").as("numberOfParticipants"))
+      .select(db.fn.count<string>("id").as("numberOfParticipants"))
       .where("topicId", "=", group.topicId)
       .groupBy("topicId")
       .executeTakeFirstOrThrow(),
@@ -45,9 +43,10 @@ export async function getGroupPreviewInfo(
   }
 
   return ok({
-    groupId: group.topicId as GroupTopicId,
+    groupId: group.topicId,
     groupName: group.groupName,
-    numberOfParticipants: numOfSubs.value.numberOfParticipants,
+    numberOfParticipants: parseInt(numOfSubs.value.numberOfParticipants),
     profilePhotoUrl: group.profilePhotoUrl,
+    canNewInviteJoin: permission(group.defaultPermissions).canJoin(),
   });
 }

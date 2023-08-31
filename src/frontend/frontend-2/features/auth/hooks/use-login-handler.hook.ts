@@ -77,8 +77,6 @@ export const useLoginHandler = () => {
           });
         }
       }
-
-      console.log(s);
     });
 
     store.setContact((s) => {
@@ -93,8 +91,6 @@ export const useLoginHandler = () => {
         },
       });
     });
-
-    console.log(store.get());
 
     return ok({});
   };
@@ -427,7 +423,6 @@ export const useLoginHandler = () => {
             status: c.status,
           });
         } else {
-          console.log("UPDATE WITH NEW PERMISSION", payload.updatedPermission);
           state.grp.set(payload.topicId, {
             profile: {
               ...c.profile,
@@ -652,8 +647,6 @@ export const useLoginHandler = () => {
       });
     },
     ["message.from-new-topic"]: async (payload) => {
-      console.log("RECEIVED MESSAGE FROM NEW TOPIC", payload);
-
       await dexie.messages.put({
         seqId: payload.seqId,
         topicId: payload.topicId,
@@ -812,6 +805,13 @@ export const useLoginHandler = () => {
       {
         const readListener = makeReadListener(response.userId);
         client.addListener("read", readListener);
+      }
+
+      {
+        const navigateTo = store.get().afterLoginNavigateTo;
+        if (navigateTo !== null) {
+          router.push(navigateTo);
+        }
       }
 
       return ok({});
