@@ -103,6 +103,13 @@ export const contract = {
         getUserTopicsGeneral.extend({
           type: z.literal("past-grp"),
           topicId: zGroupId,
+          memberListSnapshot: z.array(
+            z.object({
+              userId: zUserId,
+              name: z.string(),
+              profilePhotoUrl: z.string().nullable(),
+            })
+          ),
         }),
       ])
     ),

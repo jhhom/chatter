@@ -5,8 +5,8 @@ import type {
 import type { LastMessageOfTopic } from "~/backend/service/topics/common/get-user-topics/get-last-message-of-topic.repo";
 import type { ProfileSlice } from "~/frontend/stores/profile.store";
 import type { AuthStatusSlice } from "~/frontend/stores/auth-status.store";
-import { ImmerStateCreator } from "~/frontend/stores/types";
-import { AfterLoginNavigateToSlice } from "~/frontend/stores/after-login-navigate-to.store";
+import { type ImmerStateCreator } from "~/frontend/stores/types";
+import { type AfterLoginNavigateToSlice } from "~/frontend/stores/after-login-navigate-to.store";
 
 type P2PContactStatus =
   | {
@@ -64,6 +64,11 @@ export type PastGrpContactProfile = {
     touchedAt: null | Date;
     profilePhotoUrl: string | null;
     lastMessage: LastMessageOfTopic | null;
+    memberList: {
+      userId: UserId;
+      name: string;
+      profilePhotoUrl: string | null;
+    }[];
   };
 };
 
@@ -84,7 +89,7 @@ export type ContactSlice = {
 };
 
 export const createContactSlice: ImmerStateCreator<
-  ContactSlice & ProfileSlice & AuthStatusSlice,
+  ContactSlice & ProfileSlice & AuthStatusSlice & AfterLoginNavigateToSlice,
   ContactSlice
 > = (set, get) => ({
   p2p: new Map(),

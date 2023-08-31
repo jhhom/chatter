@@ -44,7 +44,8 @@ export async function leaveGroup(
         if (newOwner === undefined) {
           await tx
             .deleteFrom("topics")
-            .where("topics.id", "=", arg.groupTopicId);
+            .where("topics.id", "=", arg.groupTopicId)
+            .execute();
           return {
             type: "group-deleted" as const,
           };
@@ -80,6 +81,20 @@ export async function leaveGroup(
         throw precedingDate.error;
       }
 
+      const memberListSnapshot = await tx
+        .selectFrom("users")
+        .select(["id as userId", "fullname as name", "profilePhotoUrl"])
+        .where(
+          "id",
+          "in",
+          tx
+            .selectFrom("subscriptions")
+            .select("userId")
+            .where("topicId", "=", arg.groupTopicId)
+        )
+        .where("id", "!=", arg.memberId)
+        .execute();
+
       const topicEventLog = await tx
         .insertInto("topicEventLogs")
         .values({
@@ -87,15 +102,22 @@ export async function leaveGroup(
           topicId: arg.groupTopicId,
           actorUserId: arg.memberId,
           messageId: message.id,
+          info: {
+            type: "leave_group",
+            memberListSnapshot: memberListSnapshot,
+          },
         })
         .returningAll()
         .executeTakeFirstOrThrow();
 
-      await tx.insertInto("topicEventLogMetaRemoveMember").values({
-        id: topicEventLog.id,
-        readSeqId: deletedSubscription.readSeqId,
-        recvSeqId: deletedSubscription.recvSeqId,
-      });
+      await tx
+        .insertInto("topicEventLogMetaRemoveMember")
+        .values({
+          id: topicEventLog.id,
+          readSeqId: deletedSubscription.readSeqId,
+          recvSeqId: deletedSubscription.recvSeqId,
+        })
+        .execute();
 
       const memberName = (
         await tx
@@ -177,7 +199,7 @@ export async function leaveGroup(
           topicId: arg.groupTopicId,
           message: match(m.id)
             .with(arg.memberId, () => `You left the group`)
-            .otherwise(() => `${r.value.memberName} left the group`),
+            .otherwise(() => `${r.value.memberName ?? ""} left the group`),
           seqId: r.value.message.sequenceId,
           createdAt: new Date(r.value.message.createdAt),
           isFirstOfDate: r.value.isMessageFirstOfDate,
@@ -198,6 +220,13 @@ export async function leaveGroup(
             event: "leave_group",
             payload: {
               newOwnerId: r.value.newOwnerId,
+              memberListSnapshot: groupMembers.value
+                .filter((m) => m.id !== arg.memberId)
+                .map((m) => ({
+                  userId: m.id,
+                  name: m.fullname,
+                  profilePhotoUrl: m.profilePhotoUrl,
+                })),
             },
           },
           topicId: arg.groupTopicId,

@@ -114,7 +114,16 @@ export interface TopicEventLogs {
   topicId: TopicId;
   actorUserId: UserId;
   affectedUserId: UserId | null;
-  info: Json | null;
+  info: {
+    type: "leave_group" | "remove_member";
+    // member list snapshot when user is removed from the group
+    // doesn't include the user themselves
+    memberListSnapshot: {
+      userId: UserId;
+      name: string;
+      profilePhotoUrl: string | null;
+    }[];
+  } | null;
   createdAt: Generated<Timestamp>;
 }
 

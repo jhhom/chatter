@@ -56,10 +56,21 @@ type TopicEventPayload = {
     profilePhotoUrl: string | null;
   };
   change_member_permission: Record<string, never>;
-  remove_member: Record<string, never>;
+  remove_member: {
+    memberListSnapshot?: {
+      userId: UserId;
+      name: string;
+      profilePhotoUrl: string | null;
+    }[];
+  };
   create_group: Record<string, never>;
   leave_group: {
     newOwnerId?: UserId;
+    memberListSnapshot?: {
+      userId: UserId;
+      name: string;
+      profilePhotoUrl: string | null;
+    }[];
   };
 };
 

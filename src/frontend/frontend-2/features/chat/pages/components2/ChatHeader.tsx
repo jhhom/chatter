@@ -43,6 +43,79 @@ const indicatorText = (
   }
 };
 
+export function PastGroupChatHeader(props: {
+  groupName: string;
+  groupProfilePhotoUrl?: string;
+  onInfoClick: () => void;
+}) {
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const onClick: Parameters<
+      typeof document.body.addEventListener<"click">
+    >[1] = (e) => {
+      if (e.target instanceof Node && !menuRef.current?.contains(e.target)) {
+        setShowMenu(false);
+      }
+    };
+    document.body.addEventListener("click", onClick);
+
+    return () => document.body.addEventListener("click", onClick);
+  }, []);
+
+  return (
+    <div className="flex h-16 w-full items-center justify-between border-b-[1.5px] border-gray-200 px-5">
+      <div className="flex items-center">
+        <div className="relative h-10 w-10">
+          {props.groupProfilePhotoUrl ? (
+            <img
+              className="inline-block h-10 w-10 rounded-lg"
+              src={props.groupProfilePhotoUrl}
+            />
+          ) : (
+            <div className="flex h-10 w-10 items-end justify-center rounded-lg bg-gray-100 pb-1">
+              <IconPerson className="h-7 w-7 text-gray-400" />
+            </div>
+          )}
+        </div>
+
+        <div className="pl-3">
+          <p className="font-medium">{props.groupName}</p>
+        </div>
+      </div>
+
+      <div className="pr-2">
+        <button
+          onClick={() => {
+            setShowMenu(!showMenu);
+          }}
+          className="h-10 w-10 rounded-md p-2 hover:bg-gray-100"
+        >
+          <IconEllipsisVertical className="h-6 w-6" />
+        </button>
+
+        <div
+          className={cx(
+            { hidden: !showMenu },
+            // "absolute right-5 z-10 w-36 bg-white py-2 text-sm shadow-md"
+            "absolute right-5 z-10 w-[150px] rounded-md border-[1.5px] border-gray-300 bg-white py-2 text-sm"
+          )}
+          ref={menuRef}
+        >
+          <MenuItem
+            content="Info"
+            onClick={() => {
+              setShowMenu(false);
+              props.onInfoClick();
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ChatHeader(props: {
   type: "p2p" | "grp";
   online: boolean;

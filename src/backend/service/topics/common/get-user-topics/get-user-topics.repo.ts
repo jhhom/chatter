@@ -147,7 +147,7 @@ export async function getP2PTopics(db: KyselyDB, userId: UserId) {
 }
 
 export async function getPastGroupTopicsOfUser(db: KyselyDB, userId: UserId) {
-  const r = await fromPromise(
+  const topicEventLogs = await fromPromise(
     db
       .selectFrom("topicEventLogs")
       .innerJoin(
@@ -159,6 +159,7 @@ export async function getPastGroupTopicsOfUser(db: KyselyDB, userId: UserId) {
         sql<GroupTopicId>`DISTINCT ${eb.ref("topicEventLogs.topicId")}`.as(
           "topicId"
         ),
+        "topicEventLogs.info",
         "groupTopicMeta.groupName as topicName",
         "groupTopicMeta.profilePhotoUrl",
       ])
@@ -177,15 +178,15 @@ export async function getPastGroupTopicsOfUser(db: KyselyDB, userId: UserId) {
       .execute(),
     (e) => e
   );
-  if (r.isErr()) {
-    return err(r.error);
+  if (topicEventLogs.isErr()) {
+    return err(topicEventLogs.error);
   }
 
-  if (r.value.length == 0) {
+  if (topicEventLogs.value.length == 0) {
     return ok([]);
   }
 
-  const removedTopics = r.value;
+  const removedTopics = topicEventLogs.value;
 
   const presentSubscriptionResult = await fromPromise(
     db
@@ -213,6 +214,11 @@ export async function getPastGroupTopicsOfUser(db: KyselyDB, userId: UserId) {
         ? completeMediaUrl(t.profilePhotoUrl)
         : null,
       touchedAt: null as null | Date,
+      memberListSnapshot:
+        t.info !== null &&
+        (t.info.type === "leave_group" || t.info.type === "remove_member")
+          ? t.info.memberListSnapshot ?? []
+          : [],
     }));
 
   for (const t of pastTopics) {
@@ -240,4 +246,3 @@ export async function getPastGroupTopicsOfUser(db: KyselyDB, userId: UserId) {
 
   return ok(pastTopics);
 }
-

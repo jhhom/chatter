@@ -10,6 +10,8 @@ import { topicUsecase } from "~/backend/service/topics";
 
 import { OnlineUsers } from "~/backend/service/common/online-users";
 
+import type { UserId } from "~/api-contract/subscription/subscription";
+import type { Socket } from "~/backend/service/common/socket";
 import { contract } from "~/api-contract/endpoints";
 import { serializeTRPCSourceError } from "~/backend/router/error-formatter";
 
@@ -33,9 +35,14 @@ const isAuthed = t.middleware(async ({ ctx, next }) => {
     ctx: {
       ctx: {
         config: ctx.config,
-        setAuth: ctx.ctx.setAuth,
-        resetAuth: ctx.ctx.resetAuth,
-        setSocket: ctx.ctx.setSocket,
+        setAuth: (
+          userId: UserId,
+          username: string,
+          email: string,
+          socketId: string
+        ) => ctx.ctx.setAuth(userId, username, email, socketId),
+        resetAuth: () => ctx.ctx.resetAuth(),
+        setSocket: (s: Socket | undefined) => ctx.ctx.setSocket(s),
         socket: ctx.ctx.socket,
         auth: ctx.ctx.auth,
         session: ctx.ctx.session,
@@ -247,8 +254,8 @@ const mainRouter = router({
       }
       return result.value;
     }),
-  registerSocket: procedure.subscription(async ({ input, ctx }) => {
-    const callback = await authUsecase.registerSocket(
+  registerSocket: procedure.subscription(({ input, ctx }) => {
+    const callback = authUsecase.registerSocket(
       { onlineUsers, db: ctx.ctx.db },
       { userCtx: ctx.ctx }
     );
@@ -359,6 +366,8 @@ const mainRouter = router({
       if (result.isErr()) {
         throw result.error;
       }
+      console.log("BOOM");
+      console.log(JSON.stringify(result.value));
       return result.value;
     }),
   ["users/contact_status"]: authProcedure

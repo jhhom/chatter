@@ -50,6 +50,20 @@ export async function removeGroupMember(
         throw precedingDate.error;
       }
 
+      const memberListSnapshot = await tx
+        .selectFrom("users")
+        .select(["id as userId", "fullname as name", "profilePhotoUrl"])
+        .where(
+          "id",
+          "in",
+          tx
+            .selectFrom("subscriptions")
+            .select("userId")
+            .where("topicId", "=", arg.groupTopicId)
+        )
+        .where("id", "!=", arg.memberId)
+        .execute();
+
       const createdTopicEventLog = await tx
         .insertInto("topicEventLogs")
         .values({
@@ -58,6 +72,10 @@ export async function removeGroupMember(
           actorUserId: arg.removerUserId,
           affectedUserId: arg.memberId,
           messageId: message.id,
+          info: {
+            type: "remove_member",
+            memberListSnapshot,
+          },
         })
         .returningAll()
         .executeTakeFirstOrThrow();
@@ -175,7 +193,15 @@ export async function removeGroupMember(
       payload: {
         event: {
           event: "remove_member",
-          payload: {},
+          payload: {
+            memberListSnapshot: groupMembers.value
+              .filter((m) => m.id !== r.value.removed.id)
+              .map((m) => ({
+                userId: m.id,
+                name: m.fullname,
+                profilePhotoUrl: m.profilePhotoUrl,
+              })),
+          },
         },
         topicId: arg.groupTopicId,
         message: `${r.value.remover.fullname} removed you`,

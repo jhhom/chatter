@@ -35,7 +35,7 @@ export async function getUserTopics(
     return err(new AppError("UNKNOWN", { cause: pastGrpTopics.error }));
   }
 
-  let result: (
+  const result: (
     | {
         topicName: string;
         touchedAt: Date | null;
@@ -60,6 +60,11 @@ export async function getUserTopics(
         | {
             type: "past-grp";
             topicId: GroupTopicId;
+            memberListSnapshot: {
+              userId: UserId;
+              name: string;
+              profilePhotoUrl: string | null;
+            }[];
           }
       )
   )[] = [

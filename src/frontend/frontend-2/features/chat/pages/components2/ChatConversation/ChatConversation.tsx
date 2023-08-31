@@ -162,7 +162,10 @@ export const ChatConversation = forwardRef<
           <>
             <div
               ref={conversationContainerRef}
-              className="h-full w-full overflow-y-auto pb-2 pt-2"
+              className={cx("h-full w-full overflow-y-auto pt-2", {
+                "pb-2": props.mode.type === "normal",
+                "pb-10": props.mode.type !== "normal",
+              })}
             >
               {props.chatItems.map((item) => (
                 <ConversationItem

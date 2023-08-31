@@ -73,23 +73,11 @@ export const useLoginHandler = () => {
               touchedAt: t.touchedAt,
               profilePhotoUrl: t.profilePhotoUrl,
               lastMessage: t.lastMessage,
+              memberList: t.memberListSnapshot,
             },
           });
         }
       }
-    });
-
-    store.setContact((s) => {
-      s.pastGrp = new Map();
-      s.pastGrp.set("grpBOOM", {
-        profile: {
-          name: "past",
-          touchedAt: new Date(),
-          profilePhotoUrl: "james.jpg",
-          description: "past grp",
-          lastMessage: null,
-        },
-      });
     });
 
     return ok({});
@@ -371,6 +359,7 @@ export const useLoginHandler = () => {
                   type: "message",
                   content: payload.message,
                 },
+                memberList: payload.event.payload.memberListSnapshot ?? [],
               },
             });
           }

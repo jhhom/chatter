@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import useAsyncEffect from "use-async-effect";
 import { fromPromise } from "neverthrow";
 import type {
@@ -7,9 +7,7 @@ import type {
 } from "~/api-contract/subscription/subscription";
 import clsx from "clsx";
 
-import { ChatConversation } from "~/frontend/frontend-2/features/chat/pages/components/ChatConversation/ChatConversation";
-import { ChatImageOverlay } from "~/frontend/frontend-2/features/chat/pages/components/ChatOverlays";
-import { ChatHeader } from "~/frontend/frontend-2/features/chat/pages/components/PastGroupChat";
+import { ChatConversation } from "~/frontend/frontend-2/features/chat/pages/components2/ChatConversation/ChatConversation";
 import type {
   IChatUI,
   IChatConversationUI,
@@ -27,6 +25,7 @@ import { useMembersStore } from "~/frontend/frontend-2/features/chat/pages/store
 import { useMessagesStore } from "~/frontend/frontend-2/features/chat/pages/stores/messages/messages.store";
 import { client } from "~/frontend/external/api-client/client";
 import { dexie } from "~/frontend/external/browser/indexed-db";
+import { PastGroupChatHeader } from "~/frontend/frontend-2/features/chat/pages/components2/ChatHeader";
 
 const PAGE_SIZE = 24;
 const INITIAL_PAGE_SIZE = 64;
@@ -200,5 +199,89 @@ export function PastGroupChatPage(props: { contactId: GroupTopicId }) {
     throw new Error(`User profile is undefined`);
   }
 
-  return <div className="flex h-screen"></div>;
+  const pastGrpMemberList = useMemo(() => {
+    const memberArr = store.pastGrp?.profile.memberList ?? [];
+    const memberList = new Map<
+      UserId,
+      {
+        name: string;
+        profilePhotoUrl: string | null;
+      }
+    >();
+    for (const m of memberArr) {
+      memberList.set(m.userId, {
+        name: m.name,
+        profilePhotoUrl: m.profilePhotoUrl,
+      });
+    }
+
+    return memberList;
+  }, [store.pastGrp.profile.memberList]);
+
+  const getAuthorProfileImage = useCallback(
+    (userId: UserId) => {
+      return pastGrpMemberList.get(userId)?.profilePhotoUrl ?? undefined;
+    },
+    [pastGrpMemberList]
+  );
+
+  return (
+    <div className="relative h-screen">
+      <PastGroupChatHeader
+        groupName={store.pastGrp.profile.name}
+        onInfoClick={() => setShowDrawer(false)}
+        groupProfilePhotoUrl={
+          store.pastGrp.profile.profilePhotoUrl ?? undefined
+        }
+      />
+
+      <div className="relative h-[calc(100%-4rem)] w-full">
+        <ChatConversation
+          isNewContact={false}
+          peerName={store.pastGrp.profile.name}
+          ref={conversationUIControl}
+          onChatScrollToTop={async () => {
+            if (
+              messagesStore.hasEarlierMessages &&
+              !messagesStore.isLoadingMoreMessages
+            ) {
+              await messagesStore.loadMessages(
+                PAGE_SIZE,
+                messagesStore.messages[0].seqId
+              );
+              return "new messages loaded";
+            }
+            return "no new messages loaded";
+          }}
+          onMessageBubbleMenuClick={() => {
+            //
+          }}
+          getAuthorProfileImage={getAuthorProfileImage}
+          chatItems={messagesStore.messages}
+          mode={{ type: "removed from group" }}
+          onMessageImageClick={async (messageUrl) => {
+            if (chatImgViewRef.current) {
+              chatImgViewRef.current.src = messageUrl;
+            }
+
+            await new Promise((resolve) => {
+              setTimeout(() => {
+                resolve(undefined);
+              }, 200);
+            });
+
+            setShowMessageImageOverlay(true);
+          }}
+          onReplyMessage={() => {
+            //
+          }}
+          toReplyMessage={null}
+          showReplyPreview={false}
+          onCloseReplyPreview={() => {
+            //
+          }}
+        />
+      </div>
+    </div>
+  );
 }
