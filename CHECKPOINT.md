@@ -12,3 +12,7 @@ Features targeted to be done before next checkpoints:
 
 # Checkpoint 3 - Old UI / New UI
 - Checkpoint before we start working on new UI
+
+# Checkpoint 4 - All basic functionalities done except Invite Link
+Checkpoint before we work on Invite Link handling.
+
