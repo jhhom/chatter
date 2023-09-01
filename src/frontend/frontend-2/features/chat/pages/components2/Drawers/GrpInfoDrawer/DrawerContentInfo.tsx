@@ -18,6 +18,7 @@ import { DrawerContentAddMembersToGroup } from "./DrawerContentAddMembersToGroup
 import { permission } from "~/backend/service/common/permissions";
 
 import { client } from "~/frontend/external/api-client/client";
+import { clsx as cx } from "clsx";
 
 import {
   Popover,
@@ -187,8 +188,8 @@ function MemberListContact(props: {
 }) {
   return (
     <li className="group flex cursor-pointer items-center justify-between rounded-lg">
-      <div className="flex items-center">
-        <div className="h-9 w-9">
+      <div className=" flex items-center">
+        <div className="relative h-9 w-9">
           {props.profilePhotoUrl ? (
             <img
               className="h-full w-full rounded-lg object-cover"
@@ -199,7 +200,18 @@ function MemberListContact(props: {
               <IconPerson className="h-6 w-6 text-gray-400" />
             </div>
           )}
+          <div
+            className={cx(
+              "absolute -right-1 -top-1 block h-3 w-3 rounded-sm bg-white p-[0.1rem]",
+              {
+                hidden: !props.online,
+              }
+            )}
+          >
+            <div className="h-full w-full rounded-sm bg-green-400/80" />
+          </div>
         </div>
+
         <p className="pl-3">{props.name}</p>
       </div>
 

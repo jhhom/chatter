@@ -156,13 +156,12 @@ export async function getPastGroupTopicsOfUser(db: KyselyDB, userId: UserId) {
         "topicEventLogs.topicId"
       )
       .select((eb) => [
-        sql<GroupTopicId>`DISTINCT ${eb.ref("topicEventLogs.topicId")}`.as(
-          "topicId"
-        ),
+        "topicEventLogs.topicId",
         "topicEventLogs.info",
         "groupTopicMeta.groupName as topicName",
         "groupTopicMeta.profilePhotoUrl",
       ])
+      .distinctOn("topicEventLogs.topicId")
       .where(({ eb, and, or }) =>
         or([
           and([
@@ -175,9 +174,43 @@ export async function getPastGroupTopicsOfUser(db: KyselyDB, userId: UserId) {
           ]),
         ])
       )
+      .orderBy("topicEventLogs.topicId", "desc")
+      .orderBy("topicEventLogs.id", "desc")
       .execute(),
     (e) => e
   );
+
+  {
+    const q = db
+      .selectFrom("topicEventLogs")
+      .innerJoin(
+        "groupTopicMeta",
+        "groupTopicMeta.topicId",
+        "topicEventLogs.topicId"
+      )
+      .select((eb) => [
+        "topicEventLogs.topicId",
+        "topicEventLogs.info",
+        "groupTopicMeta.groupName as topicName",
+        "groupTopicMeta.profilePhotoUrl",
+      ])
+      .distinctOn("topicEventLogs.topicId")
+      .where(({ eb, and, or }) =>
+        or([
+          and([
+            eb("topicEventLogs.affectedUserId", "=", userId),
+            eb("topicEventLogs.topicEvent", "=", "remove_member"),
+          ]),
+          and([
+            eb("topicEventLogs.actorUserId", "=", userId),
+            eb("topicEventLogs.topicEvent", "=", "leave_group"),
+          ]),
+        ])
+      )
+      .orderBy("topicEventLogs.topicId", "desc")
+      .orderBy("topicEventLogs.id", "desc");
+  }
+
   if (topicEventLogs.isErr()) {
     return err(topicEventLogs.error);
   }
@@ -217,7 +250,7 @@ export async function getPastGroupTopicsOfUser(db: KyselyDB, userId: UserId) {
       memberListSnapshot:
         t.info !== null &&
         (t.info.type === "leave_group" || t.info.type === "remove_member")
-          ? t.info.memberListSnapshot ?? []
+          ? t.info.memberListSnapshot
           : [],
     }));
 

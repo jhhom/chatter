@@ -438,7 +438,12 @@ function MessageWithFile(
           <ReplyMessage {...props.replyTo} />
         </div>
       )}
-      <div className="mx-1 flex cursor-pointer rounded-md bg-gray-500/10 px-2 pb-2.5 pt-1.5">
+      <a
+        target="_blank"
+        download
+        href={props.url}
+        className="mx-1 flex cursor-pointer rounded-md bg-gray-500/10 px-2 pb-2.5 pt-1.5"
+      >
         <div className="flex h-10 items-center justify-center px-1">
           <IconFile className="h-8 w-8 text-gray-400" />
         </div>
@@ -450,7 +455,7 @@ function MessageWithFile(
             {formatFileSize(props.size)}
           </p>
         </div>
-      </div>
+      </a>
     </div>
   );
 }
