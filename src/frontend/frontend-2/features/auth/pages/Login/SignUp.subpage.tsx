@@ -1,4 +1,10 @@
-import { useState, forwardRef, useRef, useImperativeHandle } from "react";
+import {
+  useState,
+  forwardRef,
+  useRef,
+  useImperativeHandle,
+  useEffect,
+} from "react";
 import { z } from "zod";
 import { RefCallBack, useForm } from "react-hook-form";
 import { clsx as cx } from "clsx";
@@ -169,20 +175,18 @@ export default function SignupPage() {
         <div className="mb-6 flex pt-2">
           <ImageUpload
             ref={(e) => {
-              if (e && e.imgInput && e.removeImage) {
-                imgUploadRef.current = {
-                  imgInput: (el) => {
-                    profileImageInputRef(e.imgInput());
-                    return e.imgInput();
-                  },
-                  removeImage: e.removeImage,
-                };
+              if (e) {
+                const imgInputRef = e.imgInput();
+                if (imgInputRef) {
+                  profileImageInputRef(imgInputRef);
+                }
               }
+              imgUploadRef.current = e;
             }}
             {...profileImageRegister}
           />
 
-          {watchProfileImage?.item.length > 0 && (
+          {watchProfileImage?.length > 0 && (
             <div className="flex flex-col justify-end pb-2 pl-3">
               <button
                 onClick={(e) => {
@@ -190,7 +194,11 @@ export default function SignupPage() {
                   const r = document.getElementById("profileImage");
                   if (r && r instanceof HTMLInputElement) {
                     r.value = "";
+                    if (r.files !== null) {
+                      setValue("profileImage", r.files);
+                    }
                   }
+                  imgUploadRef.current?.removeImage();
                 }}
                 className="rounded-md border border-red-500 px-4 py-2 text-red-500 hover:bg-red-500 hover:text-white"
               >
@@ -296,7 +304,7 @@ const loginApiErrorMessage = (loginApiError: unknown) => {
 };
 
 type ImageUploadRef = {
-  imgInput: (el: HTMLInputElement | null) => void;
+  imgInput: () => HTMLInputElement | null;
   removeImage: () => void;
 };
 
@@ -327,7 +335,7 @@ const ImageUpload = forwardRef<
 
   useImperativeHandle(ref, (): ImageUploadRef => {
     return {
-      imgInput: (el: HTMLInputElement | null) => {
+      imgInput: () => {
         return imgInput.current;
       },
       removeImage: () => {
