@@ -59,8 +59,6 @@ export function TabNewGroup(props: { onSubmit: (values: FormSchema) => void }) {
   } = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
   });
-  const imageInputRef = createRef<HTMLInputElement>();
-
   return (
     <div>
       <form
