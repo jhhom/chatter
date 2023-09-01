@@ -6,19 +6,20 @@ import {
   useEffect,
 } from "react";
 import { z } from "zod";
-import { RefCallBack, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { clsx as cx } from "clsx";
 import { useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { isAppError } from "~/api-contract/errors/errors";
-import { useLoginHandler } from "~/frontend/frontend-2/features/auth/hooks/use-login-handler.hook";
 
 import { useAppStore } from "~/frontend/stores/stores";
 import { client } from "~/frontend/external/api-client/client";
-import storage from "~/frontend/external/browser/local-storage";
 
 import { Components } from "~/frontend/frontend-2/features/auth/pages/Login/components";
+import { file2Base64 } from "~/frontend/utils";
+
+import { toast } from "react-hot-toast";
 
 const formSchema = z.object({
   username: z.string().min(1, { message: "Username is required" }),
@@ -74,9 +75,10 @@ function ChatIcon(props: { className: string }) {
   );
 }
 
-export default function SignupPage() {
-  const { onLoginSuccess } = useLoginHandler();
-
+export default function SignupPage(props: {
+  onSignupSuccess: () => void;
+  onLoginClick: () => void;
+}) {
   const {
     watch,
     register,
@@ -95,34 +97,37 @@ export default function SignupPage() {
     setAuthStatus: s.setAuthStatus,
   }));
 
-  const loginMutation = useMutation({
-    mutationFn: async (values: { username: string; password: string }) => {
-      const loginResult = await client["auth/login"]({
+  const signupMutation = useMutation({
+    mutationFn: async (values: {
+      username: string;
+      password: string;
+      fullname: string;
+      email: string;
+      photoBase64: string | null;
+    }) => {
+      const signupResult = await client["users/create_user"]({
         username: values.username,
         password: values.password,
+        fullname: values.fullname,
+        email: values.email,
+        photoBase64: values.photoBase64,
       });
 
-      if (loginResult.isErr()) {
-        throw loginResult.error;
+      if (signupResult.isErr()) {
+        throw signupResult.error;
       }
-
-      const r = await onLoginSuccess(loginResult.value);
-      if (r.isErr()) {
-        throw r.error;
-      }
-      store.setProfile(loginResult.value);
-      storage.setToken(loginResult.value.token);
     },
     onSuccess(data) {
+      toast.success("Successfully signed-up!");
+      props.onSignupSuccess();
       setOpenErrorAlert(false);
-      store.setAuthStatus("logged-in");
     },
     onError(error: unknown) {
       setOpenErrorAlert(true);
     },
   });
 
-  const loginErrorMessage = loginApiErrorMessage(loginMutation.error);
+  const loginErrorMessage = loginApiErrorMessage(signupMutation.error);
 
   const { ref: profileImageInputRef, ...profileImageRegister } =
     register("profileImage");
@@ -149,8 +154,8 @@ export default function SignupPage() {
 
       <div
         className={cx("flex items-end", {
-          "h-20": loginMutation.isError && openErrorAlert,
-          "h-10": !loginMutation.isError && openErrorAlert,
+          "h-20": signupMutation.isError && openErrorAlert,
+          "h-10": !signupMutation.isError && openErrorAlert,
         })}
       >
         {openErrorAlert && loginErrorMessage !== undefined && (
@@ -162,10 +167,16 @@ export default function SignupPage() {
       </div>
 
       <form
-        onSubmit={handleSubmit((data) => {
-          loginMutation.mutate({
+        onSubmit={handleSubmit(async (data) => {
+          const img = data.profileImage.item(0);
+          const photoBase64 = img ? await file2Base64(img) : null;
+
+          signupMutation.mutate({
             username: data.username,
             password: data.password,
+            fullname: data.fullname,
+            email: data.email,
+            photoBase64,
           });
         })}
       >
@@ -245,16 +256,16 @@ export default function SignupPage() {
         <div>
           <button
             type="submit"
-            disabled={loginMutation.isPending}
+            disabled={signupMutation.isPending}
             className={cx(
               "focus-visible:outline-primary flex w-full items-center justify-center rounded-md bg-primary-500 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2",
               {
-                "hover:bg-primary-600": !loginMutation.isPending,
-                "cursor-not-allowed bg-primary-300": loginMutation.isPending,
+                "hover:bg-primary-600": !signupMutation.isPending,
+                "cursor-not-allowed bg-primary-300": signupMutation.isPending,
               }
             )}
           >
-            {loginMutation.isPending && (
+            {signupMutation.isPending && (
               <span className="flex w-6 items-center">
                 <span
                   className="inline-block h-4 w-4 animate-spin rounded-full border-[3px] border-current border-t-transparent text-white"
@@ -276,7 +287,10 @@ export default function SignupPage() {
           <div className="mt-4">
             <p className="text-sm">
               Already have an account?{" "}
-              <span className="cursor-pointer text-primary-600 hover:underline">
+              <span
+                onClick={props.onLoginClick}
+                className="cursor-pointer text-primary-600 hover:underline"
+              >
                 Login here
               </span>
             </p>

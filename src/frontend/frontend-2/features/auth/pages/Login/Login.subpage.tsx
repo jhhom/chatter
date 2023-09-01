@@ -21,7 +21,7 @@ const formSchema = z.object({
 
 type FormSchema = z.infer<typeof formSchema>;
 
-export default function LoginPage() {
+export default function LoginPage(props: { onSignupClick: () => void }) {
   const { onLoginSuccess } = useLoginHandler();
 
   const {
@@ -123,7 +123,21 @@ export default function LoginPage() {
         <Components.Form.SubmitButton isPending={loginMutation.isPending} />
       </form>
 
-      <Components.SignupLink />
+      <div>
+        <div>
+          <div className="mt-4">
+            <p className="text-sm">
+              Doesn&apos;t have an account?{" "}
+              <span
+                onClick={props.onSignupClick}
+                className="cursor-pointer text-primary-600 hover:underline"
+              >
+                Sign up here
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
     </Components.Layout>
   );
 }
