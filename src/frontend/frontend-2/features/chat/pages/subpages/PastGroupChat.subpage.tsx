@@ -1,33 +1,30 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+  type ComponentProps,
+} from "react";
 import useAsyncEffect from "use-async-effect";
 import { fromPromise } from "neverthrow";
+import { clsx as cx } from "clsx";
+import { toast } from "react-hot-toast";
+
 import type {
   GroupTopicId,
   UserId,
 } from "~/api-contract/subscription/subscription";
-import clsx from "clsx";
-
 import { ChatConversation } from "~/frontend/frontend-2/features/chat/pages/components2/ChatConversation/ChatConversation";
-import type {
-  IChatUI,
-  IChatConversationUI,
-} from "~/frontend/frontend-2/features/chat/pages/types";
-import {
-  useDeleteMessageListener,
-  useEventLogListener,
-  useMessageListener,
-  useReadListener,
-  useGroupEventLogListener,
-} from "~/frontend/frontend-2/features/chat/pages/hooks";
-
+import type { IChatConversationUI } from "~/frontend/frontend-2/features/chat/pages/types";
+import { useEventLogListener } from "~/frontend/frontend-2/features/chat/pages/hooks";
+import { ChatImageOverlay } from "~/frontend/frontend-2/features/chat/pages/components2/ChatOverlays";
 import { useAppStore } from "~/frontend/stores/stores";
-import { useMembersStore } from "~/frontend/frontend-2/features/chat/pages/stores/members/members.store";
 import { useMessagesStore } from "~/frontend/frontend-2/features/chat/pages/stores/messages/messages.store";
 import { client } from "~/frontend/external/api-client/client";
 import { dexie } from "~/frontend/external/browser/indexed-db";
 import { PastGroupChatHeader } from "~/frontend/frontend-2/features/chat/pages/components2/ChatHeader";
 import { GroupInfoDrawer3 } from "~/frontend/frontend-2/features/chat/pages/components2/Drawers/GrpInfoDrawer/GrpInfoDrawer2";
-import { match } from "assert";
 import { PastGrpDrawerContentInfo } from "~/frontend/frontend-2/features/chat/pages/components2/Drawers/PastGrpInfoDrawer";
 
 const PAGE_SIZE = 24;
@@ -165,6 +162,46 @@ export function PastGroupChatPage(props: { contactId: GroupTopicId }) {
     [pastGrpMemberList]
   );
 
+  const onReplyMessageClick: ComponentProps<
+    typeof ChatConversation
+  >["onReplyMessageClick"] = useCallback(
+    async (seqId) => {
+      const hasMessageInDisplay =
+        messagesStore.get().messages.findIndex((x) => x.seqId === seqId) !== -1;
+      if (hasMessageInDisplay) {
+        conversationUIControl.current?.scrollToMessage(seqId);
+        return;
+      }
+
+      const hasMessagesBeforeReplyInDisplay =
+        messagesStore.get().messages.findIndex((x) => x.seqId < seqId) !== -1;
+      if (hasMessagesBeforeReplyInDisplay) {
+        toast("Message not found");
+        return;
+      }
+
+      const result = await messagesStore.loadMessagesUntilReply(
+        messagesStore.get().messages[0].seqId,
+        seqId
+      );
+      if (result.isErr()) {
+        if (result.error.type === "message not found") {
+          toast("Message not found");
+          return;
+        } else {
+          console.error(
+            `Unexpected error in getting replied message:`,
+            result.error.cause
+          );
+          return;
+        }
+      } else {
+        conversationUIControl.current?.scrollToMessage(seqId);
+      }
+    },
+    [messagesStore.get, messagesStore.loadMessagesUntilReply]
+  );
+
   return (
     <div className="relative flex h-screen">
       <div className="w-full">
@@ -197,6 +234,7 @@ export function PastGroupChatPage(props: { contactId: GroupTopicId }) {
             onMessageBubbleMenuClick={() => {
               //
             }}
+            onReplyMessageClick={onReplyMessageClick}
             getAuthorProfileImage={getAuthorProfileImage}
             chatItems={messagesStore.messages}
             mode={{ type: "removed from group" }}
@@ -253,6 +291,17 @@ export function PastGroupChatPage(props: { contactId: GroupTopicId }) {
           </GroupInfoDrawer3>
         </div>
       )}
+
+      <div
+        className={cx("absolute left-0 top-0 h-[calc(100%)] w-full bg-white", {
+          hidden: !showMessageImageOverlay,
+        })}
+      >
+        <ChatImageOverlay
+          ref={chatImgViewRef}
+          onCloseOverlay={() => setShowMessageImageOverlay(false)}
+        />
+      </div>
     </div>
   );
 }

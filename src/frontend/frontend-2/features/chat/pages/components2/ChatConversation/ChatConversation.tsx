@@ -31,6 +31,7 @@ type ChatConversationProps = {
   onChatScrollToTop: () => Promise<
     "new messages loaded" | "no new messages loaded"
   >;
+  onReplyMessageClick: (seqId: number) => void;
   onMessageImageClick: (messageUrl: string) => void;
   onMessageBubbleMenuClick: (
     e: React.MouseEvent<Element, MouseEvent>,
@@ -169,6 +170,7 @@ export const ChatConversation = forwardRef<
             >
               {props.chatItems.map((item) => (
                 <ConversationItem
+                  onReplyMessageClick={props.onReplyMessageClick}
                   key={item.seqId}
                   item={item}
                   getAuthorProfileImage={props.getAuthorProfileImage}

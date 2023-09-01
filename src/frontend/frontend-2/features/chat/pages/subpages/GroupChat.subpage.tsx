@@ -20,7 +20,6 @@ import type { IChatConversationUI } from "~/frontend/frontend-2/features/chat/pa
 import type { ChatMessageTypeMessage } from "~/frontend/frontend-2/features/chat/pages/stores/messages/get-messages-display-sequences";
 import { ChatConversation } from "~/frontend/frontend-2/features/chat/pages/components2/ChatConversation/ChatConversation";
 import { ChatHeader } from "~/frontend/frontend-2/features/chat/pages/components2/ChatHeader";
-
 import {
   ChatReplyPreview,
   type ChatReplyPreviewProps,
@@ -30,6 +29,7 @@ import {
   ChatImageUploadPreviewOverlay,
   ForwardMessageOverlay,
   DeleteMessageOverlay,
+  ChatImageOverlay,
 } from "~/frontend/frontend-2/features/chat/pages/components2/ChatOverlays";
 import {
   TextInput,
@@ -422,6 +422,46 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
       setToReplyMessage(false);
     }, []);
 
+  const onReplyMessageClick: ComponentProps<
+    typeof ChatConversation
+  >["onReplyMessageClick"] = useCallback(
+    async (seqId) => {
+      const hasMessageInDisplay =
+        messagesStore.get().messages.findIndex((x) => x.seqId === seqId) !== -1;
+      if (hasMessageInDisplay) {
+        conversationUIControl.current?.scrollToMessage(seqId);
+        return;
+      }
+
+      const hasMessagesBeforeReplyInDisplay =
+        messagesStore.get().messages.findIndex((x) => x.seqId < seqId) !== -1;
+      if (hasMessagesBeforeReplyInDisplay) {
+        toast("Message not found");
+        return;
+      }
+
+      const result = await messagesStore.loadMessagesUntilReply(
+        messagesStore.get().messages[0].seqId,
+        seqId
+      );
+      if (result.isErr()) {
+        if (result.error.type === "message not found") {
+          toast("Message not found");
+          return;
+        } else {
+          console.error(
+            `Unexpected error in getting replied message:`,
+            result.error.cause
+          );
+          return;
+        }
+      } else {
+        conversationUIControl.current?.scrollToMessage(seqId);
+      }
+    },
+    [messagesStore.get, messagesStore.loadMessagesUntilReply]
+  );
+
   const onMessageSubmit: TextInputProps["onMessageSubmit"] = useCallback(
     async (message) => {
       if (toReplyMessage) {
@@ -533,6 +573,7 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
             isNewContact={false}
             peerName={store.grp.profile.name}
             ref={conversationUIControl}
+            onReplyMessageClick={onReplyMessageClick}
             onReplyMessage={onReplyMessage}
             onChatScrollToTop={onChatScrollToTop}
             toReplyMessage={toReplyMessage ? messageSelected : null}
@@ -874,6 +915,17 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
           }}
         />
       )}
+
+      <div
+        className={cx("absolute left-0 top-0 h-[calc(100%)] w-full bg-white", {
+          hidden: !showMessageImageOverlay,
+        })}
+      >
+        <ChatImageOverlay
+          ref={chatImgViewRef}
+          onCloseOverlay={() => setShowMessageImageOverlay(false)}
+        />
+      </div>
 
       {showDeleteMessageOverlay && (
         <DeleteMessageOverlay

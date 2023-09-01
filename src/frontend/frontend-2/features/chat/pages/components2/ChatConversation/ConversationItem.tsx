@@ -27,6 +27,7 @@ export function ConversationItem(props: {
   item: ChatMessageType;
   getAuthorProfileImage: (userId: UserId) => string | undefined;
   onReplyMessage: () => void;
+  onReplyMessageClick: (seqId: number) => void;
   onMenuClick: React.MouseEventHandler<HTMLButtonElement>;
   onMessageImageClick: (imgUrl: string) => void;
 }) {
@@ -40,11 +41,6 @@ export function ConversationItem(props: {
 
   useEffect(() => {
     if (props.item.text.type === "text") {
-      console.log(
-        `${props.item.text.content}: ${
-          itemContainerRef.current?.clientHeight ?? "undefined"
-        }`
-      );
       if (
         itemContainerRef.current &&
         itemContainerRef.current.clientHeight < 70
@@ -72,6 +68,7 @@ export function ConversationItem(props: {
       )}
       {props.item.type === "message" && (
         <div
+          id={`message-${props.item.seqId}`}
           onMouseEnter={() => {
             setIsUserHovering(true);
           }}
@@ -154,6 +151,11 @@ export function ConversationItem(props: {
                     .with({ type: "text" }, (c) => (
                       <MessageText
                         {...c}
+                        onReplyMessageClick={() => {
+                          if (c.replyTo !== null) {
+                            props.onReplyMessageClick(c.replyTo.seqId);
+                          }
+                        }}
                         addTopPadding={
                           props.item.type === "message" &&
                           (!(
@@ -167,10 +169,24 @@ export function ConversationItem(props: {
                     .with({ type: "picture" }, (c) => (
                       <MessageWithPicture
                         onPictureClick={() => props.onMessageImageClick(c.url)}
+                        onReplyMessageClick={() => {
+                          if (c.replyTo !== null) {
+                            props.onReplyMessageClick(c.replyTo.seqId);
+                          }
+                        }}
                         {...c}
                       />
                     ))
-                    .with({ type: "file" }, (c) => <MessageWithFile {...c} />)
+                    .with({ type: "file" }, (c) => (
+                      <MessageWithFile
+                        {...c}
+                        onReplyMessageClick={() => {
+                          if (c.replyTo !== null) {
+                            props.onReplyMessageClick(c.replyTo.seqId);
+                          }
+                        }}
+                      />
+                    ))
                     .exhaustive()
                 )}
               </div>
@@ -356,6 +372,7 @@ function ChatImage(props: {
 function MessageWithPicture(
   props: Extract<ChatBubbleMessageContent, { type: "picture" }> & {
     onPictureClick: () => void;
+    onReplyMessageClick: () => void;
   }
 ) {
   const [imgDisplayMode, setImageDisplayMode] =
@@ -378,6 +395,7 @@ function MessageWithPicture(
     >
       {props.replyTo !== null && (
         <div
+          onClick={props.onReplyMessageClick}
           className={cx("mb-1 px-1", {
             [landscape]: imgDisplayMode === "landscape",
             [portrait]: imgDisplayMode === "portrait" && props.caption === "",
@@ -409,12 +427,14 @@ function MessageWithPicture(
 }
 
 function MessageWithFile(
-  props: Extract<ChatBubbleMessageContent, { type: "file" }>
+  props: Extract<ChatBubbleMessageContent, { type: "file" }> & {
+    onReplyMessageClick: () => void;
+  }
 ) {
   return (
     <div className="w-[280px] rounded-md pt-1">
       {props.replyTo !== null && (
-        <div className="mb-1 px-1">
+        <div onClick={props.onReplyMessageClick} className="mb-1 px-1">
           <ReplyMessage {...props.replyTo} />
         </div>
       )}
@@ -438,6 +458,7 @@ function MessageWithFile(
 function MessageText(
   props: Extract<ChatBubbleMessageContent, { type: "text" }> & {
     addTopPadding: boolean;
+    onReplyMessageClick: () => void;
   }
 ) {
   return (
@@ -447,7 +468,7 @@ function MessageText(
       })}
     >
       {props.replyTo !== null && (
-        <div className="mb-1 px-1 ">
+        <div onClick={props.onReplyMessageClick} className="mb-1 px-1 ">
           <ReplyMessage {...props.replyTo} />
         </div>
       )}

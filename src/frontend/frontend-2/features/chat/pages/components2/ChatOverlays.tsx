@@ -226,3 +226,34 @@ const DeleteMessageOverlayButton = (props: {
     </button>
   );
 };
+
+export const ChatImageOverlay = forwardRef<
+  HTMLImageElement,
+  {
+    onCloseOverlay: () => void;
+  }
+>(function ChatImageOverlay(props, ref) {
+  return (
+    <>
+      <div className="flex h-16 items-center border-b-2 border-gray-300 bg-gray-100">
+        <div className="flex-grow pl-4">
+          <p>Picture</p>
+        </div>
+        <div className="flex items-center pr-4">
+          <button onClick={props.onCloseOverlay}>
+            <div className="h-5 w-5">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+                <path d="m249-207-42-42 231-231-231-231 42-42 231 231 231-231 42 42-231 231 231 231-42 42-231-231-231 231Z" />
+              </svg>
+            </div>
+          </button>
+        </div>
+      </div>
+      <div className="flex h-[calc(100%-4rem)] items-center justify-center">
+        <div className="h-full">
+          <img ref={ref} className="h-full object-scale-down" />
+        </div>
+      </div>
+    </>
+  );
+});

@@ -34,6 +34,7 @@ import {
   ForwardMessageOverlay,
   ChatImageUploadPreviewOverlay,
   DeleteMessageOverlay,
+  ChatImageOverlay,
 } from "~/frontend/frontend-2/features/chat/pages/components2/ChatOverlays";
 import {
   ChatMessageBubbleMenu,
@@ -235,6 +236,8 @@ export function P2PChatPage(props: { contactId: UserId }) {
           toast("Message not found");
           return;
         }
+
+        console.log("LOAD MESSAGES UNTIL REPLY!!");
 
         const result = await messagesStore.loadMessagesUntilReply(
           messagesStore.get().messages[0].seqId,
@@ -599,6 +602,7 @@ export function P2PChatPage(props: { contactId: UserId }) {
         />
         <div className="relative h-[calc(100%-8rem)] w-full">
           <ChatConversation
+            onReplyMessageClick={onReplyMessageClick}
             isNewContact={false}
             peerName={peer.profile.name}
             ref={conversationUIControl}
@@ -775,6 +779,17 @@ export function P2PChatPage(props: { contactId: UserId }) {
           }}
         />
       )}
+
+      <div
+        className={cx("absolute left-0 top-0 h-[calc(100%)] w-full bg-white", {
+          hidden: !showMessageImageOverlay,
+        })}
+      >
+        <ChatImageOverlay
+          ref={chatImgViewRef}
+          onCloseOverlay={() => setShowMessageImageOverlay(false)}
+        />
+      </div>
 
       {showDeleteMessageOverlay && (
         <DeleteMessageOverlay
