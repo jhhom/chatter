@@ -108,7 +108,9 @@ export function DrawerContentInfo(props: {
 
       <div className="px-4 text-sm">
         <div className="flex justify-between">
-          <p className="border-gray-400  font-medium">Group members (10)</p>
+          <p className="border-gray-400  font-medium">
+            Group members ({props.memberList.length})
+          </p>
         </div>
 
         <div className="mt-5">

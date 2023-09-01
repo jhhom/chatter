@@ -26,6 +26,9 @@ import { useMessagesStore } from "~/frontend/frontend-2/features/chat/pages/stor
 import { client } from "~/frontend/external/api-client/client";
 import { dexie } from "~/frontend/external/browser/indexed-db";
 import { PastGroupChatHeader } from "~/frontend/frontend-2/features/chat/pages/components2/ChatHeader";
+import { GroupInfoDrawer3 } from "~/frontend/frontend-2/features/chat/pages/components2/Drawers/GrpInfoDrawer/GrpInfoDrawer2";
+import { match } from "assert";
+import { PastGrpDrawerContentInfo } from "~/frontend/frontend-2/features/chat/pages/components2/Drawers/PastGrpInfoDrawer";
 
 const PAGE_SIZE = 24;
 const INITIAL_PAGE_SIZE = 64;
@@ -36,7 +39,6 @@ export function PastGroupChatPage(props: { contactId: GroupTopicId }) {
     pastGrp: s.pastGrp.get(props.contactId),
   }));
   const messagesStore = useMessagesStore();
-  const membersStore = useMembersStore();
 
   const [showDrawer, setShowDrawer] = useState(false);
   const [showMessageImageOverlay, setShowMessageImageOverlay] = useState(false);
@@ -44,88 +46,27 @@ export function PastGroupChatPage(props: { contactId: GroupTopicId }) {
   const chatImgViewRef = useRef<HTMLImageElement | null>(null);
   const conversationUIControl = useRef<IChatConversationUI | null>(null);
 
-  const makeMessageListener = useMessageListener(props.contactId, (userId) =>
-    membersStore.members.get(userId)
-  );
   const makeEventLogListener = useEventLogListener(props.contactId);
-  const makeGroupEventLogListener = useGroupEventLogListener(props.contactId, {
-    remove: (userId) => membersStore.deleteMember(userId),
-    add: (userId, user) => membersStore.setMember(userId, user),
-  });
-  const makeReadNotificationListener = useReadListener(props.contactId);
-  const makeDeleteMessageListener = useDeleteMessageListener(props.contactId);
 
   useEffect(() => {
     if (conversationUIControl.current === null) {
       return;
     }
-    const messageListener = makeMessageListener(conversationUIControl.current);
     const eventLogListener = makeEventLogListener(
       conversationUIControl.current
     );
-    const groupEventLogListener = makeGroupEventLogListener();
-    const readNotificationListener = makeReadNotificationListener();
-    const deleteMessageListener = makeDeleteMessageListener();
-
-    const readListenerId = client.addListener("read", readNotificationListener);
-    const messageListenerId = client.addListener("message", messageListener);
     const eventLogListenerId = client.addListener(
       "notification.topic-event",
       eventLogListener
     );
-    const deleteMessageListenerId = client.addListener(
-      "notification.message-deleted",
-      deleteMessageListener
-    );
-    const groupEventLogListenerId = client.addListener(
-      "notification.topic-event",
-      groupEventLogListener
-    );
 
     return () => {
-      client.removeListener("read", readListenerId);
-      client.removeListener("message", messageListenerId);
       client.removeListener("notification.topic-event", eventLogListenerId);
-      client.removeListener(
-        "notification.message-deleted",
-        deleteMessageListenerId
-      );
-      client.removeListener(
-        "notification.topic-event",
-        groupEventLogListenerId
-      );
     };
-  }, [
-    makeMessageListener,
-    makeEventLogListener,
-    makeGroupEventLogListener,
-    makeReadNotificationListener,
-    makeDeleteMessageListener,
-  ]);
+  }, [makeEventLogListener]);
 
   useAsyncEffect(
     async (isMounted) => {
-      membersStore.clear();
-
-      const memberRetrievalResult = await client["group/members"]({
-        groupTopicId: props.contactId,
-      });
-      if (memberRetrievalResult.isErr()) {
-        alert("failed to get group members");
-      } else {
-        if (!isMounted) {
-          return;
-        }
-
-        for (const member of memberRetrievalResult.value) {
-          membersStore.setMember(member.id, {
-            name: member.fullname,
-            online: member.online,
-            profilePhotoUrl: member.profilePhotoUrl,
-          });
-        }
-      }
-
       const result = await messagesStore.loadMessages(INITIAL_PAGE_SIZE, -1);
       if (result.isErr()) {
         return;
@@ -181,7 +122,6 @@ export function PastGroupChatPage(props: { contactId: GroupTopicId }) {
       conversationUIControl.current?.updateFirstMessageRef();
     },
     [
-      membersStore.clear,
       messagesStore.loadMessages,
       messagesStore.get,
       props.contactId,
@@ -226,62 +166,93 @@ export function PastGroupChatPage(props: { contactId: GroupTopicId }) {
   );
 
   return (
-    <div className="relative h-screen">
-      <PastGroupChatHeader
-        groupName={store.pastGrp.profile.name}
-        onInfoClick={() => setShowDrawer(false)}
-        groupProfilePhotoUrl={
-          store.pastGrp.profile.profilePhotoUrl ?? undefined
-        }
-      />
-
-      <div className="relative h-[calc(100%-4rem)] w-full">
-        <ChatConversation
-          isNewContact={false}
-          peerName={store.pastGrp.profile.name}
-          ref={conversationUIControl}
-          onChatScrollToTop={async () => {
-            if (
-              messagesStore.hasEarlierMessages &&
-              !messagesStore.isLoadingMoreMessages
-            ) {
-              await messagesStore.loadMessages(
-                PAGE_SIZE,
-                messagesStore.messages[0].seqId
-              );
-              return "new messages loaded";
-            }
-            return "no new messages loaded";
-          }}
-          onMessageBubbleMenuClick={() => {
-            //
-          }}
-          getAuthorProfileImage={getAuthorProfileImage}
-          chatItems={messagesStore.messages}
-          mode={{ type: "removed from group" }}
-          onMessageImageClick={async (messageUrl) => {
-            if (chatImgViewRef.current) {
-              chatImgViewRef.current.src = messageUrl;
-            }
-
-            await new Promise((resolve) => {
-              setTimeout(() => {
-                resolve(undefined);
-              }, 200);
-            });
-
-            setShowMessageImageOverlay(true);
-          }}
-          onReplyMessage={() => {
-            //
-          }}
-          toReplyMessage={null}
-          showReplyPreview={false}
-          onCloseReplyPreview={() => {
-            //
-          }}
+    <div className="relative flex h-screen">
+      <div className="w-full">
+        <PastGroupChatHeader
+          groupName={store.pastGrp.profile.name}
+          onInfoClick={() => setShowDrawer(true)}
+          groupProfilePhotoUrl={
+            store.pastGrp.profile.profilePhotoUrl ?? undefined
+          }
         />
+
+        <div className="relative h-[calc(100%-4rem)] w-full">
+          <ChatConversation
+            isNewContact={false}
+            peerName={store.pastGrp.profile.name}
+            ref={conversationUIControl}
+            onChatScrollToTop={async () => {
+              if (
+                messagesStore.hasEarlierMessages &&
+                !messagesStore.isLoadingMoreMessages
+              ) {
+                await messagesStore.loadMessages(
+                  PAGE_SIZE,
+                  messagesStore.messages[0].seqId
+                );
+                return "new messages loaded";
+              }
+              return "no new messages loaded";
+            }}
+            onMessageBubbleMenuClick={() => {
+              //
+            }}
+            getAuthorProfileImage={getAuthorProfileImage}
+            chatItems={messagesStore.messages}
+            mode={{ type: "removed from group" }}
+            onMessageImageClick={async (messageUrl) => {
+              if (chatImgViewRef.current) {
+                chatImgViewRef.current.src = messageUrl;
+              }
+
+              await new Promise((resolve) => {
+                setTimeout(() => {
+                  resolve(undefined);
+                }, 200);
+              });
+
+              setShowMessageImageOverlay(true);
+            }}
+            onReplyMessage={() => {
+              //
+            }}
+            toReplyMessage={null}
+            showReplyPreview={false}
+            onCloseReplyPreview={() => {
+              //
+            }}
+          />
+        </div>
       </div>
+
+      {showDrawer && (
+        <div className="h-full basis-2/5">
+          <GroupInfoDrawer3 onClose={() => setShowDrawer(false)}>
+            {() => {
+              const grp = store.pastGrp;
+              if (grp === undefined) {
+                throw new Error("Group is undefined");
+              }
+
+              if (!store.profile.profile) {
+                throw new Error("User profile is undefined");
+              }
+              return (
+                <div className="h-full">
+                  <PastGrpDrawerContentInfo
+                    groupName={grp.profile.name}
+                    groupId={props.contactId}
+                    userId={store.profile.profile.userId}
+                    userFullname={store.profile.profile.fullname}
+                    profilePhotoUrl={store.profile.profile.profilePhotoUrl}
+                    memberList={grp.profile.memberList}
+                  />
+                </div>
+              );
+            }}
+          </GroupInfoDrawer3>
+        </div>
+      )}
     </div>
   );
 }
