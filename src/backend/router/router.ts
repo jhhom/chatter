@@ -1,7 +1,7 @@
 import type { IContext } from "~/backend/router/context";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { observable } from "@trpc/server/observable";
-import { SubscriptionMessage } from "~/api-contract/subscription/subscription";
+import { type SubscriptionMessage } from "~/api-contract/subscription/subscription";
 import superjson from "superjson";
 
 import { authUsecase } from "~/backend/service/auth";

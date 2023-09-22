@@ -1,14 +1,14 @@
 import { ok, err } from "neverthrow";
 import { JwtPayload } from "jsonwebtoken";
 
-import { IServiceContext } from "~/backend/router/context";
-import { OnlineUsers } from "~/backend/service/common/online-users";
+import { type IServiceContext } from "~/backend/router/context";
+import { type OnlineUsers } from "~/backend/service/common/online-users";
 import { notifyStatus } from "~/backend/service/auth/common/notify-status/notify-status";
 import { findOneUser } from "~/backend/service/auth/common/repo";
 import { completeMediaUrl } from "~/backend/service/common/media";
 import { jwt, bcrypt } from "~/backend/wrapper/wrapper";
 
-import { ServiceResult } from "~/api-contract/types";
+import { type ServiceResult } from "~/api-contract/types";
 import { AppError } from "~/api-contract/errors/errors";
 
 export async function login(

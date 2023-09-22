@@ -59,7 +59,7 @@ export class Context {
 
 // TODO: Return an instance of a class, that provides mutation methods to mutate only certain properties
 // Which can act as an interface to the service class
-export const createContextInner = async (
+export const createContextInner = (
   opts: NodeHTTPCreateContextFnOptions<IncomingMessage, ws>,
   config: ConfigSchema,
   db: KyselyDB
@@ -72,10 +72,10 @@ export const createContextInner = async (
 };
 
 export const createContextBuilder = (config: ConfigSchema, db: KyselyDB) => {
-  const createContext = async (
+  const createContext = (
     opts: NodeHTTPCreateContextFnOptions<IncomingMessage, ws>
   ) => {
-    return await createContextInner(opts, config, db);
+    return createContextInner(opts, config, db);
   };
   return createContext;
 };

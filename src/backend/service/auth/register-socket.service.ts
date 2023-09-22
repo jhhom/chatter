@@ -1,7 +1,7 @@
-import { KyselyDB } from "~/backend/schema";
-import { IServiceContext } from "~/backend/router/context";
-import { Socket } from "~/backend/service/common/socket";
-import { OnlineUsers } from "~/backend/service/common/online-users";
+import type { KyselyDB } from "~/backend/schema";
+import type { IServiceContext } from "~/backend/router/context";
+import type { Socket } from "~/backend/service/common/socket";
+import type { OnlineUsers } from "~/backend/service/common/online-users";
 import { notifyStatus } from "~/backend/service/auth/common/notify-status/notify-status";
 import { updateUserLastOnline } from "~/backend/service/auth/common/repo";
 
