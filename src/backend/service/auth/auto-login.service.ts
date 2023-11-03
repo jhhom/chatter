@@ -30,7 +30,7 @@ export async function autoLogin(
     return err(new AppError("UNKNOWN", { cause: decoded.error }));
   }
 
-  const username = (decoded.value as JwtPayload).username;
+  const username = (decoded.value as JwtPayload).username as string;
   if (!username || username == "") {
     return err(new AppError("UNKNOWN", { cause: "Token is invalid" }));
   }

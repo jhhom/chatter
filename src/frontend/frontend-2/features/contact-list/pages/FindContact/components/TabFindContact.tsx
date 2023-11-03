@@ -48,7 +48,10 @@ export function TabFindContact(props: {
   return (
     <div className="h-full">
       <div className="h-9 px-4">
-        <ContactSearch onInput={(e) => setSearchQuery(e.target.value)} />
+        <ContactSearch
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
       </div>
 
       <div className="mt-4 h-[calc(100%-(3.25rem))] space-y-3 overflow-y-auto">

@@ -53,7 +53,7 @@ export const isAppError = (e: unknown): e is AppErrorUnion => {
     assertedE.details !== undefined &&
     typeof assertedE.details === "object" &&
     typeof assertedE.message === "string" &&
-    assertedE.details.type in Object.keys(ErrorMessage)
+    assertedE.details.type in ErrorMessage
   );
 };
 

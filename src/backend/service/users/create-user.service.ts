@@ -33,7 +33,7 @@ export async function registerUser(
   let profilePhotoUrl: string | undefined = undefined;
   if (input.photoBase64 !== null) {
     const fileExtension = extractFileExtensionFromBase64(input.photoBase64);
-    const result = await saveMedia(
+    const result = saveMedia(
       {
         filename: `${input.username}-profile${
           fileExtension ? `.${fileExtension}` : ""

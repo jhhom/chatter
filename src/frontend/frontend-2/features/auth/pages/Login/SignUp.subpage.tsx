@@ -3,7 +3,6 @@ import {
   forwardRef,
   useRef,
   useImperativeHandle,
-  useEffect,
 } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -185,6 +184,7 @@ export default function SignupPage(props: {
         </label>
         <div className="mb-6 flex pt-2">
           <ImageUpload
+            {...profileImageRegister}
             ref={(e) => {
               if (e) {
                 const imgInputRef = e.imgInput();
@@ -194,7 +194,6 @@ export default function SignupPage(props: {
               }
               imgUploadRef.current = e;
             }}
-            {...profileImageRegister}
           />
 
           {watchProfileImage?.length > 0 && (

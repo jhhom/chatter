@@ -17,6 +17,7 @@ import {
   createProfileSlice,
 } from "~/frontend/stores/profile.store";
 
+// Reference: https://github.com/pmndrs/zustand/discussions/1796
 export const useAppStore = create(
   immer<
     ContactSlice & ProfileSlice & AuthStatusSlice & AfterLoginNavigateToSlice
