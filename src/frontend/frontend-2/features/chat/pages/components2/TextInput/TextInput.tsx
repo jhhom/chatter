@@ -119,6 +119,17 @@ export function TextInput(props: TextInputProps) {
     }
   }, [props.inputMode, props.onMessageSubmit]);
 
+  const onMessageInputKeydown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === "Enter" && e.shiftKey) {
+      } else if (e.key === "Enter" && !e.shiftKey) {
+        void onSendClick();
+        e.preventDefault();
+      }
+    },
+    [onSendClick]
+  );
+
   return (
     <div className="flex h-16 items-center border-t-[1.5px] border-gray-200 pl-2 pr-6">
       {props.inputMode.type === "message" && (
@@ -185,6 +196,7 @@ export function TextInput(props: TextInputProps) {
       <textarea
         disabled={props.disabled}
         ref={messageInputRef}
+        onKeyDown={onMessageInputKeydown}
         className={cx(
           "block h-10 w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-blue-100 disabled:cursor-not-allowed",
           {
