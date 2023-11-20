@@ -99,18 +99,17 @@ export function ConversationItem(props: {
                 "order-last": props.item.userIsAuthor,
               })}
             >
-              {props.item.seq === "first" ||
-                (props.item.seq === "single" &&
-                  (props.getAuthorProfileImage(props.item.authorId) ? (
-                    <img
-                      className="inline-block h-8 w-8 rounded-md object-cover"
-                      src={props.getAuthorProfileImage(props.item.authorId)}
-                    />
-                  ) : (
-                    <div className="flex h-8 w-8 items-end justify-center rounded-lg bg-gray-100 pb-1">
-                      <IconPerson className="h-6 w-6 text-gray-400" />
-                    </div>
-                  )))}
+              {(props.item.seq === "first" || props.item.seq === "single") &&
+                (props.getAuthorProfileImage(props.item.authorId) ? (
+                  <img
+                    className="inline-block h-8 w-8 rounded-md object-cover"
+                    src={props.getAuthorProfileImage(props.item.authorId)}
+                  />
+                ) : (
+                  <div className="flex h-8 w-8 items-end justify-center rounded-lg bg-gray-100 pb-1">
+                    <IconPerson className="h-6 w-6 text-gray-400" />
+                  </div>
+                ))}
             </div>
 
             <div
@@ -119,14 +118,13 @@ export function ConversationItem(props: {
                 "bg-white": !props.item.userIsAuthor,
               })}
             >
-              {props.item.seq === "first" ||
-                (props.item.seq === "single" && (
-                  <div className="flex items-end pl-4 pr-3 pt-1 text-[13px]">
-                    <p className="font-medium text-black">
-                      {props.item.authorName}
-                    </p>
-                  </div>
-                ))}
+              {(props.item.seq === "first" || props.item.seq === "single") && (
+                <div className="flex items-end pl-4 pr-3 pt-1 text-[13px]">
+                  <p className="font-medium text-black">
+                    {props.item.authorName}
+                  </p>
+                </div>
+              )}
 
               {props.item.text.forwarded && (
                 <div className="flex items-center pb-1 pl-4 pr-4 pt-1.5">
