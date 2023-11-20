@@ -1,14 +1,13 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import "~/styles/globals.css";
 
 import { useLoginHandler } from "~/frontend/frontend-2/features/auth/hooks/use-login-handler.hook";
 
 import { useAppStore } from "~/frontend/stores/stores";
 import { dexie } from "~/frontend/external/browser/indexed-db";
-import storage from "~/frontend/external/browser/local-storage";
 import { client } from "~/frontend/external/api-client/client";
 import { match } from "ts-pattern";
 import LoginPage from "~/frontend/frontend-2/features/auth/pages/Login/Login.page";
@@ -19,21 +18,14 @@ import ChatPage from "~/frontend/frontend-2/features/chat/pages/Chat.page";
 
 import { defaultTheme, Provider } from "@adobe/react-spectrum";
 
-import {
-  DialogTrigger,
-  Button,
-  Dialog,
-  Heading,
-  Input,
-  Label,
-  Modal,
-  TextField,
-} from "react-aria-components";
+import { DialogTrigger, Dialog, Modal } from "react-aria-components";
 import { Toaster } from "react-hot-toast";
 import { useSearchParams, useRouter } from "next/navigation";
 import useAsyncEffect from "use-async-effect";
 import { IsGroupTopicId, IsUserId } from "~/backend/service/common/topics";
 import { type ServiceOutput } from "~/api-contract/types";
+
+import { useLocalStorageAuthToken } from "~/frontend/external/browser/local-storage";
 
 const queryClient = new QueryClient();
 
@@ -76,20 +68,35 @@ function Layout({ children }: { children: React.ReactNode }) {
   const joinGroupParam = searchParams.get("join_group");
   const topicParam = searchParams.get("topic");
 
+  const tokenStorage = useLocalStorageAuthToken();
+
+  // This hook setups socket connection and performs auto-login
+  // If there is token in local storage
   useEffect(() => {
     void (async () => {
+      // clears the previous cache data that could be outdated in IndexedDB
+      // - cache data becomes outdated when client stops connecting to the server
+      // - and hence doesn't receive any updates (e.g new messages, new events) from server
+      // - this hook runs during the setup of the application, where no connection has yet been established to the server
+      // - (this hook itself is the one responsible to establish that server connection)
+      // - hence the cache data is already outdated
       await dexie.messages.clear();
       await dexie.topicEventLogs.clear();
 
-      const token = storage.token();
-
-      if (token === null || token === "") {
+      if (
+        tokenStorage.token === null ||
+        tokenStorage.token === "" ||
+        tokenStorage.token === undefined
+      ) {
         store.setAuthStatus("logged-out");
-        storage.clearToken();
+        tokenStorage.clearToken();
+        router.push("/");
       } else {
-        const r = await client["auth/login_with_token"]({ jwtToken: token });
+        const r = await client["auth/login_with_token"]({
+          jwtToken: tokenStorage.token,
+        });
         if (r.isErr()) {
-          storage.clearToken();
+          tokenStorage.clearToken();
           store.setProfile(null);
           store.setAuthStatus("logged-out");
           return;
@@ -99,7 +106,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           userId: r.value.id,
         });
         if (loginHandlingResult.isErr()) {
-          storage.clearToken();
+          tokenStorage.clearToken();
           store.setProfile(null);
           store.setAuthStatus("logged-out");
           return;
@@ -109,6 +116,22 @@ function Layout({ children }: { children: React.ReactNode }) {
       }
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useLayoutEffect(() => {
+    if (
+      (tokenStorage.token === null || tokenStorage.token === "") &&
+      store.authStatus === "logged-in"
+    ) {
+      location.reload();
+    } else if (
+      tokenStorage.token !== null &&
+      tokenStorage.token !== "" &&
+      store.authStatus === "logged-out"
+    ) {
+      // reloads to run hook 1
+      location.reload();
+    }
+  }, [tokenStorage.token, store.authStatus]);
 
   useEffect(() => {
     const removeParam = () => {

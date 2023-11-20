@@ -10,7 +10,7 @@ import { useLoginHandler } from "~/frontend/frontend-2/features/auth/hooks/use-l
 
 import { useAppStore } from "~/frontend/stores/stores";
 import { client } from "~/frontend/external/api-client/client";
-import storage from "~/frontend/external/browser/local-storage";
+import { useLocalStorageAuthToken } from "~/frontend/external/browser/local-storage";
 
 import { Components } from "~/frontend/frontend-2/features/auth/pages/Login/components";
 
@@ -38,6 +38,8 @@ export default function LoginPage(props: { onSignupClick: () => void }) {
     setAuthStatus: s.setAuthStatus,
   }));
 
+  const { setToken } = useLocalStorageAuthToken();
+
   const loginMutation = useMutation({
     mutationFn: async (values: { username: string; password: string }) => {
       const loginResult = await client["auth/login"]({
@@ -54,7 +56,7 @@ export default function LoginPage(props: { onSignupClick: () => void }) {
         throw r.error;
       }
       store.setProfile(loginResult.value);
-      storage.setToken(loginResult.value.token);
+      setToken(loginResult.value.token);
     },
     onSuccess(data) {
       setOpenErrorAlert(false);
