@@ -9,7 +9,7 @@ import { Toaster } from "react-hot-toast";
 type Page = "login" | "sign-up";
 
 export default function LoggedOutPage() {
-  const [page, setPage] = useState<Page>("sign-up");
+  const [page, setPage] = useState<Page>("login");
 
   return (
     <>

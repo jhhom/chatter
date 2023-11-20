@@ -56,13 +56,22 @@ export function ContactListContact(
   }
 ) {
   const unreadMessageCount =
+    // the reason we need to check `dexie.isOpen`
+    // IndexedDB (dexie) will be closed when user login to a different account on the same browser
+    // When that happens, the database will be closed and resetted
+    // Hence we need to check `dexie.isOpen` so that error is not thrown
+    // Before the browser detects that a different account is open on another window
     useLiveQuery(() =>
-      dexie.messages
-        .filter(
-          (m) =>
-            m.topicId == props.topicId && !m.read && !(m.author == props.userId)
-        )
-        .count()
+      dexie.isOpen()
+        ? dexie.messages
+            .filter(
+              (m) =>
+                m.topicId == props.topicId &&
+                !m.read &&
+                !(m.author == props.userId)
+            )
+            .count()
+        : 0
     ) ?? 0;
 
   const contactDescription = () => {
