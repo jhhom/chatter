@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev:server": "tsx watch src/backend/main.ts --tsconfig tsconfig.server.json",
+    "dev:asset": "tsx watch src/asset-server/main.ts",
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
