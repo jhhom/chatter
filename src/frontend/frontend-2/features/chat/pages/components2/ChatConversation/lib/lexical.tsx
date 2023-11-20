@@ -66,7 +66,7 @@ const MATCHERS = [
       length: fullMatch.length,
       text: fullMatch,
       url: fullMatch.startsWith("http") ? fullMatch : `https://${fullMatch}`,
-      attributes: fullMatch.includes("http://localhost:4000/join_group") // check if it is a special link to join a group, if it is, we don't want to open a new tab when user open the link
+      attributes: fullMatch.includes("http://localhost:3000?join_group") // check if it is a special link to join a group, if it is, we don't want to open a new tab when user open the link
         ? undefined
         : { rel: "noopener", target: "_blank" }, // Optional link attributes
     };

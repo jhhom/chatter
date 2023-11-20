@@ -22,6 +22,7 @@ import type {
   ChatMessageType,
 } from "~/frontend/frontend-2/features/chat/pages/components/ChatConversation/ChatMessage";
 import { Tooltip, TooltipTrigger } from "@adobe/react-spectrum";
+import { LexicalRenderer } from "~/frontend/frontend-2/features/chat/pages/components2/ChatConversation/lib/lexical";
 
 export function ConversationItem(props: {
   item: ChatMessageType;
@@ -418,7 +419,9 @@ function MessageWithPicture(
         </div>
         {props.caption !== "" && (
           <div className="px-3 pb-1.5 pt-2">
-            <p className="text-[13px] text-gray-600">{props.caption}</p>
+            <div className="text-[13px] text-gray-600">
+              <LexicalRenderer content={props.caption} />
+            </div>
           </div>
         )}
       </div>
@@ -477,7 +480,9 @@ function MessageText(
           <ReplyMessage {...props.replyTo} />
         </div>
       )}
-      <p className="px-4 text-[13px] text-gray-600">{props.content}</p>
+      <div className="px-4 text-[13px] text-gray-600">
+        <LexicalRenderer content={props.content} />
+      </div>
     </div>
   );
 }

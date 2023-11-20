@@ -3,11 +3,16 @@
 @tailwind utilities;
 
 #chat-message-menu {
-    --mouse-x: 0px;
-    --mouse-y: 0px;
-    position: fixed;
-    margin: 0;
-    left: 0;
-    top: 0;
-    transform: translateX(min(var(--mouse-x), calc(100vw - (100% + 15px)))) translateY(min(calc(var(--mouse-y) + 15px), calc(100vh - 100%)));
+  --mouse-x: 0px;
+  --mouse-y: 0px;
+  position: fixed;
+  margin: 0;
+  left: 0;
+  top: 0;
+  transform: translateX(min(var(--mouse-x), calc(100vw - (100% + 15px))))
+    translateY(min(calc(var(--mouse-y) + 15px), calc(100vh - 100%)));
+}
+
+.chat_message a {
+  @apply text-blue-500 hover:underline;
 }

@@ -15,6 +15,7 @@ import { type UserId } from "~/api-contract/subscription/subscription";
 import { type IChatConversationUI } from "~/frontend/frontend-2/features/chat/pages/types";
 
 import type { GroupConversationDisplayMode } from "~/frontend/frontend-2/features/chat/utils";
+import { LexicalRenderer } from "~/frontend/frontend-2/features/chat/pages/components2/ChatConversation/lib/lexical";
 
 type GetAuthorProfileImage = (userId: UserId) => string | undefined;
 
@@ -293,12 +294,14 @@ function ChatReplyPreview(props: ChatReplyPreviewProps) {
           .with({ type: "text" }, (t) => {
             return (
               <div className="py-2 pr-4">
-                <p className="mb-1 text-green-600">
+                <div className="mb-1 text-green-600">
                   {props.messageReplied.userIsAuthor
                     ? "You"
                     : props.messageReplied.authorName}
-                </p>
-                <p className="max-h-10 overflow-hidden">{t.content}</p>
+                </div>
+                <div className="max-h-10 overflow-hidden">
+                  <LexicalRenderer content={t.content} />
+                </div>
               </div>
             );
           })

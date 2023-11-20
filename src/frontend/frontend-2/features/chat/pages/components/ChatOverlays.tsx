@@ -222,6 +222,7 @@ export function ForwardMessageOverlay(props: {
         <ul className="mt-4">
           {filteredContacts.map((c) => (
             <li
+              key={c.topicId}
               onClick={() => props.onForwardMessage(c.topicId)}
               className="cursor-pointer px-4 pt-1.5 text-sm hover:bg-gray-100"
             >

@@ -15,7 +15,7 @@ import { MarkNode } from "@lexical/mark";
 import { HashtagNode } from "@lexical/hashtag";
 import { CodeHighlightNode, CodeNode } from "@lexical/code";
 
-import { TextFormatTransformer } from "@lexical/markdown";
+import { type TextFormatTransformer } from "@lexical/markdown";
 
 import { find as findLinks } from "linkifyjs";
 
@@ -87,7 +87,7 @@ const MATCHERS_2 = [
       url: fullMatch.value.startsWith("http")
         ? fullMatch.value
         : `https://${fullMatch.value}`,
-      attributes: fullMatch.value.includes("http://localhost:4000/join_group") // check if it is a special link to join a group, if it is, we don't want to open a new tab when user open the link
+      attributes: fullMatch.value.includes("http://localhost:3000?join_group") // check if it is a special link to join a group, if it is, we don't want to open a new tab when user open the link
         ? undefined
         : { rel: "noopener", target: "_blank" }, // Optional link attributes
     };
