@@ -17,6 +17,7 @@ import type {
   UserId,
   GroupTopicId,
 } from "~/api-contract/subscription/subscription";
+import { IconChatLogo } from "~/frontend/frontend-2/features/common/icons";
 
 const P2PTopic = React.memo(function P2PTopic(props: { topic: UserId }) {
   return (
@@ -119,6 +120,13 @@ export default function ChatPage() {
       )}
     </>
   ) : (
-    <div>Fallback</div>
+    <div className="flex h-full items-center justify-center">
+      <div className="flex">
+        <IconChatLogo className="ml-2 h-10 w-10 text-primary-500" />
+        <div className="flex items-center pl-2.5 text-2xl font-semibold text-primary-500">
+          <p>Chatter</p>
+        </div>
+      </div>
+    </div>
   );
 }

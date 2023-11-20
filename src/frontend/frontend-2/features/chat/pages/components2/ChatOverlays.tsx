@@ -117,9 +117,9 @@ export function ForwardMessageOverlay(props: {
     <div className="fixed bottom-0 left-1/2 h-[80%] w-full -translate-x-1/2 rounded-md border-t border-gray-100 bg-white shadow-lg sm:bottom-auto sm:top-1/2 sm:h-[85%] sm:w-80 sm:-translate-y-1/2">
       <div className="">
         <div className="flex items-center justify-between px-4 pt-4">
-          <p className="font-semibold text-blue-600">Forward to</p>
+          <p className="font-semibold text-primary-600">Forward to</p>
           <button onClick={props.onClose} className="h-7 w-7 rounded-md p-1">
-            <IconX className="text-blue-500" strokeWidth="2" />
+            <IconX className="text-primary-500" strokeWidth="2" />
           </button>
         </div>
 
