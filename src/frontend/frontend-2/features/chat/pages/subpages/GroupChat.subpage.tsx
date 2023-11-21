@@ -105,7 +105,6 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
   const chatImgViewRef = useRef<HTMLImageElement | null>(null);
   const messageBubbleMenuRef = useRef<HTMLDivElement | null>(null);
   const conversationContainerRef = useRef<HTMLDivElement | null>(null);
-  const chatReplyPreviewRef = useRef<HTMLDivElement | null>(null);
 
   const { chatContainerRef, messageInputContainerRef } = useMessageInputResize({
     resizedHeight(messageInputContainerHeight) {
@@ -940,47 +939,46 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
         />
       </div>
 
-      {showDeleteMessageOverlay && (
-        <DeleteMessageOverlay
-          onDeleteForEveryone={
-            messageSelected?.userIsAuthor ||
-            permission(store.grp.profile.userPermissions).canDelete()
-              ? async () => {
-                  setShowDeleteMessageOverlay(false);
-                  if (messageSelected === null) {
-                    throw new Error("No message is selected for deletion");
-                  }
-                  const r = await client["topic/delete_message"]({
-                    topicId: props.contactId,
-                    messageSeqId: messageSelected.seqId,
-                    deleteFor: "everyone",
-                  });
-                  if (r.isErr()) {
-                    alert(`Failed to delete message: ${r.error.message}`);
-                    return;
-                  }
+      <DeleteMessageOverlay
+        open={showDeleteMessageOverlay}
+        onDeleteForEveryone={
+          messageSelected?.userIsAuthor ||
+          permission(store.grp.profile.userPermissions).canDelete()
+            ? async () => {
+                setShowDeleteMessageOverlay(false);
+                if (messageSelected === null) {
+                  throw new Error("No message is selected for deletion");
                 }
-              : undefined
+                const r = await client["topic/delete_message"]({
+                  topicId: props.contactId,
+                  messageSeqId: messageSelected.seqId,
+                  deleteFor: "everyone",
+                });
+                if (r.isErr()) {
+                  alert(`Failed to delete message: ${r.error.message}`);
+                  return;
+                }
+              }
+            : undefined
+        }
+        onDeleteForMe={async () => {
+          setShowDeleteMessageOverlay(false);
+          const message = messageSelected;
+          if (message === null) {
+            throw new Error("No message is selected for deletion");
           }
-          onDeleteForMe={async () => {
-            setShowDeleteMessageOverlay(false);
-            const message = messageSelected;
-            if (message === null) {
-              throw new Error("No message is selected for deletion");
-            }
-            const r = await client["topic/delete_message"]({
-              topicId: props.contactId,
-              messageSeqId: message.seqId,
-              deleteFor: "self",
-            });
-            if (r.isErr()) {
-              alert(`Failed to delete message: ${r.error.message}`);
-              return;
-            }
-          }}
-          onCancel={() => setShowDeleteMessageOverlay(false)}
-        />
-      )}
+          const r = await client["topic/delete_message"]({
+            topicId: props.contactId,
+            messageSeqId: message.seqId,
+            deleteFor: "self",
+          });
+          if (r.isErr()) {
+            alert(`Failed to delete message: ${r.error.message}`);
+            return;
+          }
+        }}
+        onCancel={() => setShowDeleteMessageOverlay(false)}
+      />
     </div>
   );
 }

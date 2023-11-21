@@ -3,6 +3,7 @@ lockfileVersion: 5.4
 specifiers:
   '@adobe/react-spectrum': ^3.28.0
   '@faker-js/faker': ^8.0.2
+  '@headlessui/react': ^1.7.17
   '@hookform/resolvers': ^3.1.1
   '@lexical/code': ^0.11.3
   '@lexical/hashtag': ^0.11.3
@@ -95,6 +96,7 @@ specifiers:
 dependencies:
   '@adobe/react-spectrum': 3.28.0_biqbaboplfbrettd7655fr4n2y
   '@faker-js/faker': 8.0.2
+  '@headlessui/react': 1.7.17_biqbaboplfbrettd7655fr4n2y
   '@hookform/resolvers': 3.1.1_react-hook-form@7.45.1
   '@lexical/code': 0.11.3_lexical@0.11.3
   '@lexical/hashtag': 0.11.3_lexical@0.11.3
@@ -981,6 +983,18 @@ packages:
     resolution: {integrity: sha512-bRTd+rKomvfdS4QDlVJ6TA/Jx1F2h/TBVO5LjvhQ7QPPHp19oPNMIum7W2CMEReq/zPxpmCeB31F9+5gl/qtvw==}
     dependencies:
       tslib: 2.6.0
+    dev: false
+
+  /@headlessui/react/1.7.17_biqbaboplfbrettd7655fr4n2y:
+    resolution: {integrity: sha512-4am+tzvkqDSSgiwrsEpGWqgGo9dz8qU5M3znCkC4PgkpY4HcCZzEDEvozltGGGHIKl9jbXbZPSH5TWn4sWJdow==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      react: ^16 || ^17 || ^18
+      react-dom: ^16 || ^17 || ^18
+    dependencies:
+      client-only: 0.0.1
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
     dev: false
 
   /@hookform/resolvers/3.1.1_react-hook-form@7.45.1:

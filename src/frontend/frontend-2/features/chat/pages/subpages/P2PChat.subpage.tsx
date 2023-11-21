@@ -755,41 +755,40 @@ export function P2PChatPage(props: { contactId: UserId }) {
         />
       )}
 
-      {showForwardMessageOverlay && (
-        <ForwardMessageOverlay
-          contacts={[
-            ...Array.from(store.grp.entries()).map(([id, g]) => ({
-              topicId: id,
-              name: g.profile.name,
-            })),
-            ...Array.from(store.p2p.entries()).map(([id, p]) => ({
-              topicId: id,
-              name: p.profile.name,
-            })),
-          ]}
-          onForwardMessage={async (forwardTo) => {
-            if (messageSelected == null) {
-              setShowForwardMessageOverlay(false);
-              return;
-            }
+      <ForwardMessageOverlay
+        open={showForwardMessageOverlay}
+        contacts={[
+          ...Array.from(store.grp.entries()).map(([id, g]) => ({
+            topicId: id,
+            name: g.profile.name,
+          })),
+          ...Array.from(store.p2p.entries()).map(([id, p]) => ({
+            topicId: id,
+            name: p.profile.name,
+          })),
+        ]}
+        onForwardMessage={async (forwardTo) => {
+          if (messageSelected == null) {
+            setShowForwardMessageOverlay(false);
+            return;
+          }
 
-            const result = await client["topic/forward_message"]({
-              message: {
-                seqId: messageSelected.seqId,
-                topicId: props.contactId,
-              },
-              forwardTo,
-            });
-            if (result.isOk()) {
-              router.push(location.pathname + `?topic=${forwardTo}`);
-            }
-            setShowForwardMessageOverlay(false);
-          }}
-          onClose={() => {
-            setShowForwardMessageOverlay(false);
-          }}
-        />
-      )}
+          const result = await client["topic/forward_message"]({
+            message: {
+              seqId: messageSelected.seqId,
+              topicId: props.contactId,
+            },
+            forwardTo,
+          });
+          if (result.isOk()) {
+            router.push(location.pathname + `?topic=${forwardTo}`);
+          }
+          setShowForwardMessageOverlay(false);
+        }}
+        onClose={() => {
+          setShowForwardMessageOverlay(false);
+        }}
+      />
 
       <div
         className={cx("absolute left-0 top-0 h-[calc(100%)] w-full bg-white", {
@@ -802,17 +801,16 @@ export function P2PChatPage(props: { contactId: UserId }) {
         />
       </div>
 
-      {showDeleteMessageOverlay && (
-        <DeleteMessageOverlay
-          onDeleteForEveryone={
-            messageSelected?.deleted || !messageSelected?.userIsAuthor
-              ? undefined
-              : onDeleteForEveryone
-          }
-          onDeleteForMe={onDeleteForMe}
-          onCancel={() => setShowDeleteMessageOverlay(false)}
-        />
-      )}
+      <DeleteMessageOverlay
+        open={showDeleteMessageOverlay}
+        onDeleteForEveryone={
+          messageSelected?.deleted || !messageSelected?.userIsAuthor
+            ? undefined
+            : onDeleteForEveryone
+        }
+        onDeleteForMe={onDeleteForMe}
+        onCancel={() => setShowDeleteMessageOverlay(false)}
+      />
     </div>
   );
 }

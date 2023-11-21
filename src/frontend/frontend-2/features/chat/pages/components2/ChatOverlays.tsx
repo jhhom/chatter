@@ -1,7 +1,9 @@
-import { useState, useRef, forwardRef } from "react";
+import { useState, useRef, forwardRef, Fragment } from "react";
 import { type UserTopicId } from "~/api-contract/subscription/subscription";
 import { IconX, IconSearch } from "~/frontend/frontend-2/features/common/icons";
 import { clsx as cx } from "clsx";
+
+import { Transition, Dialog } from "@headlessui/react";
 
 export function ChatFileUploadPreviewOverlay(props: {
   filename: string;
@@ -105,6 +107,7 @@ export function ForwardMessageOverlay(props: {
   }>;
   onForwardMessage: (topicId: UserTopicId) => void;
   onClose: () => void;
+  open: boolean;
 }) {
   const [contactSearch, setContactSearch] = useState("");
 
@@ -114,39 +117,76 @@ export function ForwardMessageOverlay(props: {
     );
 
   return (
-    <div className="fixed bottom-0 left-1/2 h-[80%] w-full -translate-x-1/2 overflow-y-auto rounded-md border-t border-gray-100 bg-white shadow-lg sm:bottom-auto sm:top-1/2 sm:h-[85%] sm:w-80 sm:-translate-y-1/2">
-      <div className="">
-        <div className="flex items-center justify-between px-4 pt-4">
-          <p className="font-semibold text-primary-600">Forward to</p>
-          <button onClick={props.onClose} className="h-7 w-7 rounded-md p-1">
-            <IconX className="text-primary-500" strokeWidth="2" />
-          </button>
-        </div>
+    <Transition appear show={props.open} as={Fragment}>
+      <Dialog as="div" className="relative z-10" onClose={props.onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-00"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-white bg-opacity-50" />
+        </Transition.Child>
 
-        <div className="mt-1.5 px-4">
-          <SearchContactInput
-            search={contactSearch}
-            setSearch={(s) => setContactSearch(s)}
-          />
-        </div>
-
-        <ul className="mt-4">
-          {filteredContacts().map((c) => (
-            <li
-              onClick={() => props.onForwardMessage(c.topicId)}
-              className="cursor-pointer px-4 pt-1.5 text-sm hover:bg-gray-100"
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4 text-center">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
             >
-              <div className="flex pb-1.5">
-                <div className="mr-2 h-10 w-10 rounded-full bg-gray-200"></div>
-                <p>{c.name}</p>
-              </div>
+              <Dialog.Panel
+                className="fixed bottom-0 left-1/2 h-[80%] w-full -translate-x-1/2 overflow-y-auto 
+          rounded-md border-t border-gray-100 bg-white shadow-lg 
+          sm:bottom-auto sm:top-1/2 sm:h-[85%] sm:w-80 sm:-translate-y-1/2"
+              >
+                <div className="">
+                  <div className="flex items-center justify-between px-4 pt-4">
+                    <p className="font-semibold text-primary-600">Forward to</p>
+                    <button
+                      onClick={props.onClose}
+                      className="h-7 w-7 rounded-md p-1"
+                    >
+                      <IconX className="text-primary-500" strokeWidth="2" />
+                    </button>
+                  </div>
 
-              <hr className="border-1 ml-auto w-[calc(100%-2.5rem-0.25rem)] border-gray-200" />
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
+                  <div className="mt-1.5 px-4">
+                    <SearchContactInput
+                      search={contactSearch}
+                      setSearch={(s) => setContactSearch(s)}
+                    />
+                  </div>
+
+                  <ul className="mt-4">
+                    {filteredContacts().map((c) => (
+                      <li
+                        onClick={() => props.onForwardMessage(c.topicId)}
+                        className="cursor-pointer px-4 pt-1.5 text-sm hover:bg-gray-100"
+                      >
+                        <div className="flex pb-1.5">
+                          <div className="mr-2 h-10 w-10 rounded-full bg-gray-200"></div>
+                          <p>{c.name}</p>
+                        </div>
+
+                        <hr className="border-1 ml-auto w-[calc(100%-2.5rem-0.25rem)] border-gray-200" />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition>
   );
 }
 
@@ -176,37 +216,76 @@ export type DeleteMessageOverlayProps = {
   onDeleteForEveryone?: () => void;
   onDeleteForMe: () => void;
   onCancel: () => void;
+  open: boolean;
 };
 
 export function DeleteMessageOverlay(props: DeleteMessageOverlayProps) {
   return (
-    <div className="fixed left-1/2 top-1/2 w-10/12 -translate-x-1/2 -translate-y-1/2 rounded-md border-2 border-gray-100 bg-white p-5 shadow-lg sm:w-96">
-      <p className="mb-10">Delete message?</p>
+    <Transition appear show={props.open} as={Fragment}>
+      <Dialog as="div" className="relative z-10" onClose={props.onCancel}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-00"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-white bg-opacity-50" />
+        </Transition.Child>
 
-      <div
-        className={cx("flex text-sm", {
-          "flex-col items-end space-y-4":
-            props.onDeleteForEveryone !== undefined,
-          "justify-end space-x-3": props.onDeleteForEveryone === undefined,
-        })}
-      >
-        {props.onDeleteForEveryone !== undefined && (
-          <DeleteMessageOverlayButton
-            text="Delete for everyone"
-            onClick={props.onDeleteForEveryone}
-          />
-        )}
-        <DeleteMessageOverlayButton
-          className={cx({
-            "order-5 ml-3 border-none bg-blue-500 text-white":
-              props.onDeleteForEveryone === undefined,
-          })}
-          text="Delete for me"
-          onClick={props.onDeleteForMe}
-        />
-        <DeleteMessageOverlayButton text="Cancel" onClick={props.onCancel} />
-      </div>
-    </div>
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4 text-center">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <Dialog.Panel
+                className="w-full max-w-md transform overflow-hidden
+              rounded-sm bg-white p-6 text-left align-middle shadow-o-xl transition-all"
+              >
+                <div className="flex justify-between pb-8">
+                  <p className="leading-6 text-gray-600">Delete message?</p>
+                </div>
+                <div
+                  className={cx("flex text-sm", {
+                    "flex-col items-end space-y-4":
+                      props.onDeleteForEveryone !== undefined,
+                    "justify-end space-x-3":
+                      props.onDeleteForEveryone === undefined,
+                  })}
+                >
+                  {props.onDeleteForEveryone !== undefined && (
+                    <DeleteMessageOverlayButton
+                      text="Delete for everyone"
+                      onClick={props.onDeleteForEveryone}
+                    />
+                  )}
+                  <DeleteMessageOverlayButton
+                    className={cx({
+                      "order-5 ml-3 border-none bg-primary-500 text-white":
+                        props.onDeleteForEveryone === undefined,
+                    })}
+                    text="Delete for me"
+                    onClick={props.onDeleteForMe}
+                  />
+                  <DeleteMessageOverlayButton
+                    text="Cancel"
+                    onClick={props.onCancel}
+                  />
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition>
   );
 }
 
@@ -217,7 +296,7 @@ const DeleteMessageOverlayButton = (props: {
 }) => {
   return (
     <button
-      className={`rounded-full border border-gray-200 px-4 py-2 font-medium text-blue-600 ${
+      className={`rounded-full border border-gray-200 px-4 py-2 font-medium text-primary-600 ${
         props.className ?? ""
       }`}
       onClick={props.onClick}
