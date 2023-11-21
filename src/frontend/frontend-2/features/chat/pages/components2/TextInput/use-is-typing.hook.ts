@@ -7,9 +7,7 @@ export interface UseIsTypingProps {
   timeout?: number;
 }
 
-export type TextElement = HTMLInputElement | HTMLTextAreaElement;
-
-export type RegisterElement = <Element extends TextElement = TextElement>(
+export type RegisterElement = <Element extends HTMLElement>(
   el: Element | null
 ) => void;
 
@@ -18,7 +16,7 @@ export function useIsTyping({ timeout = 1000 }: UseIsTypingProps = {}): [
   RegisterElement
 ] {
   const [isTyping, setIsTyping] = useState(false);
-  const [currentEl, setCurrentEl] = useState<TextElement | null>(null);
+  const [currentEl, setCurrentEl] = useState<HTMLElement | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const reset = useCallback(() => {
@@ -54,7 +52,7 @@ export function useIsTyping({ timeout = 1000 }: UseIsTypingProps = {}): [
     }
 
     const keyUpDownListener = (e: Event) => {
-      const hasValue = (e.target as TextElement).value !== "";
+      const hasValue = (e.target as HTMLElement).innerText !== "";
 
       setIsTyping(hasValue);
       reset();

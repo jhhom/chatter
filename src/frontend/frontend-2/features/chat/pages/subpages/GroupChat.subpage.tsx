@@ -67,6 +67,7 @@ import {
   DrawerContentAddMembersToGroup,
 } from "~/frontend/frontend-2/features/chat/pages/components2/Drawers/GrpInfoDrawer/GrpInfoDrawer2";
 import { DrawerContentMemberSecurity } from "~/frontend/frontend-2/features/chat/pages/components2/Drawers/GrpInfoDrawer/DrawerContentMemberSecurity";
+import { useMessageInputResize } from "~/frontend/frontend-2/features/chat/pages/hooks/use-message-input-resize.hook";
 
 const PAGE_SIZE = 24;
 const INITIAL_PAGE_SIZE = 64;
@@ -105,6 +106,14 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
   const messageBubbleMenuRef = useRef<HTMLDivElement | null>(null);
   const conversationContainerRef = useRef<HTMLDivElement | null>(null);
   const chatReplyPreviewRef = useRef<HTMLDivElement | null>(null);
+
+  const { chatContainerRef, messageInputContainerRef } = useMessageInputResize({
+    resizedHeight(messageInputContainerHeight) {
+      return `calc(100vh - (4rem + 1.5px) - ${
+        messageInputContainerHeight + 1.5
+      }px)`;
+    },
+  });
 
   if (store.grp === undefined) {
     throw new Error("Group not found");
@@ -568,7 +577,10 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
           onInfoClick={() => setShowDrawer(true)}
           type="grp"
         />
-        <div className="relative h-[calc(100%-8rem)] w-full">
+        <div
+          ref={chatContainerRef}
+          className="relative h-[calc(100%-8rem)] w-full"
+        >
           <ChatConversation
             isNewContact={false}
             peerName={store.grp.profile.name}
@@ -615,6 +627,7 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
           </div>
         </div>
         <TextInput
+          ref={messageInputContainerRef}
           inputMode={inputMode}
           onTyping={onTyping}
           onMessageSubmit={onMessageSubmit}

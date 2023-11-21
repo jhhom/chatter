@@ -1,6 +1,6 @@
 import { type ServiceInput } from "~/api-contract/types";
 import { useIsTyping } from "./use-is-typing.hook";
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, forwardRef } from "react";
 import { file2Base64 } from "~/frontend/utils";
 import { clsx as cx } from "clsx";
 
@@ -31,191 +31,198 @@ export type TextInputProps = {
   disabled: boolean;
 };
 
-export function TextInput(props: TextInputProps) {
-  const messageInputRef = useRef<HTMLTextAreaElement | null>(null);
-  const photoInputRef = useRef<HTMLInputElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+export const TextInput = forwardRef<HTMLDivElement, TextInputProps>(
+  function TextInput(props, ref) {
+    const messageInputRef = useRef<HTMLDivElement | null>(null);
+    const photoInputRef = useRef<HTMLInputElement | null>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [isTyping, register] = useIsTyping({ timeout: 1500 });
+    const [isTyping, register] = useIsTyping({ timeout: 1500 });
 
-  useEffect(() => {
-    register(messageInputRef.current);
-  }, [register]);
+    useEffect(() => {
+      register(messageInputRef.current);
+    }, [register]);
 
-  useEffect(() => {
-    props.onTyping(isTyping);
-  }, [isTyping, props.onTyping]);
+    useEffect(() => {
+      props.onTyping(isTyping);
+    }, [isTyping, props.onTyping]);
 
-  const loadPhoto: React.ChangeEventHandler<HTMLInputElement> = (e) => {
-    const files = (e.target as HTMLInputElement).files;
-    if (files) {
-      const file = files[0];
-      // props.onLoadPhoto(URL.createObjectURL(files[0]));
-      props.onLoadPhoto(file);
-    }
-  };
-
-  const loadFile: React.ChangeEventHandler<HTMLInputElement> = (e) => {
-    const files = (e.target as HTMLInputElement).files;
-    if (files) {
-      const file = files[0];
-      props.onLoadFile(file);
-    }
-  };
-
-  const onSendClick = useCallback(async () => {
-    if (messageInputRef.current === null) {
-      return;
-    }
-
-    if (
-      props.inputMode.type == "message" &&
-      messageInputRef.current.value !== ""
-    ) {
-      props.onMessageSubmit({
-        type: "text",
-        content: messageInputRef.current.value,
-      });
-      messageInputRef.current.value = "";
-    } else if (
-      props.inputMode.type == "photo" &&
-      photoInputRef.current !== null
-    ) {
-      const files = photoInputRef.current.files;
-      let fileBase64 = "";
-      let filename = "";
+    const loadPhoto: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+      const files = (e.target as HTMLInputElement).files;
       if (files) {
         const file = files[0];
-        fileBase64 = await file2Base64(file);
-        filename = file.name;
+        // props.onLoadPhoto(URL.createObjectURL(files[0]));
+        props.onLoadPhoto(file);
       }
+    };
 
-      props.onMessageSubmit({
-        type: "picture",
-        base64: fileBase64,
-        caption: messageInputRef.current.value,
-        filename,
-      });
-      messageInputRef.current.value = "";
-    } else if (
-      props.inputMode.type == "file" &&
-      fileInputRef.current !== null
-    ) {
-      const files = fileInputRef.current.files;
-      let fileBase64 = "";
-      let filename = "";
+    const loadFile: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+      const files = (e.target as HTMLInputElement).files;
       if (files) {
         const file = files[0];
-        fileBase64 = await file2Base64(file);
-        filename = file.name;
+        props.onLoadFile(file);
+      }
+    };
+
+    const onSendClick = useCallback(async () => {
+      if (messageInputRef.current === null) {
+        return;
       }
 
-      props.onMessageSubmit({
-        type: "file",
-        base64: fileBase64,
-        caption: "",
-        filename,
-      });
-    }
-  }, [props.inputMode, props.onMessageSubmit]);
+      if (
+        props.inputMode.type == "message" &&
+        messageInputRef.current.innerText !== ""
+      ) {
+        props.onMessageSubmit({
+          type: "text",
+          content: messageInputRef.current.innerText,
+        });
+        messageInputRef.current.innerHTML = "";
+      } else if (
+        props.inputMode.type == "photo" &&
+        photoInputRef.current !== null
+      ) {
+        const files = photoInputRef.current.files;
+        let fileBase64 = "";
+        let filename = "";
+        if (files) {
+          const file = files[0];
+          fileBase64 = await file2Base64(file);
+          filename = file.name;
+        }
 
-  const onMessageInputKeydown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === "Enter" && e.shiftKey) {
-      } else if (e.key === "Enter" && !e.shiftKey) {
-        void onSendClick();
-        e.preventDefault();
+        props.onMessageSubmit({
+          type: "picture",
+          base64: fileBase64,
+          caption: messageInputRef.current.innerText,
+          filename,
+        });
+        messageInputRef.current.innerHTML = "";
+      } else if (
+        props.inputMode.type == "file" &&
+        fileInputRef.current !== null
+      ) {
+        const files = fileInputRef.current.files;
+        let fileBase64 = "";
+        let filename = "";
+        if (files) {
+          const file = files[0];
+          fileBase64 = await file2Base64(file);
+          filename = file.name;
+        }
+
+        props.onMessageSubmit({
+          type: "file",
+          base64: fileBase64,
+          caption: "",
+          filename,
+        });
       }
-    },
-    [onSendClick]
-  );
+    }, [props.inputMode, props.onMessageSubmit]);
 
-  return (
-    <div className="flex h-16 items-center border-t-[1.5px] border-gray-200 pl-2 pr-6">
-      {props.inputMode.type === "message" && (
+    const onMessageInputKeydown = useCallback(
+      (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (e.key === "Enter" && e.shiftKey) {
+        } else if (e.key === "Enter" && !e.shiftKey) {
+          void onSendClick();
+          e.preventDefault();
+        }
+      },
+      [onSendClick]
+    );
+
+    return (
+      <div
+        ref={ref}
+        className="flex items-end border-t-[1.5px] border-gray-200 pb-2 pl-2 pr-6 pt-3"
+      >
+        {props.inputMode.type === "message" && (
+          <div
+            className={cx("flex", {
+              "cursor-not-allowed": props.disabled,
+            })}
+          >
+            <label
+              htmlFor="photo-input"
+              className={cx(
+                "mr-1 h-10 w-10  rounded-lg p-3 hover:bg-gray-100 disabled:cursor-not-allowed",
+                {
+                  "cursor-pointer": !props.disabled,
+                  "cursor-not-allowed": props.disabled,
+                }
+              )}
+            >
+              <IconPicture className="text-gray-400" />
+            </label>
+            <div className="h-6 self-center border-r-[1.5px] border-gray-200"></div>
+            <label
+              htmlFor="file-input"
+              className={cx(
+                "mx-1 h-10 w-10 rounded-md p-3 hover:bg-gray-100 disabled:cursor-not-allowed",
+                {
+                  "cursor-not-allowed": props.disabled,
+                  "cursor-pointer": !props.disabled,
+                }
+              )}
+            >
+              <IconFile className="text-gray-400" />
+            </label>
+          </div>
+        )}
+
+        <input
+          disabled={props.disabled}
+          ref={photoInputRef}
+          type="file"
+          id="photo-input"
+          className="hidden"
+          accept="image/*"
+          onChange={loadPhoto}
+        />
+
+        <input
+          disabled={props.disabled}
+          ref={fileInputRef}
+          type="file"
+          id="file-input"
+          className="hidden"
+          onChange={loadFile}
+        />
+
         <div
-          className={cx("flex", {
-            "cursor-not-allowed": props.disabled,
+          className={cx("flex h-8 flex-grow items-center pl-6 pr-4", {
+            hidden: props.inputMode.type != "file",
           })}
         >
-          <label
-            htmlFor="photo-input"
-            className={cx(
-              "mr-1 h-10 w-10  rounded-lg p-3 hover:bg-gray-100 disabled:cursor-not-allowed",
-              {
-                "cursor-pointer": !props.disabled,
-                "cursor-not-allowed": props.disabled,
-              }
-            )}
-          >
-            <IconPicture className="text-gray-400" />
-          </label>
-          <div className="h-6 self-center border-r-[1.5px] border-gray-200"></div>
-          <label
-            htmlFor="file-input"
-            className={cx(
-              "mx-1 h-10 w-10 rounded-md p-3 hover:bg-gray-100 disabled:cursor-not-allowed",
-              {
-                "cursor-not-allowed": props.disabled,
-                "cursor-pointer": !props.disabled,
-              }
-            )}
-          >
-            <IconFile className="text-gray-400" />
-          </label>
+          <hr className="w-full rounded-full border-2 border-gray-200" />
         </div>
-      )}
 
-      <input
-        disabled={props.disabled}
-        ref={photoInputRef}
-        type="file"
-        id="photo-input"
-        className="hidden"
-        accept="image/*"
-        onChange={loadPhoto}
-      />
-
-      <input
-        disabled={props.disabled}
-        ref={fileInputRef}
-        type="file"
-        id="file-input"
-        className="hidden"
-        onChange={loadFile}
-      />
-
-      <div
-        className={cx("flex h-8 flex-grow items-center pl-6 pr-4", {
-          hidden: props.inputMode.type != "file",
-        })}
-      >
-        <hr className="w-full rounded-full border-2 border-gray-200" />
+        <div
+          // disabled={props.disabled}
+          contentEditable
+          suppressContentEditableWarning
+          ref={messageInputRef}
+          onKeyDown={onMessageInputKeydown}
+          className={cx(
+            "block w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-blue-100 disabled:cursor-not-allowed",
+            {
+              hidden: props.inputMode.type === "file",
+            }
+          )}
+          placeholder="Type new message"
+        />
+        <div className="ml-4 flex items-center justify-center">
+          <button
+            onClick={onSendClick}
+            className="h-10 w-10 rounded-md bg-green-500 p-3 text-white"
+          >
+            <IconPaperPlane className="" />
+          </button>
+        </div>
       </div>
-
-      <textarea
-        disabled={props.disabled}
-        ref={messageInputRef}
-        onKeyDown={onMessageInputKeydown}
-        className={cx(
-          "block h-10 w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-blue-100 disabled:cursor-not-allowed",
-          {
-            hidden: props.inputMode.type === "file",
-          }
-        )}
-        placeholder="Type new message"
-      />
-      <div className="ml-4 flex items-center justify-center">
-        <button
-          onClick={onSendClick}
-          className="h-10 w-10 rounded-md bg-green-500 p-3 text-white"
-        >
-          <IconPaperPlane className="" />
-        </button>
-      </div>
-    </div>
-  );
-}
+    );
+  }
+);
 
 function IconPicture(props: { className: string }) {
   return (

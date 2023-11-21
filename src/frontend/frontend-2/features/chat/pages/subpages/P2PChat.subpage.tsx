@@ -58,7 +58,7 @@ import { useMessagesStore } from "~/frontend/frontend-2/features/chat/pages/stor
 import { clsx as cx } from "clsx";
 import useAsyncEffect from "use-async-effect";
 import { userPeerConversationDisplayMode } from "../../utils";
-import { getPeerPermission } from "~/backend/service/topics/permissions/permissions";
+import { useMessageInputResize } from "~/frontend/frontend-2/features/chat/pages/hooks/use-message-input-resize.hook";
 
 export type IChatUI = Pick<
   IChatConversationUI,
@@ -109,8 +109,15 @@ export function P2PChatPage(props: { contactId: UserId }) {
   const [messageSelected, setMessageSelected] =
     useState<ChatMessageTypeMessage | null>(null);
 
+  const { chatContainerRef, messageInputContainerRef } = useMessageInputResize({
+    resizedHeight(messageInputContainerHeight) {
+      return `calc(100vh - (4rem + 1.5px) - ${
+        messageInputContainerHeight + 1.5
+      }px)`;
+    },
+  });
+
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [inputMode, setInputMode] = useState<ChatInputMode>({
     type: "message",
@@ -600,7 +607,10 @@ export function P2PChatPage(props: { contactId: UserId }) {
           onInfoClick={() => setShowDrawer(true)}
           type="p2p"
         />
-        <div className="relative h-[calc(100%-8rem)] w-full">
+        <div
+          ref={chatContainerRef}
+          className="relative h-[calc(100%-8rem)] w-full"
+        >
           <ChatConversation
             onReplyMessageClick={onReplyMessageClick}
             isNewContact={false}
@@ -657,6 +667,7 @@ export function P2PChatPage(props: { contactId: UserId }) {
           </div>
         </div>
         <TextInput
+          ref={messageInputContainerRef}
           inputMode={inputMode}
           onTyping={onTyping}
           onMessageSubmit={onMessageSubmit}
