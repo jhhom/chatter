@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   type PermissionId,
@@ -16,6 +16,9 @@ import { dexie } from "~/frontend/external/browser/indexed-db";
 import { permission } from "~/backend/service/common/permissions";
 
 import { IconPerson } from "~/frontend/frontend-2/features/common/icons";
+import { Dialog, Transition } from "@headlessui/react";
+
+import { clsx as cx } from "clsx";
 
 export function SidePanelSettings() {
   const router = useRouter();
@@ -30,6 +33,9 @@ export function SidePanelSettings() {
   const [permissionStr, setPermissionStr] = useState(
     profile?.defaultPermissions ?? ""
   );
+
+  const [showDeleteAccountOverlay, setShowDeleteAccountOverlay] =
+    useState(false);
 
   const currentTopic = useSearchParams().get("topic");
 
@@ -171,6 +177,7 @@ export function SidePanelSettings() {
         </button>
 
         <button
+          onClick={() => setShowDeleteAccountOverlay(true)}
           className="group mt-3 flex h-10 w-full cursor-pointer items-center justify-between
          rounded-md border border-red-500 bg-white pl-4 text-left text-gray-600 hover:font-medium"
         >
@@ -180,6 +187,76 @@ export function SidePanelSettings() {
           </div>
         </button>
       </div>
+
+      <DeleteAccountOverlay
+        open={showDeleteAccountOverlay}
+        onCancel={() => setShowDeleteAccountOverlay(false)}
+        onDelete={() => {
+          alert("account deleted");
+          setShowDeleteAccountOverlay(false);
+        }}
+      />
     </div>
+  );
+}
+
+export function DeleteAccountOverlay(props: {
+  open: boolean;
+  onCancel: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <Transition appear show={props.open} as={Fragment}>
+      <Dialog as="div" className="relative z-10" onClose={props.onCancel}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-00"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-white bg-opacity-50" />
+        </Transition.Child>
+
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4 text-center">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <Dialog.Panel
+                className="w-full max-w-md transform overflow-hidden
+              rounded-sm bg-white p-6 text-left align-middle shadow-o-xl transition-all"
+              >
+                <div className="flex justify-between pb-8">
+                  <p className="leading-6 text-gray-600">Delete account?</p>
+                </div>
+                <div className="flex justify-end gap-x-2 text-sm">
+                  <button
+                    onClick={props.onCancel}
+                    className="rounded-full border border-gray-200 px-4 py-2 font-medium text-primary-600 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={props.onDelete}
+                    className="rounded-full border border-gray-200 px-4 py-2 font-medium text-red-600 hover:bg-red-500 hover:text-white"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition>
   );
 }
