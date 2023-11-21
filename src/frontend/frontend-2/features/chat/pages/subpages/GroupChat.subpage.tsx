@@ -558,8 +558,8 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
   );
 
   return (
-    <div className="relative flex h-screen">
-      <div className="w-full">
+    <div className="relative flex h-screen ">
+      <div className="flex-shrink flex-grow overflow-x-hidden ">
         <ChatHeader
           online={store.grp.status.online}
           lastSeen={null}
@@ -671,7 +671,7 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
       </ChatMessageBubbleMenu>
 
       {showDrawer && (
-        <div className="h-full basis-2/5">
+        <div className="h-full flex-shrink-0 basis-full lg:basis-2/5">
           <GroupInfoDrawer3 onClose={() => setShowDrawer(false)}>
             {(p) => {
               return match(p.content)
@@ -894,6 +894,7 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
 
       {showForwardMessageOverlay && (
         <ForwardMessageOverlay
+          open={showForwardMessageOverlay}
           contacts={[
             ...Array.from(store.p2pList).map(([id, p]) => ({
               topicId: id,

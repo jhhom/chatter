@@ -583,7 +583,7 @@ export function P2PChatPage(props: { contactId: UserId }) {
 
   return (
     <div className="relative flex h-screen">
-      <div className="w-full">
+      <div className="flex-shrink flex-grow overflow-x-hidden">
         <ChatHeader
           online={peer.type === "old-contact" ? peer.status.online : false}
           lastSeen={
@@ -688,7 +688,7 @@ export function P2PChatPage(props: { contactId: UserId }) {
       </div>
 
       {showDrawer && peer.type === "old-contact" && (
-        <div className="h-full w-[660px] border-l border-gray-300 bg-white">
+        <div className="h-full flex-shrink-0 basis-full lg:basis-2/5">
           <P2PInfoDrawer
             userPermission={peer.profile.userPermissions}
             peerPermission={peer.profile.peerPermissions}
