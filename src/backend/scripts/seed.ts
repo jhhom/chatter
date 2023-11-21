@@ -1,5 +1,12 @@
-import { Insertable, Kysely, sql } from "kysely";
 import {
+  CamelCasePlugin,
+  Insertable,
+  Kysely,
+  PostgresDialect,
+  sql,
+} from "kysely";
+import {
+  DB,
   KyselyDB,
   KyselyTransaction,
   Messages,
@@ -15,6 +22,7 @@ import {
 } from "~/api-contract/subscription/subscription";
 import * as bcrypt from "bcrypt";
 import { faker } from "@faker-js/faker";
+import { Pool } from "pg";
 
 type SeedUser = Omit<
   Insertable<Users>,
@@ -705,7 +713,7 @@ const seed = async (db: KyselyDB | KyselyTransaction) => {
     v.topicId = result.value as P2PTopicId;
   }
 
-  const a = seedUser.reduce((acc, cur) => {
+  const a = seedUser.reduce((acc) => {
     return acc;
   }, {} as { [k in (typeof seedUser)[number]["username"]]: Insertable<Users> });
   for (const [k, v] of Object.entries(seedUser)) {
@@ -824,7 +832,7 @@ const seedP2PTopic = async (
     await db
       .insertInto("topics")
       .values({
-        id: `p2p${faker.random.alphaNumeric(12)}`,
+        id: `p2p${faker.string.alphanumeric(12)}`,
         topicType: "p2p",
       })
       .returning("topics.id")
@@ -876,4 +884,27 @@ const seedMessages = async <T1 extends string, T2 extends string>(
   ).map(() => topicId);
 };
 
-export { seed };
+const config = {
+  DB_URL: "postgres://dbuser:dbuser@localhost/tinode_clone_test",
+  JWT_KEY: "xxx-xxx",
+};
+
+const dialect = new PostgresDialect({
+  pool: new Pool({
+    connectionString: config.DB_URL,
+    max: 10,
+  }),
+});
+
+const db = new Kysely<DB>({
+  dialect,
+  log(event) {
+    if (event.level === "query") {
+      console.log(event.query.sql);
+      console.log(event.query.parameters);
+    }
+  },
+  plugins: [new CamelCasePlugin()],
+});
+
+void seed(db);
