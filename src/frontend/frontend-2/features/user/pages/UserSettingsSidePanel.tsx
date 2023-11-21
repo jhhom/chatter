@@ -7,6 +7,7 @@ import {
 import {
   IconBackArrow,
   IconLeaveGroup,
+  IconUserXMark,
 } from "~/frontend/frontend-2/features/common/icons";
 import { useAppStore } from "~/frontend/stores/stores";
 import storage from "~/frontend/external/browser/local-storage";
@@ -166,6 +167,16 @@ export function SidePanelSettings() {
           <p className="text-sm text-white group-hover:text-white">LOG OUT</p>
           <div className="mr-2 flex h-full w-10 items-center justify-center rounded-md px-2">
             <IconLeaveGroup className="text-white group-hover:text-white" />
+          </div>
+        </button>
+
+        <button
+          className="group mt-3 flex h-10 w-full cursor-pointer items-center justify-between
+         rounded-md border border-red-500 bg-white pl-4 text-left text-gray-600 hover:font-medium"
+        >
+          <p className="text-sm text-red-500">DELETE ACCOUNT</p>
+          <div className="mr-2 flex h-full w-10 items-center justify-center rounded-md px-2">
+            <IconUserXMark className="text-red-500" />
           </div>
         </button>
       </div>

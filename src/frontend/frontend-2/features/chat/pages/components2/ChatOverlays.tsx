@@ -114,7 +114,7 @@ export function ForwardMessageOverlay(props: {
     );
 
   return (
-    <div className="fixed bottom-0 left-1/2 h-[80%] w-full -translate-x-1/2 rounded-md border-t border-gray-100 bg-white shadow-lg sm:bottom-auto sm:top-1/2 sm:h-[85%] sm:w-80 sm:-translate-y-1/2">
+    <div className="fixed bottom-0 left-1/2 h-[80%] w-full -translate-x-1/2 overflow-y-auto rounded-md border-t border-gray-100 bg-white shadow-lg sm:bottom-auto sm:top-1/2 sm:h-[85%] sm:w-80 sm:-translate-y-1/2">
       <div className="">
         <div className="flex items-center justify-between px-4 pt-4">
           <p className="font-semibold text-primary-600">Forward to</p>

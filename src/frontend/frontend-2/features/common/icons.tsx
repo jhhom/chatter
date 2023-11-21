@@ -8,7 +8,7 @@ export function EyeIcon(props: { showPassword: boolean }) {
     >
       <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
       <path
-        filleRule="evenodd"
+        fillRule="evenodd"
         d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113-1.487 4.471-5.705 7.697-10.677 7.697-4.97 0-9.186-3.223-10.675-7.69a1.762 1.762 0 010-1.113zM17.25 12a5.25 5.25 0 11-10.5 0 5.25 5.25 0 0110.5 0z"
         clipRule="evenodd"
       />
@@ -27,6 +27,19 @@ export function EyeIcon(props: { showPassword: boolean }) {
   );
 }
 
+export function IconUserXMark(props: { className: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="currentColor"
+      className={props.className}
+      viewBox="0 0 640 512"
+    >
+      <path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304h91.4C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7H29.7C13.3 512 0 498.7 0 482.3zM471 143c9.4-9.4 24.6-9.4 33.9 0l47 47 47-47c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-47 47 47 47c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-47-47-47 47c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l47-47-47-47c-9.4-9.4-9.4-24.6 0-33.9z" />
+    </svg>
+  );
+}
+
 export function IconGroup(props: { className: string }) {
   return (
     <svg
@@ -36,7 +49,7 @@ export function IconGroup(props: { className: string }) {
       className={props.className}
     >
       <path
-        filleRule="evenodd"
+        fillRule="evenodd"
         d="M8.25 6.75a3.75 3.75 0 117.5 0 3.75 3.75 0 01-7.5 0zM15.75 9.75a3 3 0 116 0 3 3 0 01-6 0zM2.25 9.75a3 3 0 116 0 3 3 0 01-6 0zM6.31 15.117A6.745 6.745 0 0112 12a6.745 6.745 0 016.709 7.498.75.75 0 01-.372.568A12.696 12.696 0 0112 21.75c-2.305 0-4.47-.612-6.337-1.684a.75.75 0 01-.372-.568 6.787 6.787 0 011.019-4.38z"
         clipRule="evenodd"
       />
@@ -54,7 +67,7 @@ export function IconPicture(props: { className?: string; fill?: string }) {
       className={props.className ?? ""}
     >
       <path
-        filleRule="evenodd"
+        fillRule="evenodd"
         d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z"
         clipRule="evenodd"
       />
@@ -71,7 +84,7 @@ export function IconPaperClip(props: { className?: string; fill?: string }) {
       className={props.className ?? ""}
     >
       <path
-        filleRule="evenodd"
+        fillRule="evenodd"
         d="M18.97 3.659a2.25 2.25 0 00-3.182 0l-10.94 10.94a3.75 3.75 0 105.304 5.303l7.693-7.693a.75.75 0 011.06 1.06l-7.693 7.693a5.25 5.25 0 11-7.424-7.424l10.939-10.94a3.75 3.75 0 115.303 5.304L9.097 18.835l-.008.008-.007.007-.002.002-.003.002A2.25 2.25 0 015.91 15.66l7.81-7.81a.75.75 0 011.061 1.06l-7.81 7.81a.75.75 0 001.054 1.068L18.97 6.84a2.25 2.25 0 000-3.182z"
         clipRule="evenodd"
       />
@@ -279,7 +292,7 @@ export function IconSearch(props: { className?: string }) {
       className={props.className}
     >
       <path
-        filleRule="evenodd"
+        fillRule="evenodd"
         d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
         clipRule="evenodd"
       />
