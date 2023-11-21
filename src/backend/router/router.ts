@@ -68,6 +68,18 @@ const mainRouter = router({
       }
       return result.value;
     }),
+  ["users/delete_user"]: authProcedure
+    .output(contract["users/delete_user"].output)
+    .mutation(async ({ ctx }) => {
+      const result = await userUsecase.deleteUser(
+        ctx.ctx.db,
+        ctx.ctx.auth.userId
+      );
+      if (result.isErr()) {
+        throw result.error;
+      }
+      return result.value;
+    }),
   ["group/add_members"]: authProcedure
     .input(contract["group/add_members"].input)
     .output(contract["group/add_members"].output)

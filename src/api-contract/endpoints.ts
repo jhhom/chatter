@@ -53,6 +53,12 @@ export const contract = {
   },
   // #endregion
 
+  "users/delete_user": {
+    output: z.object({
+      message: z.string(),
+    }),
+  },
+
   "users/create_user": {
     input: z.object({
       username: z.string().min(1),

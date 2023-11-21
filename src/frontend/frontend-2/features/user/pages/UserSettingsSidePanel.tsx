@@ -8,6 +8,7 @@ import {
   IconBackArrow,
   IconLeaveGroup,
   IconUserXMark,
+  IconWarning,
 } from "~/frontend/frontend-2/features/common/icons";
 import { useAppStore } from "~/frontend/stores/stores";
 import storage from "~/frontend/external/browser/local-storage";
@@ -191,9 +192,16 @@ export function SidePanelSettings() {
       <DeleteAccountOverlay
         open={showDeleteAccountOverlay}
         onCancel={() => setShowDeleteAccountOverlay(false)}
-        onDelete={() => {
-          alert("account deleted");
-          setShowDeleteAccountOverlay(false);
+        onDelete={async () => {
+          const result = await client["users/delete_user"]();
+          if (result.isErr()) {
+            alert("Error logout: " + result.error.message);
+          }
+          storage.clearToken();
+          setAuthStatus("logged-out");
+          setAfterLoginNavigateTo(null);
+          await dexie.delete().then(() => dexie.open());
+          router.push(`/`);
         }}
       />
     </div>
@@ -235,10 +243,10 @@ export function DeleteAccountOverlay(props: {
                 className="w-full max-w-md transform overflow-hidden
               rounded-sm bg-white p-6 text-left align-middle shadow-o-xl transition-all"
               >
-                <div className="flex justify-between pb-8">
-                  <p className="leading-6 text-gray-600">Delete account?</p>
+                <div className="pb-8">
+                  <DeleteAccountContent />
                 </div>
-                <div className="flex justify-end gap-x-2 text-sm">
+                <div className="mt-2 flex justify-end gap-x-2 text-sm">
                   <button
                     onClick={props.onCancel}
                     className="rounded-full border border-gray-200 px-4 py-2 font-medium text-primary-600 hover:bg-gray-50"
@@ -249,7 +257,7 @@ export function DeleteAccountOverlay(props: {
                     onClick={props.onDelete}
                     className="rounded-full border border-gray-200 px-4 py-2 font-medium text-red-600 hover:bg-red-500 hover:text-white"
                   >
-                    Delete
+                    Delete My Account
                   </button>
                 </div>
               </Dialog.Panel>
@@ -258,5 +266,23 @@ export function DeleteAccountOverlay(props: {
         </div>
       </Dialog>
     </Transition>
+  );
+}
+
+function DeleteAccountContent() {
+  return (
+    <div className="">
+      <p className="text-red-500">Delete account?</p>
+      <div className="mt-4 flex items-center text-red-500">
+        <IconWarning className="h-5 w-5" />
+        <p className="ml-4">Deleting your account will:</p>
+      </div>
+      <ul className="mt-4 list-disc space-y-1.5 pl-12 text-sm text-gray-500">
+        <li>Delete your account from Chatter</li>
+        <li>Erase your message history</li>
+        <li>Delete you from all of your Chatter groups</li>
+        <li>Delete you from other people's conversation history</li>
+      </ul>
+    </div>
   );
 }

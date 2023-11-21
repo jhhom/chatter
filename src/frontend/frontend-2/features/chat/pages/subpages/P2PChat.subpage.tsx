@@ -735,25 +735,24 @@ export function P2PChatPage(props: { contactId: UserId }) {
         />
       </ChatMessageBubbleMenu>
 
-      {showUnblockModal && (
-        <UnblockModal
-          name={peer.profile.name}
-          onUnblock={async () => {
-            const newPermission =
-              peer.type === "old-contact"
-                ? peer.profile.peerPermissions + "J"
-                : (store.get().profile.profile?.defaultPermissions ?? "") + "J";
+      <UnblockModal
+        show={showUnblockModal}
+        name={peer.profile.name}
+        onUnblock={async () => {
+          const newPermission =
+            peer.type === "old-contact"
+              ? peer.profile.peerPermissions + "J"
+              : (store.get().profile.profile?.defaultPermissions ?? "") + "J";
 
-            if (store.get().profile.profile?.defaultPermissions)
-              void (await client["permissions/update_peer_permission"]({
-                newPermission,
-                peerId: props.contactId,
-              }));
-            setShowUnblockModal(false);
-          }}
-          onCancel={() => setShowUnblockModal(false)}
-        />
-      )}
+          if (store.get().profile.profile?.defaultPermissions)
+            void (await client["permissions/update_peer_permission"]({
+              newPermission,
+              peerId: props.contactId,
+            }));
+          setShowUnblockModal(false);
+        }}
+        onCancel={() => setShowUnblockModal(false)}
+      />
 
       <ForwardMessageOverlay
         open={showForwardMessageOverlay}

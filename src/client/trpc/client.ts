@@ -246,6 +246,13 @@ export class Client implements IApiClient {
     return r;
   }
 
+  async ["users/delete_user"]() {
+    const r = await this.#fromApiPromise(
+      this.#trpc["users/delete_user"].mutate()
+    );
+    return r;
+  }
+
   async ["users/contact_status"]() {
     const r = await this.#fromApiPromise(
       this.#trpc["users/contact_status"].query()

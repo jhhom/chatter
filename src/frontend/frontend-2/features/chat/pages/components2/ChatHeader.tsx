@@ -212,7 +212,15 @@ export function ChatHeader(props: {
             content="Clear messages"
           />
           {props.type === "p2p" && (
-            <MenuItem onClick={props.onBlock} content="Block" />
+            <MenuItem
+              onClick={() => {
+                if (props.onBlock) {
+                  props.onBlock();
+                }
+                setShowMenu(false);
+              }}
+              content="Block"
+            />
           )}
         </div>
       </div>
