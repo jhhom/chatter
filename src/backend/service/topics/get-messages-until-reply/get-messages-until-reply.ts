@@ -26,6 +26,7 @@ import { ServiceResult } from "~/api-contract/types";
 
 export async function getMessagesUntilReply(
   db: KyselyDB,
+  assetServerUrl: string,
   arg: {
     requesterUserId: UserId;
     topicId: UserId | GroupTopicId;
@@ -153,14 +154,17 @@ export async function getMessagesUntilReply(
     return ok({
       msgs: messages.map((m) => {
         if (m.content.type == "picture" || m.content.type == "file") {
-          m.content.url = completeMediaUrl(m.content.url);
+          m.content.url = completeMediaUrl(assetServerUrl, m.content.url);
         }
         if (
           m.type == "message" &&
           m.content.replyTo !== null &&
           m.content.replyTo.type == "picture"
         ) {
-          m.content.replyTo.url = completeMediaUrl(m.content.replyTo.url);
+          m.content.replyTo.url = completeMediaUrl(
+            assetServerUrl,
+            m.content.replyTo.url
+          );
         }
         let read = true;
         if (m.type != "message" || m.author != arg.requesterUserId) {
@@ -211,14 +215,17 @@ export async function getMessagesUntilReply(
     return ok({
       msgs: messagesWithReadStatus.map((m) => {
         if (m.content.type == "picture" || m.content.type == "file") {
-          m.content.url = completeMediaUrl(m.content.url);
+          m.content.url = completeMediaUrl(assetServerUrl, m.content.url);
         }
         if (
           m.type == "message" &&
           m.content.replyTo !== null &&
           m.content.replyTo.type == "picture"
         ) {
-          m.content.replyTo.url = completeMediaUrl(m.content.replyTo.url);
+          m.content.replyTo.url = completeMediaUrl(
+            assetServerUrl,
+            m.content.replyTo.url
+          );
         }
         return m;
       }),

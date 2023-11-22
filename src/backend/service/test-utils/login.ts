@@ -2,14 +2,14 @@ import { ok, err } from "neverthrow";
 
 import { MockEmitter } from "~/backend/service/test-utils/mock-emitter";
 import { OnlineUsers } from "~/backend/service/common/online-users";
-import { ConfigSchema } from "~/backend/config/config";
 import { KyselyDB } from "~/backend/schema";
 import { Context } from "~/backend/router/context";
 import { authUsecase } from "~/backend/service/auth";
 import { IServiceAuthContext } from "~/backend/router/context";
+import { TestConfigSchema } from "~/config/config";
 
 export async function login(
-  ctx: { onlineUsers: OnlineUsers; config: ConfigSchema; db: KyselyDB },
+  ctx: { onlineUsers: OnlineUsers; config: TestConfigSchema; db: KyselyDB },
   input: {
     username: string;
     password: string;
@@ -20,7 +20,8 @@ export async function login(
       {
         DATABASE_URL: ctx.config.DATABASE_URL,
         JWT_KEY: ctx.config.JWT_KEY,
-        PROJECT_ROOT: "",
+        PROJECT_ROOT: ctx.config.PROJECT_ROOT,
+        ASSET_SERVER_URL: ctx.config.ASSET_SERVER_URL,
       },
       ctx.db
     ),
@@ -34,7 +35,10 @@ export async function login(
   callback(alice.emitter.socket);
 
   const result = await authUsecase.login(
-    { onlineUsers: ctx.onlineUsers },
+    {
+      onlineUsers: ctx.onlineUsers,
+      assetServerUrl: ctx.config.ASSET_SERVER_URL,
+    },
     {
       ...input,
       userCtx: alice.ctx,

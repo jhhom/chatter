@@ -6,6 +6,7 @@ import { completeMediaUrl } from "~/backend/service/common/media";
 
 export async function findUsersToAddContact(
   db: KyselyDB,
+  assetServerUrl: string,
   email: string | undefined
 ): ServiceResult<"users/find_users_to_add_as_contact"> {
   let query = db.selectFrom("users").selectAll();
@@ -21,7 +22,7 @@ export async function findUsersToAddContact(
         ...u,
         passwordHash: undefined,
         profilePhotoUrl: u.profilePhotoUrl
-          ? completeMediaUrl(u.profilePhotoUrl)
+          ? completeMediaUrl(assetServerUrl, u.profilePhotoUrl)
           : null,
       };
       delete r["passwordHash"];

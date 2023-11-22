@@ -14,8 +14,12 @@ export class MockEmitter {
       next: (value) => {
         this.receivedMessages.push(value);
       },
-      error: (err) => {},
-      complete: () => {},
+      error: (err) => {
+        //
+      },
+      complete: () => {
+        //
+      },
     };
   }
 

@@ -21,6 +21,7 @@ export async function createGroupTopic(
   },
   config: {
     projectRoot: string;
+    assetServerUrl: string;
   }
 ): ServiceResult<"group/create_group"> {
   // The flow of creating a new group topic
@@ -35,7 +36,7 @@ export async function createGroupTopic(
   let profilePhotoUrl: string | undefined = undefined;
   if (arg.photoBase64 !== null) {
     const fileExtension = extractFileExtensionFromBase64(arg.photoBase64);
-    const result = await saveMedia(
+    const result = saveMedia(
       {
         filename: `${arg.groupName}-profile${
           fileExtension ? `.${fileExtension}` : ""
@@ -116,7 +117,10 @@ export async function createGroupTopic(
         topicId,
         groupName: groupTopicMeta.groupName,
         profilePhotoUrl: groupTopicMeta.profilePhotoUrl
-          ? completeMediaUrl(groupTopicMeta.profilePhotoUrl)
+          ? completeMediaUrl(
+              config.assetServerUrl,
+              groupTopicMeta.profilePhotoUrl
+            )
           : null,
       };
     }),

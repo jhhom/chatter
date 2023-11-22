@@ -101,7 +101,9 @@ export async function getLastMessageOfTopic(
     };
   } else if (message.topicEventLog === null) {
     const author =
-      message.authorId === arg.requesterUserId ? "You" : message.authorName;
+      message.authorId === arg.requesterUserId
+        ? "You"
+        : message.authorName ?? "";
 
     result = {
       type: "message",
@@ -134,7 +136,9 @@ export async function getLastMessageOfTopic(
     };
   } else {
     const author =
-      message.authorId === arg.requesterUserId ? "You" : message.authorName;
+      message.authorId === arg.requesterUserId
+        ? "You"
+        : message.authorName ?? "";
 
     result = {
       type: "message",

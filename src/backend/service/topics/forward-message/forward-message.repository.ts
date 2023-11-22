@@ -1,5 +1,9 @@
-import { KyselyDB } from "~/backend/schema";
-import { UserId, GroupTopicId, TopicId } from "~/backend/schema";
+import type { KyselyDB } from "~/backend/schema";
+import type {
+  UserId,
+  GroupTopicId,
+  TopicId,
+} from "~/api-contract/subscription/subscription";
 import { IsUserId } from "~/backend/service/common/topics";
 import { getTopicIdOfP2PTopicBetween } from "~/backend/service/topics/common/repo/repo";
 import { fromPromise, ok, err } from "neverthrow";

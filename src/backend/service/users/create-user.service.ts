@@ -22,6 +22,7 @@ export async function registerUser(
     photoBase64: string | null;
   },
   config: {
+    assetServerUrl: string;
     projectRoot: string;
   }
 ): ServiceResult<"users/create_user"> {
@@ -59,7 +60,7 @@ export async function registerUser(
       return await tx
         .insertInto("users")
         .values({
-          id: `usr${faker.random.alphaNumeric(12)}`,
+          id: `usr${faker.string.alphanumeric(12)}`,
           defaultPermissions: "JRW",
           username: input.username,
           fullname: input.fullname,
@@ -85,7 +86,7 @@ export async function registerUser(
     email: user.email,
     createdAt: new Date(user.createdAt),
     profilePhotoUrl: user.profilePhotoUrl
-      ? completeMediaUrl(user.profilePhotoUrl)
+      ? completeMediaUrl(config.assetServerUrl, user.profilePhotoUrl)
       : null,
   });
 }

@@ -14,6 +14,7 @@ import { Insertable } from "kysely";
 
 export async function addMessageToP2PTopic(
   db: KyselyDB,
+  assetServerUrl: string,
   arg: {
     message: Insertable<Messages>;
     forwarder: UserId;
@@ -124,7 +125,10 @@ export async function addMessageToP2PTopic(
         message.content?.type == "picture" ||
         message.content?.type == "file"
       ) {
-        message.content.url = completeMediaUrl(message.content.url);
+        message.content.url = completeMediaUrl(
+          assetServerUrl,
+          message.content.url
+        );
       }
 
       // 6. ⭐️ If the sending of the message results in the creation of a new topic, return the information of the created topic

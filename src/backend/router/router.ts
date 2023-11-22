@@ -62,6 +62,7 @@ const mainRouter = router({
     .mutation(async ({ input, ctx }) => {
       const result = await userUsecase.registerUser(ctx.ctx.db, input, {
         projectRoot: ctx.config.PROJECT_ROOT,
+        assetServerUrl: ctx.config.ASSET_SERVER_URL,
       });
       if (result.isErr()) {
         throw result.error;
@@ -85,7 +86,11 @@ const mainRouter = router({
     .output(contract["group/add_members"].output)
     .mutation(async ({ input, ctx }) => {
       const result = await topicUsecase.addMembersToGroup(
-        { db: ctx.ctx.db, onlineUsers },
+        {
+          db: ctx.ctx.db,
+          onlineUsers,
+          assetServerUrl: ctx.config.ASSET_SERVER_URL,
+        },
         {
           adderUserId: ctx.ctx.auth.userId,
           membersToAdd: input.membersToAdd,
@@ -101,11 +106,15 @@ const mainRouter = router({
     .input(contract["group/find_new_members"].input)
     .output(contract["group/find_new_members"].output)
     .mutation(async ({ input, ctx }) => {
-      const result = await topicUsecase.findNewMembersForGroup(ctx.ctx.db, {
-        requesterUserId: ctx.ctx.auth.userId,
-        groupTopicId: input.groupTopicId,
-        searchQueryUsername: input.searchQueryUsername,
-      });
+      const result = await topicUsecase.findNewMembersForGroup(
+        ctx.ctx.db,
+        ctx.config.ASSET_SERVER_URL,
+        {
+          requesterUserId: ctx.ctx.auth.userId,
+          groupTopicId: input.groupTopicId,
+          searchQueryUsername: input.searchQueryUsername,
+        }
+      );
       if (result.isErr()) {
         throw result.error;
       }
@@ -124,6 +133,7 @@ const mainRouter = router({
         },
         {
           projectRoot: ctx.config.PROJECT_ROOT,
+          assetServerUrl: ctx.config.ASSET_SERVER_URL,
         }
       );
       if (result.isErr()) {
@@ -139,6 +149,7 @@ const mainRouter = router({
     .query(async ({ input, ctx }) => {
       const result = await topicUsecase.getGroupPreviewInfo(
         ctx.ctx.db,
+        ctx.config.ASSET_SERVER_URL,
         input.groupInviteLinkId
       );
       if (result.isErr()) {
@@ -217,7 +228,7 @@ const mainRouter = router({
     .output(contract["auth/login_with_token"].output)
     .mutation(async ({ input, ctx }) => {
       const result = await authUsecase.autoLogin(
-        { onlineUsers },
+        { onlineUsers, assetServerUrl: ctx.ctx.config.ASSET_SERVER_URL },
         {
           jwtToken: input.jwtToken,
           userCtx: ctx.ctx,
@@ -245,7 +256,7 @@ const mainRouter = router({
     .output(contract["auth/login"].output)
     .mutation(async ({ input, ctx }) => {
       const result = await authUsecase.login(
-        { onlineUsers },
+        { assetServerUrl: ctx.config.ASSET_SERVER_URL, onlineUsers },
         { ...input, userCtx: ctx.ctx }
       );
       if (result.isErr()) {
@@ -259,6 +270,7 @@ const mainRouter = router({
     .query(async ({ input, ctx }) => {
       const result = await userUsecase.findUsersToAddContact(
         ctx.ctx.db,
+        ctx.config.ASSET_SERVER_URL,
         input.email
       );
       if (result.isErr()) {
@@ -327,6 +339,7 @@ const mainRouter = router({
         },
         {
           projectRoot: ctx.config.PROJECT_ROOT,
+          assetServerUrl: ctx.config.ASSET_SERVER_URL,
         }
       );
       if (result.isErr()) {
@@ -398,12 +411,16 @@ const mainRouter = router({
     .input(contract["topic/messages"].input)
     .output(contract["topic/messages"].output)
     .query(async ({ input, ctx }) => {
-      const result = await topicUsecase.getMessages(ctx.ctx.db, {
-        requesterUserId: ctx.ctx.auth.userId,
-        topicId: input.topicId,
-        numberOfMessages: input.numberOfMessages,
-        beforeSequenceId: input.beforeSequenceId,
-      });
+      const result = await topicUsecase.getMessages(
+        ctx.ctx.db,
+        ctx.config.ASSET_SERVER_URL,
+        {
+          requesterUserId: ctx.ctx.auth.userId,
+          topicId: input.topicId,
+          numberOfMessages: input.numberOfMessages,
+          beforeSequenceId: input.beforeSequenceId,
+        }
+      );
       if (result.isErr()) {
         throw result.error;
       }
@@ -413,12 +430,16 @@ const mainRouter = router({
     .input(contract["topic/get_messages_until_reply"].input)
     .output(contract["topic/get_messages_until_reply"].output)
     .query(async ({ input, ctx }) => {
-      const result = await topicUsecase.getMessagesUntilReply(ctx.ctx.db, {
-        requesterUserId: ctx.ctx.auth.userId,
-        topicId: input.topicId,
-        untilReplySequenceId: input.untilReplySequenceId,
-        beforeSequenceId: input.beforeSequenceId,
-      });
+      const result = await topicUsecase.getMessagesUntilReply(
+        ctx.ctx.db,
+        ctx.config.ASSET_SERVER_URL,
+        {
+          requesterUserId: ctx.ctx.auth.userId,
+          topicId: input.topicId,
+          untilReplySequenceId: input.untilReplySequenceId,
+          beforeSequenceId: input.beforeSequenceId,
+        }
+      );
       if (result.isErr()) {
         throw result.error;
       }
@@ -467,6 +488,7 @@ const mainRouter = router({
         {
           db: ctx.ctx.db,
           onlineUsers,
+          assetServerUrl: ctx.config.ASSET_SERVER_URL,
         },
         {
           userId: ctx.ctx.auth.userId,
@@ -506,6 +528,7 @@ const mainRouter = router({
         {
           db: ctx.ctx.db,
           onlineUsers,
+          assetServerUrl: ctx.config.ASSET_SERVER_URL,
         },
         {
           userId: ctx.ctx.auth.userId,
@@ -524,6 +547,7 @@ const mainRouter = router({
     .query(async ({ ctx }) => {
       const result = await topicUsecase.getAllUnreadMessages(
         ctx.ctx.db,
+        ctx.config.ASSET_SERVER_URL,
         ctx.ctx.auth.userId
       );
       if (result.isErr()) {

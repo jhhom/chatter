@@ -3,7 +3,6 @@ import { wsLink, createWSClient, createTRPCProxyClient } from "@trpc/client";
 import { loggerLink } from "@trpc/client/links/loggerLink";
 import { fromPromise, ok, err } from "neverthrow";
 
-import { config } from "~/config/config";
 import type { ServiceInput, ServiceSyncResult } from "~/api-contract/types";
 import { AppError, type AppErrorUnion } from "~/api-contract/errors/errors";
 import type { IApiClient } from "~/api-contract/client";
@@ -21,7 +20,7 @@ export class Client implements IApiClient {
     [k in keyof EventPayload]: Map<number, (arg: EventPayload[k]) => void>;
   };
 
-  constructor() {
+  constructor(serverUrl: string) {
     this.#trpc = createTRPCProxyClient<IAppRouter>({
       transformer: superjson,
       links: [
@@ -33,7 +32,7 @@ export class Client implements IApiClient {
         }),
         wsLink<IAppRouter>({
           client: createWSClient({
-            url: config.SERVER_URL,
+            url: serverUrl,
           }),
         }),
       ],

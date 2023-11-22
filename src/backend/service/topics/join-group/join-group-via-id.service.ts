@@ -15,9 +15,11 @@ export async function joinGroupViaId(
   {
     db,
     onlineUsers,
+    assetServerUrl,
   }: {
     db: KyselyDB;
     onlineUsers: OnlineUsers;
+    assetServerUrl: string;
   },
   arg: {
     userSocketId: string;
@@ -63,7 +65,7 @@ export async function joinGroupViaId(
       const actor = {
         name: _actor.name,
         profilePhotoUrl: _actor.profilePhotoUrl
-          ? completeMediaUrl(_actor.profilePhotoUrl)
+          ? completeMediaUrl(assetServerUrl, _actor.profilePhotoUrl)
           : null,
       };
 
@@ -120,7 +122,7 @@ export async function joinGroupViaId(
   ).map((v) => ({
     ...v,
     profilePhotoUrl: v.profilePhotoUrl
-      ? completeMediaUrl(v.profilePhotoUrl)
+      ? completeMediaUrl(assetServerUrl, v.profilePhotoUrl)
       : null,
   }));
   if (groupTopicResult.isErr()) {

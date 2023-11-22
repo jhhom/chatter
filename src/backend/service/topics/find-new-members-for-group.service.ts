@@ -7,6 +7,7 @@ import { completeMediaUrl } from "~/backend/service/common/media";
 
 export async function findNewMembersForGroup(
   db: KyselyDB,
+  assetServerUrl: string,
   input: {
     requesterUserId: UserId;
     groupTopicId: GroupTopicId;
@@ -32,16 +33,21 @@ export async function findNewMembersForGroup(
   }
 
   // 2. ⭐️ GET THE LIST OF USER'S P2P CONTACTS THAT ARE NOT IN THE GROUP MEMBER LIST
-  const p2pUserIdsResult = await getUserP2PTopicsNotInSubscriptionList(db, {
-    userId: input.requesterUserId,
-    subscriptionList: subscribedUsersResult.value,
-    searchQueryUsername: input.searchQueryUsername,
-  });
+  const p2pUserIdsResult = await getUserP2PTopicsNotInSubscriptionList(
+    db,
+    assetServerUrl,
+    {
+      userId: input.requesterUserId,
+      subscriptionList: subscribedUsersResult.value,
+      searchQueryUsername: input.searchQueryUsername,
+    }
+  );
   return p2pUserIdsResult;
 }
 
 function getUserP2PTopicsNotInSubscriptionList(
   db: KyselyDB,
+  assetServerUrl: string,
   input: {
     userId: UserId;
     subscriptionList: UserId[];
@@ -69,11 +75,18 @@ function getUserP2PTopicsNotInSubscriptionList(
 
   if (input.searchQueryUsername !== undefined) {
     query = query.where(({ and, eb, not }) =>
-      and([
-        eb("topics.id", "like", "p2p%"),
-        not(eb("peer.userId", "in", input.subscriptionList)),
-        eb("users.fullname", "ilike", `%${input.searchQueryUsername}%`),
-      ])
+      and(
+        input.searchQueryUsername
+          ? [
+              eb("topics.id", "like", "p2p%"),
+              not(eb("peer.userId", "in", input.subscriptionList)),
+              eb("users.fullname", "ilike", `%${input.searchQueryUsername}%`),
+            ]
+          : [
+              eb("topics.id", "like", "p2p%"),
+              not(eb("peer.userId", "in", input.subscriptionList)),
+            ]
+      )
     );
   } else {
     query = query
@@ -90,7 +103,7 @@ function getUserP2PTopicsNotInSubscriptionList(
     v.map((u) => ({
       ...u,
       profilePhotoUrl: u.profilePhotoUrl
-        ? completeMediaUrl(u.profilePhotoUrl)
+        ? completeMediaUrl(assetServerUrl, u.profilePhotoUrl)
         : null,
     }))
   );

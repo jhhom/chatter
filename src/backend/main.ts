@@ -1,7 +1,7 @@
 // import type { DB } from "~/backend/schema";
 import pg from "pg";
 import { CamelCasePlugin, Kysely, PostgresDialect } from "kysely";
-import { loadConfig } from "~/backend/config/config";
+import { loadConfig } from "~/config/config";
 import { WebSocketServer } from "ws";
 import { createContextBuilder } from "~/backend/router/context";
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
@@ -10,7 +10,7 @@ import { mainRouter } from "~/backend/router/router";
 
 const Pool = pg.Pool;
 
-const config = loadConfig();
+const config = loadConfig("production");
 if (config.isErr()) {
   throw config.error;
 }
@@ -34,7 +34,7 @@ const db = new Kysely<DB>({
 });
 
 const wss = new WebSocketServer({
-  port: 4001,
+  port: config.value.SERVER_PORT,
 });
 const handler = applyWSSHandler({
   wss,
@@ -48,7 +48,9 @@ wss.on("connection", (ws) => {
     console.log(`➖➖ Connection (${wss.clients.size})`);
   });
 });
-console.log("✅ WebSocket Server listening on ws://localhost:4001");
+console.log(
+  `✅ WebSocket Server listening on ws://localhost:${config.value.SERVER_PORT}`
+);
 
 process.on("SIGTERM", () => {
   console.log("SIGTERM");

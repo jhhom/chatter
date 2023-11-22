@@ -3,8 +3,6 @@ import * as path from "path";
 import { ok, err } from "neverthrow";
 import { faker } from "@faker-js/faker";
 
-const ASSET_SERVER_DOMAIN = "http://localhost:4002";
-
 const MEDIA_FOLDER = {
   "message.picture": "messages/pictures",
   "message.file": "messages/files",
@@ -20,12 +18,13 @@ export function saveMedia(
   },
   config: {
     projectRoot: string;
+    assetServerUrl: string;
   }
 ) {
   const base64Data = arg.base64.split("base64,")[1];
 
   const buffer = Buffer.from(base64Data, "base64");
-  const randomFolderPath = faker.random.alphaNumeric(15);
+  const randomFolderPath = faker.string.alphanumeric(15);
 
   const assetFolderPath = path.join(
     "src/backend/assets",
@@ -51,8 +50,8 @@ export function saveMedia(
   });
 }
 
-export function completeMediaUrl(partialUrl: string) {
-  return ASSET_SERVER_DOMAIN + "/" + partialUrl;
+export function completeMediaUrl(assetServerUrl: string, partialUrl: string) {
+  return assetServerUrl + "/" + partialUrl;
 }
 
 export function extractFileExtensionFromBase64(base64: string) {

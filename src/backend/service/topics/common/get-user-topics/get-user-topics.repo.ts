@@ -9,7 +9,11 @@ import { ValuesType } from "utility-types";
 import { fromPromise, err, ok } from "neverthrow";
 import { sql } from "kysely";
 
-export async function getGroupTopics(db: KyselyDB, userId: UserId) {
+export async function getGroupTopics(
+  db: KyselyDB,
+  assetServerUrl: string,
+  userId: UserId
+) {
   const grpTopicsResult = await fromPromise(
     db
       .selectFrom("topics")
@@ -34,7 +38,7 @@ export async function getGroupTopics(db: KyselyDB, userId: UserId) {
       topicName: _t.topicName,
       touchedAt: _t.touchedAt ? new Date(_t.touchedAt) : null,
       profilePhotoUrl: _t.profilePhotoUrl
-        ? completeMediaUrl(_t.profilePhotoUrl)
+        ? completeMediaUrl(assetServerUrl, _t.profilePhotoUrl)
         : null,
       ownerId: _t.ownerId,
       userPermissions: _t.userPermissions,
@@ -146,7 +150,11 @@ export async function getP2PTopics(db: KyselyDB, userId: UserId) {
   return ok(p2pTopics);
 }
 
-export async function getPastGroupTopicsOfUser(db: KyselyDB, userId: UserId) {
+export async function getPastGroupTopicsOfUser(
+  db: KyselyDB,
+  assetServerUrl: string,
+  userId: UserId
+) {
   const topicEventLogs = await fromPromise(
     db
       .selectFrom("topicEventLogs")
@@ -244,7 +252,7 @@ export async function getPastGroupTopicsOfUser(db: KyselyDB, userId: UserId) {
     .map((t) => ({
       ...t,
       profilePhotoUrl: t.profilePhotoUrl
-        ? completeMediaUrl(t.profilePhotoUrl)
+        ? completeMediaUrl(assetServerUrl, t.profilePhotoUrl)
         : null,
       touchedAt: null as null | Date,
       memberListSnapshot:

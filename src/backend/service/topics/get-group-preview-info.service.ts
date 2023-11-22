@@ -8,6 +8,7 @@ import { permission } from "~/backend/service/common/permissions";
 
 export async function getGroupPreviewInfo(
   db: KyselyDB,
+  assetServerUrl: string,
   groupInviteLinkId: string
 ): ServiceResult<"group/preview_info"> {
   const groupResult = await fromPromise(
@@ -25,7 +26,7 @@ export async function getGroupPreviewInfo(
   const group = {
     ...groupResult.value,
     profilePhotoUrl: groupResult.value.profilePhotoUrl
-      ? completeMediaUrl(groupResult.value.profilePhotoUrl)
+      ? completeMediaUrl(assetServerUrl, groupResult.value.profilePhotoUrl)
       : null,
   };
 

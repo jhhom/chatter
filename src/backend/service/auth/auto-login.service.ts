@@ -8,9 +8,10 @@ import { IServiceContext } from "~/backend/router/context";
 
 import { ServiceResult } from "~/api-contract/types";
 import { AppError } from "~/api-contract/errors/errors";
+import { completeMediaUrl } from "~/backend/service/common/media";
 
 export async function autoLogin(
-  ctx: { onlineUsers: OnlineUsers },
+  ctx: { onlineUsers: OnlineUsers; assetServerUrl: string },
   input: {
     jwtToken: string;
     userCtx: IServiceContext;
@@ -40,7 +41,12 @@ export async function autoLogin(
     return err(new AppError("UNKNOWN", { cause: result.error }));
   }
 
-  const user = result.value;
+  const user = {
+    ...result.value,
+    profilePhotoUrl: result.value.profilePhotoUrl
+      ? completeMediaUrl(ctx.assetServerUrl, result.value.profilePhotoUrl)
+      : null,
+  };
 
   const { socketId, toNotify: groupStatusChangeNotificationList } =
     ctx.onlineUsers.add(user.id, user.subscribedGroupTopicIds, userCtx.socket);

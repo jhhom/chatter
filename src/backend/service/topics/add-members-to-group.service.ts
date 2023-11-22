@@ -13,7 +13,7 @@ import { completeMediaUrl } from "~/backend/service/common/media";
 import { ServiceResult } from "~/api-contract/types";
 
 export async function addMembersToGroup(
-  ctx: { db: KyselyDB; onlineUsers: OnlineUsers },
+  ctx: { db: KyselyDB; onlineUsers: OnlineUsers; assetServerUrl: string },
   arg: {
     /** user id of the person who add the members */
     adderUserId: UserId;
@@ -69,7 +69,7 @@ export async function addMembersToGroup(
           .executeTakeFirstOrThrow()
       ).fullname;
 
-      let notifications: {
+      const notifications: {
         isFirstOfDate: boolean;
         sequenceId: number;
         createdAt: Date;
@@ -125,7 +125,7 @@ export async function addMembersToGroup(
           addedName: addedUser.name,
           addedUserId: m,
           profilePhotoUrl: addedUser.profilePhotoUrl
-            ? completeMediaUrl(addedUser.profilePhotoUrl)
+            ? completeMediaUrl(ctx.assetServerUrl, addedUser.profilePhotoUrl)
             : null,
         });
       }
@@ -175,7 +175,7 @@ export async function addMembersToGroup(
           groupDefaultPermission: grp.defaultPermissions,
           userPermission: grp.defaultPermissions,
           profilePhotoUrl: grp.profilePhotoUrl
-            ? completeMediaUrl(grp.profilePhotoUrl)
+            ? completeMediaUrl(ctx.assetServerUrl, grp.profilePhotoUrl)
             : null,
           status: grpStatus.isOnline
             ? {

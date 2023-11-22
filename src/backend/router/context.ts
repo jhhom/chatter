@@ -5,10 +5,15 @@ import { IncomingMessage } from "http";
 import ws from "ws";
 
 import type { Socket } from "~/backend/service/common/socket";
-import type { ConfigSchema } from "~/backend/config/config";
+import type { ConfigSchema } from "~/config/config";
 
 import type { UserId } from "~/api-contract/subscription/subscription";
-import { KyselyDB } from "~/backend/schema";
+import type { KyselyDB } from "~/backend/schema";
+
+type ContextConfig = Pick<
+  ConfigSchema,
+  "DATABASE_URL" | "JWT_KEY" | "PROJECT_ROOT" | "ASSET_SERVER_URL"
+>;
 
 type Session = {
   auth?: {
@@ -22,10 +27,10 @@ type Session = {
 
 export class Context {
   readonly session: Session;
-  readonly config: ConfigSchema;
+  readonly config: ContextConfig;
   readonly db: KyselyDB;
 
-  constructor(config: ConfigSchema, db: KyselyDB) {
+  constructor(config: ContextConfig, db: KyselyDB) {
     this.session = {};
     this.config = config;
     this.db = db;

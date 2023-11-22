@@ -17,9 +17,11 @@ export async function joinGroupViaInviteLink(
   {
     db,
     onlineUsers,
+    assetServerUrl,
   }: {
     db: KyselyDB;
     onlineUsers: OnlineUsers;
+    assetServerUrl: string;
   },
   arg: {
     userId: UserId;
@@ -41,7 +43,7 @@ export async function joinGroupViaInviteLink(
   if (defaultGroupPermissionResult.isErr()) {
     return err(defaultGroupPermissionResult.error);
   }
-  const groupId = defaultGroupPermissionResult.value.groupId as GroupTopicId;
+  const groupId = defaultGroupPermissionResult.value.groupId;
   const defaultGroupPermission =
     defaultGroupPermissionResult.value.defaultGroupPermissions;
 
@@ -71,7 +73,7 @@ export async function joinGroupViaInviteLink(
       const actor = {
         name: _actor.name,
         profilePhotoUrl: _actor.profilePhotoUrl
-          ? completeMediaUrl(_actor.profilePhotoUrl)
+          ? completeMediaUrl(assetServerUrl, _actor.profilePhotoUrl)
           : null,
       };
 
@@ -127,7 +129,7 @@ export async function joinGroupViaInviteLink(
   ).map((v) => ({
     ...v,
     profilePhotoUrl: v.profilePhotoUrl
-      ? completeMediaUrl(v.profilePhotoUrl)
+      ? completeMediaUrl(assetServerUrl, v.profilePhotoUrl)
       : null,
   }));
   if (groupTopic.isErr()) {

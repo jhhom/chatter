@@ -26,6 +26,7 @@ export async function addMessageToTopic(
   },
   config: {
     projectRoot: string;
+    assetServerUrl: string;
   }
 ) {
   /**
@@ -88,6 +89,7 @@ async function addMessageToGroupTopic(
     sentTo: GroupTopicId;
   },
   config: {
+    assetServerUrl: string;
     projectRoot: string;
   }
 ) {
@@ -151,7 +153,10 @@ async function addMessageToGroupTopic(
 
   // 4. ⭐️ If message sent includes any media, complete the media URL
   if (message.content?.type == "picture" || message.content?.type == "file") {
-    message.content.url = completeMediaUrl(message.content.url);
+    message.content.url = completeMediaUrl(
+      config.assetServerUrl,
+      message.content.url
+    );
   }
 
   return ok({
@@ -175,6 +180,7 @@ async function addMessageToP2PTopic(
     sentTo: UserId;
   },
   config: {
+    assetServerUrl: string;
     projectRoot: string;
   }
 ) {
@@ -287,7 +293,10 @@ async function addMessageToP2PTopic(
         message.content?.type == "picture" ||
         message.content?.type == "file"
       ) {
-        message.content.url = completeMediaUrl(message.content.url);
+        message.content.url = completeMediaUrl(
+          config.assetServerUrl,
+          message.content.url
+        );
       }
 
       // 6. ⭐️ If the sending of the message results in the creation of a new topic, return the information of the created topic

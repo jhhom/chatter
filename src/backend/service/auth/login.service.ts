@@ -12,7 +12,7 @@ import { type ServiceResult } from "~/api-contract/types";
 import { AppError } from "~/api-contract/errors/errors";
 
 export async function login(
-  ctx: { onlineUsers: OnlineUsers },
+  ctx: { onlineUsers: OnlineUsers; assetServerUrl: string },
   input: {
     username: string;
     password: string;
@@ -77,7 +77,7 @@ export async function login(
     fullname: user.fullname,
     defaultPermissions: user.defaultPermissions,
     profilePhotoUrl: user.profilePhotoUrl
-      ? completeMediaUrl(user.profilePhotoUrl)
+      ? completeMediaUrl(ctx.assetServerUrl, user.profilePhotoUrl)
       : null,
   });
 }

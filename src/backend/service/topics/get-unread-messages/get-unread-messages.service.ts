@@ -26,6 +26,7 @@ type TopicEventLog = Omit<Event, "type"> & {
 
 export async function getAllUnreadMessages(
   db: KyselyDB,
+  assetServerUrl: string,
   userId: UserId
 ): ServiceResult<"topic/unread_messages"> {
   // The flow of getting all unread messages of a user
@@ -84,14 +85,17 @@ export async function getAllUnreadMessages(
       },
       messages: unread.value.messages.map((m) => {
         if (m.content.type == "picture" || m.content.type == "file") {
-          m.content.url = completeMediaUrl(m.content.url);
+          m.content.url = completeMediaUrl(assetServerUrl, m.content.url);
         }
         if (
           m.type == "message" &&
           m.content.replyTo !== null &&
           m.content.replyTo.type == "picture"
         ) {
-          m.content.replyTo.url = completeMediaUrl(m.content.replyTo.url);
+          m.content.replyTo.url = completeMediaUrl(
+            assetServerUrl,
+            m.content.replyTo.url
+          );
         }
         return m;
       }),
@@ -104,7 +108,7 @@ export async function getAllUnreadMessages(
       userId: userId,
       topic: {
         type: "grp",
-        id: t.topicId as GroupTopicId,
+        id: t.topicId,
       },
       afterSequenceId: t.lastReadSequenceId ? t.lastReadSequenceId : 0,
     });
@@ -120,14 +124,17 @@ export async function getAllUnreadMessages(
       },
       messages: unread.value.messages.map((m) => {
         if (m.content.type == "picture" || m.content.type == "file") {
-          m.content.url = completeMediaUrl(m.content.url);
+          m.content.url = completeMediaUrl(assetServerUrl, m.content.url);
         }
         if (
           m.type == "message" &&
           m.content.replyTo !== null &&
           m.content.replyTo.type == "picture"
         ) {
-          m.content.replyTo.url = completeMediaUrl(m.content.replyTo.url);
+          m.content.replyTo.url = completeMediaUrl(
+            assetServerUrl,
+            m.content.replyTo.url
+          );
         }
         return m;
       }),

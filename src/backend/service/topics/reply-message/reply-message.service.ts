@@ -25,6 +25,7 @@ export async function replyMessage(
     replyToMessageSeqId: number;
   },
   config: {
+    assetServerUrl: string;
     projectRoot: string;
   }
 ): ServiceResult<"topic/reply_message"> {
@@ -91,6 +92,7 @@ export async function replyMessage(
     replyToMessageResult.value.content.type == "picture"
   ) {
     replyToMessageResult.value.content.url = completeMediaUrl(
+      config.assetServerUrl,
       replyToMessageResult.value.content.url
     );
   }
@@ -174,7 +176,7 @@ export async function replyMessage(
             authorId: r.value.message.authorId,
             createdAt: new Date(r.value.message.createdAt),
             isFirstOfDate: r.value.message.isFirstOfDate,
-            lastMessageContent: match(r.value.message.content!)
+            lastMessageContent: match(r.value.message.content)
               .with({ type: "text" }, (c) => c.content)
               .with({ type: "picture" }, (c) => `${author} sent a picture`)
               .with({ type: "file" }, (c) => `${author} sent a file`)

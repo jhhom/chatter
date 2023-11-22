@@ -7,40 +7,25 @@ import {
 } from "kysely";
 import { expect, describe, test } from "vitest";
 import { Pool } from "pg";
-import { testUtil } from "~/backend/service/test-utils/test-utils";
+import { setupDb, testUtil } from "~/backend/service/test-utils/test-utils";
 
 import { DB } from "~/backend/schema";
 import { sendMessage } from "~/backend/service/topics/send-message/send-message.service";
 import { OnlineUsers } from "~/backend/service/common/online-users";
 import { replyMessage } from "~/backend/service/topics/reply-message/reply-message.service";
 import { getMessages } from "~/backend/service/topics/get-messages/get-messages";
+import { loadConfig } from "~/config/config";
 
 // 1. seed users
 // 2. seed messages
 // 3. get messages
 
-const config = {
-  DB_URL: "postgres://dbuser:dbuser@localhost/tinode_clone_test",
-  JWT_KEY: "xxx-xxx",
-};
+const config = loadConfig("test");
+if (config.isErr()) {
+  throw config.error;
+}
 
-const dialect = new PostgresDialect({
-  pool: new Pool({
-    connectionString: config.DB_URL,
-    max: 10,
-  }),
-});
-
-const db = new Kysely<DB>({
-  dialect,
-  log(event) {
-    if (event.level === "query") {
-      console.log(event.query.sql);
-      console.log(event.query.parameters);
-    }
-  },
-  plugins: [new CamelCasePlugin()],
-});
+const db = setupDb(config.value.DATABASE_URL);
 
 describe("Get messages", () => {
   test("get messages with reply", async () => {
@@ -87,11 +72,11 @@ describe("Get messages", () => {
         authorId: seededUsers.bob.id,
         replyToMessageSeqId: helloBobMessage.sequenceId,
       },
-      { projectRoot: "" }
+      { assetServerUrl: config.value.DATABASE_URL, projectRoot: "" }
     );
 
     const m = (
-      await getMessages(db, {
+      await getMessages(db, config.value.DATABASE_URL, {
         requesterUserId: seededUsers.carol.id,
         topicId: seededUsers.bob.id,
         beforeSequenceId: 99999,

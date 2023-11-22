@@ -8,6 +8,7 @@ import type { Insertable } from "kysely";
 
 export async function addMessageToGroupTopic(
   db: KyselyDB,
+  assetServerUrl: string,
   arg: {
     message: Insertable<Messages>;
     forwarder: UserId;
@@ -81,7 +82,7 @@ export async function addMessageToGroupTopic(
 
   // 4. ⭐️ If message sent includes any media, complete the media URL
   if (message.content?.type == "picture" || message.content?.type == "file") {
-    message.content.url = completeMediaUrl(message.content.url);
+    message.content.url = completeMediaUrl(assetServerUrl, message.content.url);
   }
 
   return ok({
