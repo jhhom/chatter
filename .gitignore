@@ -45,3 +45,4 @@ yarn-error.log*
 # front-end config files
 src/frontend/config/config.ts
 src/backend/assets/**/*
+pm2-logs
