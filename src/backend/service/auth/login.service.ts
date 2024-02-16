@@ -60,7 +60,11 @@ export async function login(
   userCtx.setAuth(user.id, user.username, user.email, socketId);
 
   await notifyStatus(
-    { db: userCtx.db, onlineUsers: ctx.onlineUsers },
+    {
+      db: userCtx.db,
+      onlineUsers: ctx.onlineUsers,
+      assetServerUrl: ctx.assetServerUrl,
+    },
     {
       userId: user.id,
       online: true,

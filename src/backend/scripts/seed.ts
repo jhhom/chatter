@@ -43,6 +43,7 @@ const seedUser = [
     fullname: "Carol Xmas",
     email: "carol@example.com",
     password: "carol123",
+    profilePhotoUrl: "profile-photos/user/carol/carol.jpg",
   },
   {
     id: "usr_______ALICE",
@@ -50,6 +51,7 @@ const seedUser = [
     fullname: "Alice Hatter",
     email: "alice@example.com",
     password: "alice123",
+    profilePhotoUrl: "profile-photos/user/alice/alice.jpg",
   },
   {
     id: "usr_________EVE",
@@ -57,6 +59,7 @@ const seedUser = [
     fullname: "Eve Adamas",
     email: "eve@example.com",
     password: "eve123",
+    profilePhotoUrl: "profile-photos/user/eve/eve.jpg",
   },
   {
     id: "usr_______FRANK",
@@ -64,6 +67,7 @@ const seedUser = [
     fullname: "Frank Singer",
     email: "frank@example.com",
     password: "frank123",
+    profilePhotoUrl: "profile-photos/user/frank/frank.jpg",
   },
   {
     id: "usr_________BOB",
@@ -71,6 +75,7 @@ const seedUser = [
     fullname: "Bob Smitch",
     email: "bob@example.com",
     password: "bob123",
+    profilePhotoUrl: "profile-photos/user/bob/bob.jpg",
   },
   {
     id: "usr________DAVE",
@@ -78,6 +83,7 @@ const seedUser = [
     fullname: "Dave Goliathsson",
     email: "dave@example.com",
     password: "dave123",
+    profilePhotoUrl: "profile-photos/user/dave/dave.jpg",
   },
   {
     id: "usr_________KEN",
@@ -85,6 +91,7 @@ const seedUser = [
     fullname: "Ken Hopkins",
     email: "ken@example.com",
     password: "ken123",
+    profilePhotoUrl: "profile-photos/user/ken/ken.jpg",
   },
 ] as const;
 
@@ -695,6 +702,7 @@ const seed = async (db: KyselyDB | KyselyTransaction) => {
             password: v.password,
             passwordHash: bcrypt.hashSync(v.password, 8),
             defaultPermissions: "JRWP",
+            profilePhotoUrl: v.profilePhotoUrl,
           }))
         )
         .execute(),
@@ -735,6 +743,9 @@ const seedGroupTopic = async (db: KyselyDB | KyselyTransaction) => {
     id: `grp${faker.random.alphaNumeric(12)}`,
     topicType: "group",
   };
+  const profilePhotoUrl =
+    "profile-photos/group/hs-tutor-group-1/abstract-art.jpg";
+
   const subscriptionsToSeed: Insertable<Subscriptions>[] =
     groupTopicSeed.members.map((usrId) => ({
       topicId: groupTopic.id,
@@ -765,6 +776,7 @@ const seedGroupTopic = async (db: KyselyDB | KyselyTransaction) => {
       topicId: groupTopic.id as GroupTopicId,
       defaultPermissions: "JRWPSDA",
       ownerId: userIdFromUsername("carol"),
+      profilePhotoUrl: profilePhotoUrl,
     })
     .returningAll()
     .executeTakeFirstOrThrow();
@@ -885,7 +897,7 @@ const seedMessages = async <T1 extends string, T2 extends string>(
 };
 
 const config = {
-  DB_URL: "postgres://dbuser:dbuser@localhost/tinode_clone_test",
+  DB_URL: "postgres://dbuser:dbuser@localhost/tinode_clone",
   JWT_KEY: "xxx-xxx",
 };
 

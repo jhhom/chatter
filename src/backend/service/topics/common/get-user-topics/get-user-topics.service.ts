@@ -20,17 +20,22 @@ import {
 
 export async function getUserTopics(
   db: KyselyDB,
+  assetServerUrl: string,
   userId: UserId
 ): ServiceResult<"users/topics"> {
-  const p2pTopics = await getP2PTopics(db, userId);
+  const p2pTopics = await getP2PTopics(db, assetServerUrl, userId);
   if (p2pTopics.isErr()) {
     return err(new AppError("UNKNOWN", { cause: p2pTopics.error }));
   }
-  const grpTopics = await getGroupTopics(db, userId);
+  const grpTopics = await getGroupTopics(db, assetServerUrl, userId);
   if (grpTopics.isErr()) {
     return err(new AppError("UNKNOWN", { cause: grpTopics.error }));
   }
-  const pastGrpTopics = await getPastGroupTopicsOfUser(db, userId);
+  const pastGrpTopics = await getPastGroupTopicsOfUser(
+    db,
+    assetServerUrl,
+    userId
+  );
   if (pastGrpTopics.isErr()) {
     return err(new AppError("UNKNOWN", { cause: pastGrpTopics.error }));
   }

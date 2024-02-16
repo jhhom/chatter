@@ -386,6 +386,7 @@ const mainRouter = router({
     .query(async ({ ctx }) => {
       const result = await topicUsecase.getUserTopics(
         ctx.ctx.db,
+        ctx.config.ASSET_SERVER_URL,
         ctx.ctx.auth.userId
       );
       if (result.isErr()) {

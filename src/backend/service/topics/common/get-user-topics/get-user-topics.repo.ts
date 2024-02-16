@@ -79,7 +79,11 @@ export async function getGroupTopics(
   return ok(grpTopics);
 }
 
-export async function getP2PTopics(db: KyselyDB, userId: UserId) {
+export async function getP2PTopics(
+  db: KyselyDB,
+  assetServerUrl: string,
+  userId: UserId
+) {
   const p2pTopicsResult = await fromPromise(
     db
       .selectFrom("topics")
@@ -111,7 +115,9 @@ export async function getP2PTopics(db: KyselyDB, userId: UserId) {
     t.map((_t) => ({
       ..._t,
       p2pTopicId: _t.p2pTopicId as P2PTopicId,
-      profilePhotoUrl: _t.profilePhotoUrl ? _t.profilePhotoUrl : null,
+      profilePhotoUrl: _t.profilePhotoUrl
+        ? completeMediaUrl(assetServerUrl, _t.profilePhotoUrl)
+        : null,
       lastOnline: _t.lastOnline ? new Date(_t.lastOnline) : null,
       touchedAt: _t.touchedAt ? new Date(_t.touchedAt) : null,
     }))

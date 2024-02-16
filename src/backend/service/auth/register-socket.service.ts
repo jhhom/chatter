@@ -43,7 +43,7 @@ export function registerSocket(
           });
 
           await notifyStatus(
-            { db: userCtx.db, onlineUsers: ctx.onlineUsers },
+            { db: userCtx.db,  onlineUsers: ctx.onlineUsers },
             {
               userId: userCtx.auth.userId,
               online: false,

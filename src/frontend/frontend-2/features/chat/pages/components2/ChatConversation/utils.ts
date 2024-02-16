@@ -31,5 +31,5 @@ export const formatSeparatorDate = (d: Date) => {
   if (isSameYear(d, today)) {
     return format(d, "LLLL, L");
   }
-  return format(d, "YYYY LLLL, L");
+  return format(d, "yyyy LLLL, L");
 };

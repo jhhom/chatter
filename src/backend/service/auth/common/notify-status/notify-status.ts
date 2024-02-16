@@ -1,6 +1,9 @@
 import { KyselyDB } from "~/backend/schema";
 import { OnlineUsers } from "~/backend/service/common/online-users";
-import { UserId, GroupTopicId } from "~/backend/schema";
+import type {
+  UserId,
+  GroupTopicId,
+} from "~/api-contract/subscription/subscription";
 import { GroupOnlineStatusChangeNotificationListItem } from "~/backend/service/common/online-users";
 import { getUserTopics } from "~/backend/service/auth/common/notify-status/notify-status.repo";
 import { getPermissionInP2PTopic } from "~/backend/service/auth/common/repo";
