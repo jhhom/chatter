@@ -5,9 +5,10 @@ import { OnlineUsers } from "~/backend/service/common/online-users";
 import { getGroupMembers as db_getGroupMembers } from "~/backend/service/topics/common/repo/repo";
 import { ServiceResult } from "~/api-contract/types";
 import { AppError } from "~/api-contract/errors/errors";
+import { completeMediaUrl } from "~/backend/service/common/media";
 
 export async function getGroupMembers(
-  ctx: { db: KyselyDB; onlineUsers: OnlineUsers },
+  ctx: { db: KyselyDB; assetServerUrl: string; onlineUsers: OnlineUsers },
   input: { groupTopicId: GroupTopicId }
 ): ServiceResult<"group/members"> {
   const members = await db_getGroupMembers(ctx.db, input);
@@ -17,6 +18,9 @@ export async function getGroupMembers(
   return ok(
     members.value.map((m) => ({
       ...m,
+      profilePhotoUrl: m.profilePhotoUrl
+        ? completeMediaUrl(ctx.assetServerUrl, m.profilePhotoUrl)
+        : null,
       online: ctx.onlineUsers.isUserOnline(m.id),
     }))
   );

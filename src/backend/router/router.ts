@@ -176,7 +176,11 @@ const mainRouter = router({
     .output(contract["group/members"].output)
     .query(async ({ input, ctx }) => {
       const result = await topicUsecase.getGroupMembers(
-        { db: ctx.ctx.db, onlineUsers },
+        {
+          db: ctx.ctx.db,
+          assetServerUrl: ctx.config.ASSET_SERVER_URL,
+          onlineUsers,
+        },
         { groupTopicId: input.groupTopicId }
       );
       if (result.isErr()) {
@@ -298,6 +302,7 @@ const mainRouter = router({
         },
         {
           projectRoot: ctx.config.PROJECT_ROOT,
+          assetServerUrl: ctx.config.ASSET_SERVER_URL,
         }
       );
       if (result.isErr()) {

@@ -25,6 +25,7 @@ export async function sendMessage(
   },
   config: {
     projectRoot: string;
+    assetServerUrl: string;
   }
 ): ServiceResult<"topic/send_message"> {
   // The flow of a user sending a message to a topic
