@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "scripts:seed-db": "tsx src/backend/scripts/seed.ts",
+    "scripts:seed-db": "tsx src/backend/scripts/seed/seed.ts",
     "dev:server": "tsx watch src/backend/main.ts --tsconfig tsconfig.server.json",
     "dev:asset": "tsx watch src/asset-server/main.ts",
     "type-check": "tsc --noEmit",

@@ -118,8 +118,6 @@ export default function LoginPage(props: { onSignupClick: () => void }) {
 
         <div className="mb-6" />
 
-        <Components.Form.RememberMeCheckbox />
-
         <div className="mb-6" />
 
         <Components.Form.SubmitButton isPending={loginMutation.isPending} />

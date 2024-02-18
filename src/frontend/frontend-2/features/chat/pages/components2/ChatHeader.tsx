@@ -155,7 +155,7 @@ export function ChatHeader(props: {
         <div className="relative h-10 w-10">
           {props.contactProfilePhotoUrl ? (
             <img
-              className="inline-block h-10 w-10 rounded-lg"
+              className="inline-block h-10 w-10 rounded-lg object-cover"
               src={props.contactProfilePhotoUrl}
             />
           ) : (

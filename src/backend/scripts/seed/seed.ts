@@ -23,6 +23,7 @@ import {
 import * as bcrypt from "bcrypt";
 import { faker } from "@faker-js/faker";
 import { Pool } from "pg";
+import { seedAssets } from "~/backend/scripts/seed/seed-assets";
 
 type SeedUser = Omit<
   Insertable<Users>,
@@ -220,10 +221,15 @@ const seedMessagesData: {
     user1: "carol",
     user2: "eve",
     messages: [
+      [`Hey Eve, welcome to using Chatter`, "carol"],
       [
-        `Hey Eve, I'm inviting you to my sister's wedding, please RSVP before 11th March`,
+        `Checkout some cool features in this app, for instance I can bold and italicize my messages by surrounding the texts with * (asterisk) and _ (underscore) respectively.`,
         "carol",
       ],
+      [`This is *bold*. This is _italic_`, "carol"],
+      [`You can also send multimedia. You can send Picture or File.`, "carol"],
+      ["This is so cool, I will try it out", "eve"],
+      [`👍`, "carol"],
     ],
   },
   "carol-frank": {
@@ -608,19 +614,19 @@ const seedMessagesData: {
         "frank",
       ],
       [
-        `Speaking of exploring new possibilities, have you ever considered working overseas? I've been thinking about looking for job opportunities in Singapore.`,
+        `Speaking of exploring new possibilities, have you ever considered working overseas? I've been thinking about looking for job opportunities in Australia.`,
         "carol",
       ],
       [
-        `Really? That's interesting. What's appealing to you about Singapore?`,
+        `Really? That's interesting. What's appealing to you about Australia?`,
         "frank",
       ],
       [
-        `Well, for one thing, it's a major financial hub in Asia, so there are a lot of opportunities in the finance and insurance industries. Plus, it's a vibrant and cosmopolitan city with a great quality of life.`,
+        `Well, for one thing, it's a country with sophisticated and fast-growing economy, so there are a lot of opportunities in the finance and insurance industries. Plus, it's a vibrant and cosmopolitan city with a great quality of life.`,
         "carol",
       ],
       [
-        `I can see why that would be appealing. I've heard that there are a lot of opportunities in Singapore for people with analytical skills, too.`,
+        `I can see why that would be appealing. I've heard that there are a lot of opportunities in Australia for people with analytical skills, too.`,
         "frank",
       ],
       [
@@ -632,7 +638,7 @@ const seedMessagesData: {
         "frank",
       ],
       [
-        `Have you thought about looking for job opportunities in Singapore as well?`,
+        `Have you thought about looking for job opportunities in Australia as well?`,
         "carol",
       ],
       [
@@ -640,15 +646,15 @@ const seedMessagesData: {
         "frank",
       ],
       [
-        `That's great. I think we could both bring a lot of valuable skills and experience to potential employers in Singapore.`,
+        `That's great. I think we could both bring a lot of valuable skills and experience to potential employers in Australia.`,
         "carol",
       ],
       [
-        `Definitely. So, what's your plan for finding job opportunities in Singapore?`,
+        `Definitely. So, what's your plan for finding job opportunities in Australia?`,
         "frank",
       ],
       [
-        `Well, I've been looking at job postings online and trying to network with people in the industry who have connections in Singapore.`,
+        `Well, I've been looking at job postings online and trying to network with people in the industry who have connections in Australia.`,
         "carol",
       ],
       [
@@ -660,7 +666,7 @@ const seedMessagesData: {
         "carol",
       ],
       [
-        `Yes, definitely. And it might also be helpful to attend some job fairs or conferences in Singapore to make connections and learn more about the job market there.`,
+        `Yes, definitely. And it might also be helpful to attend some job fairs or conferences in Australia to make connections and learn more about the job market there.`,
         "frank",
       ],
       [
@@ -676,7 +682,7 @@ const seedMessagesData: {
         "carol",
       ],
       [
-        `I couldn't agree more. Let's keep each other posted on any job opportunities we come across in Singapore, and maybe we can even explore the city together if we end up living there!`,
+        `I couldn't agree more. Let's keep each other posted on any job opportunities we come across in Australia, and maybe we can even explore the city together if we end up living there!`,
         "frank",
       ],
     ],
@@ -686,7 +692,7 @@ const seedMessagesData: {
 const truncateAllTables = async (db: KyselyDB) =>
   await sql`TRUNCATE TABLE users RESTART IDENTITY CASCADE;`.execute(db);
 
-const seed = async (db: KyselyDB | KyselyTransaction) => {
+const seedDb = async (db: KyselyDB | KyselyTransaction) => {
   await truncateAllTables(db);
 
   {
@@ -919,4 +925,6 @@ const db = new Kysely<DB>({
   plugins: [new CamelCasePlugin()],
 });
 
-void seed(db);
+void seedDb(db);
+
+seedAssets();

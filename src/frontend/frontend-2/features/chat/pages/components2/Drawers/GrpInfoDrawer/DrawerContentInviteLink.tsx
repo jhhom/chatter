@@ -8,6 +8,7 @@ import {
   IconPerson,
 } from "~/frontend/frontend-2/features/common/icons";
 import { DrawerButton } from "./components";
+import { config } from "~/frontend/config/config";
 
 export function DrawerContentInviteLink(props: {
   groupProfilePhotoUrl: string | undefined;
@@ -21,7 +22,7 @@ export function DrawerContentInviteLink(props: {
 
   useEffect(() => {
     void props.getInviteLink().then((l) => {
-      setInviteLink(`http://localhost:3000?join_group=${l}`);
+      setInviteLink(`${config.BASE_URL}?join_group=${l}`);
     });
   }, [props.getInviteLink]);
 
