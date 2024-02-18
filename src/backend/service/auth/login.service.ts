@@ -63,7 +63,6 @@ export async function login(
     {
       db: userCtx.db,
       onlineUsers: ctx.onlineUsers,
-      assetServerUrl: ctx.assetServerUrl,
     },
     {
       userId: user.id,

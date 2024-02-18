@@ -7,12 +7,13 @@ import { MessageInput } from "~/backend/service/topics/send-message/send-message
 import { saveMedia } from "~/backend/service/common/media";
 import { Insertable } from "kysely";
 
-export async function saveMessageMedia(
+export function saveMessageMedia(
   message: MessageInput,
   config: {
     projectRoot: string;
+    assetServerUrl: string;
   }
-): Promise<Result<NonNullable<Insertable<Messages>["content"]>, unknown>> {
+): Result<NonNullable<Insertable<Messages>["content"]>, unknown> {
   if (message.type == "text") {
     return ok({
       type: "text",
@@ -20,7 +21,7 @@ export async function saveMessageMedia(
       content: message.content,
     });
   } else if (message.type == "file") {
-    const r = await saveMedia(
+    const r = saveMedia(
       {
         filename: message.filename,
         base64: message.base64,
@@ -41,7 +42,7 @@ export async function saveMessageMedia(
       url: r.value.assetPath,
     });
   } else {
-    const r = await saveMedia(
+    const r = saveMedia(
       {
         filename: message.filename,
         base64: message.base64,

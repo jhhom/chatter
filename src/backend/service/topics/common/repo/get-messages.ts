@@ -146,7 +146,7 @@ export function formatQueriedMessage(arg: { requesterUserId: UserId }) {
         };
       }
     } else {
-      let deleted =
+      const deleted =
         m.messageDeleteLogs.findIndex((x) => x.deletedFor == "everyone") != -1;
 
       if (deleted) {

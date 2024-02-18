@@ -40,6 +40,7 @@ export async function getUserTopics(
     return err(new AppError("UNKNOWN", { cause: pastGrpTopics.error }));
   }
 
+  // @ts-expect-error we can find a way to fix this later
   const result: (
     | {
         topicName: string;

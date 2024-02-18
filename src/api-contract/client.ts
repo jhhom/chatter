@@ -24,4 +24,4 @@ type ISubscription = {
   resetListeners: () => void;
 };
 
-export type IApiClient = {} & IClient & ISubscription;
+export type IApiClient = object & IClient & ISubscription;

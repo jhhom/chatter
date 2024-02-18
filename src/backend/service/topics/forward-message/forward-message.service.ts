@@ -13,7 +13,11 @@ import { AppError } from "~/api-contract/errors/errors";
 import { IsUserId } from "~/backend/service/common/topics";
 
 export async function forwardMessage(
-  { db, onlineUsers }: { db: KyselyDB; onlineUsers: OnlineUsers },
+  {
+    assetServerUrl,
+    db,
+    onlineUsers,
+  }: { assetServerUrl: string; db: KyselyDB; onlineUsers: OnlineUsers },
   arg: {
     forwarder: UserId;
     forwardedMessage: {
@@ -32,7 +36,7 @@ export async function forwardMessage(
   }
 
   if (IsUserId(arg.forwardedTo)) {
-    const msg = await addMessageToP2PTopic(db, {
+    const msg = await addMessageToP2PTopic(db, assetServerUrl, {
       message: message.value,
       forwarder: arg.forwarder,
       forwardedTo: arg.forwardedTo,
@@ -93,7 +97,7 @@ export async function forwardMessage(
     }
     return ok({});
   } else {
-    const msg = await addMessageToGroupTopic(db, {
+    const msg = await addMessageToGroupTopic(db, assetServerUrl, {
       message: message.value,
       forwarder: arg.forwarder,
       forwardedTo: arg.forwardedTo,

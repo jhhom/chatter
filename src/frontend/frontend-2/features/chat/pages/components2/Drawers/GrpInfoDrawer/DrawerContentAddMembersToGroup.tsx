@@ -60,7 +60,10 @@ export function DrawerContentAddMembersToGroup(props: {
             <p className="font-medium">Contact Search</p>
 
             <div className="mt-3">
-              <ContactSearch onInput={(e) => setSearchInput(e.target.value)} />
+              <ContactSearch
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
             </div>
           </div>
         </div>

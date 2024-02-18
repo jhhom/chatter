@@ -116,7 +116,7 @@ async function addMessageToGroupTopic(
   }
 
   // 2. ⭐️ Save the media of the message (if the message includes any media)
-  const msgSaveMediaResult = await saveMessageMedia(arg.content, config);
+  const msgSaveMediaResult = saveMessageMedia(arg.content, config);
   if (msgSaveMediaResult.isErr()) {
     return err(msgSaveMediaResult.error);
   }
@@ -258,7 +258,7 @@ async function addMessageToP2PTopic(
       }
 
       // 3. ⭐️ Save the media of the message (if the message includes any media)
-      const msgSaveMediaResult = await saveMessageMedia(arg.content, config);
+      const msgSaveMediaResult = saveMessageMedia(arg.content, config);
       if (msgSaveMediaResult.isErr()) {
         throw msgSaveMediaResult.error;
       }

@@ -315,7 +315,11 @@ const mainRouter = router({
     .output(contract["topic/forward_message"].output)
     .mutation(async ({ input, ctx }) => {
       const result = await topicUsecase.forwardMessage(
-        { db: ctx.ctx.db, onlineUsers },
+        {
+          assetServerUrl: ctx.config.ASSET_SERVER_URL,
+          db: ctx.ctx.db,
+          onlineUsers,
+        },
         {
           forwarder: ctx.ctx.auth.userId,
           forwardedMessage: {
