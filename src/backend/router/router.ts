@@ -162,10 +162,14 @@ const mainRouter = router({
     .input(contract["topic/preview_info"].input)
     .output(contract["topic/preview_info"].output)
     .query(async ({ input, ctx }) => {
-      const result = await topicUsecase.getContactPreviewInfo(ctx.ctx.db, {
-        topicId: input.topicId,
-        requesterUserId: ctx.ctx.auth.userId,
-      });
+      const result = await topicUsecase.getContactPreviewInfo(
+        ctx.ctx.db,
+        ctx.config.ASSET_SERVER_URL,
+        {
+          topicId: input.topicId,
+          requesterUserId: ctx.ctx.auth.userId,
+        }
+      );
       if (result.isErr()) {
         throw result.error;
       }

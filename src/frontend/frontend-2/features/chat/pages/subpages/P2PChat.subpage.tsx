@@ -19,10 +19,7 @@ import type {
 
 import { type SecurityContentProps } from "~/frontend/frontend-2/features/chat/pages/components/ChatDrawer/P2PInfoDrawer";
 import { type DeleteMessageOverlayProps } from "~/frontend/frontend-2/features/chat/pages/components/ChatOverlays";
-import {
-  ChatTextInput as ChatTextInputComponent,
-  type ChatInputMode,
-} from "~/frontend/frontend-2/features/chat/pages/components/ChatTextInput/ChatTextInput";
+import { type ChatInputMode } from "~/frontend/frontend-2/features/chat/pages/components/ChatTextInput/ChatTextInput";
 import { type ChatReplyPreviewProps } from "~/frontend/frontend-2/features/chat/pages/components/ChatReplyPreview";
 import type { ChatMessageTypeMessage } from "~/frontend/frontend-2/features/chat/pages/components/ChatConversation/ChatMessage";
 

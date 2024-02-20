@@ -134,7 +134,10 @@ export const TextInput = forwardRef<HTMLDivElement, TextInputProps>(
     return (
       <div
         ref={ref}
-        className="flex items-end border-t-[1.5px] border-gray-200 pb-2 pl-2 pr-6 pt-3"
+        className={cx(
+          "flex items-end border-t-[1.5px] border-gray-200 pb-2 pl-2 pr-6 pt-3",
+          { "cursor-not-allowed": props.disabled }
+        )}
       >
         {props.inputMode.type === "message" && (
           <div
@@ -204,9 +207,10 @@ export const TextInput = forwardRef<HTMLDivElement, TextInputProps>(
           ref={messageInputRef}
           onKeyDown={onMessageInputKeydown}
           className={cx(
-            "block w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-blue-100 disabled:cursor-not-allowed",
+            "block w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-blue-100",
             {
               hidden: props.inputMode.type === "file",
+              "pointer-events-none cursor-not-allowed": props.disabled,
             }
           )}
           placeholder="Type new message"
@@ -214,7 +218,9 @@ export const TextInput = forwardRef<HTMLDivElement, TextInputProps>(
         <div className="ml-4 flex items-center justify-center">
           <button
             onClick={onSendClick}
-            className="h-10 w-10 rounded-md bg-green-500 p-3 text-white"
+            className={cx("h-10 w-10 rounded-md bg-green-500 p-3 text-white", {
+              "cursor-not-allowed": props.disabled,
+            })}
           >
             <IconPaperPlane className="" />
           </button>

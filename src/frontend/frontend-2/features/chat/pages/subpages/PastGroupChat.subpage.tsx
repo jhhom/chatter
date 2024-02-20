@@ -157,7 +157,7 @@ export function PastGroupChatPage(props: { contactId: GroupTopicId }) {
 
   const getAuthorProfileImage = useCallback(
     (userId: UserId) => {
-      return pastGrpMemberList.get(userId)?.profilePhotoUrl ?? undefined;
+      return undefined;
     },
     [pastGrpMemberList]
   );

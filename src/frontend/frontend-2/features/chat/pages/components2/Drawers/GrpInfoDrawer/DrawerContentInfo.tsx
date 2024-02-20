@@ -92,12 +92,15 @@ export function DrawerContentInfo(props: {
             iconPadding="px-2"
             onClick={props.onSecurityClick}
           />
-          <DrawerButton
-            content="Invite to group via link"
-            icon={<IconLink className="text-gray-500" />}
-            iconPadding="px-2"
-            onClick={props.onInviteLinkClick}
-          />
+          {props.canInvite && (
+            <DrawerButton
+              content="Invite to group via link"
+              icon={<IconLink className="text-gray-500" />}
+              iconPadding="px-2"
+              onClick={props.onInviteLinkClick}
+            />
+          )}
+
           <DrawerButton
             content="Add members to group"
             icon={<IconPlus className="text-gray-500" />}
@@ -227,11 +230,6 @@ function MemberListContact(props: {
           </Tooltip>
         </TooltipTrigger>
         <Popover arrowSize={10}>
-          <OverlayArrow>
-            <svg width={12} height={12}>
-              <path d="M0 0,L6 6,L12 0" />
-            </svg>
-          </OverlayArrow>
           <Dialog className="rounded-md border border-gray-200 bg-white py-2 text-sm">
             {props.canEditPermission &&
             props.onEditPermissions &&

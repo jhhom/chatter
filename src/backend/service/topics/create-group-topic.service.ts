@@ -92,7 +92,7 @@ export async function createGroupTopic(
         .values({
           topicId,
           userId: arg.creatorId,
-          permissions: "JRWP",
+          permissions: "JRWPSDA",
         })
         .execute();
 

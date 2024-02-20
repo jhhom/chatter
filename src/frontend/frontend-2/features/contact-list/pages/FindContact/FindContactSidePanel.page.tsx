@@ -103,7 +103,7 @@ export function SidePanelAddContacts() {
                         name: result.value.groupName,
                         description: "",
                         touchedAt: null,
-                        userPermissions: "JRWP",
+                        userPermissions: "JRWPSDA",
                         defaultPermissions: "JRWP",
                         profilePhotoUrl: result.value.profilePhotoUrl,
                         lastMessage: null,

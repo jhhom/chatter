@@ -6,16 +6,18 @@ import { getTopicIdOfP2PTopicBetween } from "~/backend/service/topics/common/rep
 import { UserId, GroupTopicId } from "~/api-contract/subscription/subscription";
 
 import { fromPromise, ok, err } from "neverthrow";
+import { completeMediaUrl } from "~/backend/service/common/media";
 
 export async function getContactPreviewInfo(
   db: KyselyDB,
+  assetServerUrl: string,
   arg: {
     requesterUserId: UserId;
     topicId: UserId | GroupTopicId;
   }
 ): ServiceResult<"topic/preview_info"> {
   if (IsUserId(arg.topicId)) {
-    return await getP2PContactPreviewInfo(db, {
+    return await getP2PContactPreviewInfo(db, assetServerUrl, {
       requesterUserId: arg.requesterUserId,
       topicId: arg.topicId,
     });
@@ -74,6 +76,7 @@ async function getGroupContactPreviewInfo(
 
 async function getP2PContactPreviewInfo(
   db: KyselyDB,
+  assetServerUrl: string,
   arg: {
     requesterUserId: UserId;
     topicId: UserId;
@@ -103,7 +106,12 @@ async function getP2PContactPreviewInfo(
     }
     return ok({
       type: "new p2p contact" as const,
-      value: user.value,
+      value: {
+        ...user.value,
+        profilePhotoUrl: user.value.profilePhotoUrl
+          ? completeMediaUrl(assetServerUrl, user.value.profilePhotoUrl)
+          : null,
+      },
     });
   }
 

@@ -200,6 +200,8 @@ export function GroupChatPage(props: { contactId: GroupTopicId }) {
           return;
         }
 
+        membersStore.clear();
+
         for (const member of memberRetrievalResult.value) {
           membersStore.setMember(member.id, {
             name: member.fullname,
