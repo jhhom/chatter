@@ -12,6 +12,7 @@ import { addMessageToTopic } from "~/backend/service/topics/send-message/send-me
 import { ServiceResult } from "~/api-contract/types";
 import { AppError } from "~/api-contract/errors/errors";
 import { permission } from "~/backend/service/common/permissions";
+import { completeMediaUrl } from "~/backend/service/common/media";
 
 export async function sendMessage(
   ctx: {
@@ -79,8 +80,13 @@ export async function sendMessage(
               userId: arg.authorId,
               name: r.value.createdTopicProfile.authorProfile.name,
               touchedAt: new Date(message.createdAt),
-              profilePhotoUrl:
-                r.value.createdTopicProfile.authorProfile.profilePhotoUrl,
+              profilePhotoUrl: r.value.createdTopicProfile.authorProfile
+                .profilePhotoUrl
+                ? completeMediaUrl(
+                    config.assetServerUrl,
+                    r.value.createdTopicProfile.authorProfile.profilePhotoUrl
+                  )
+                : null,
               userPermissions:
                 r.value.createdTopicProfile.receiverProfile.permissions,
               peerPermissions:
@@ -130,8 +136,13 @@ export async function sendMessage(
               userId: arg.topicId,
               name: r.value.createdTopicProfile.receiverProfile.name,
               touchedAt: new Date(message.createdAt),
-              profilePhotoUrl:
-                r.value.createdTopicProfile.receiverProfile.profilePhotoUrl,
+              profilePhotoUrl: r.value.createdTopicProfile.receiverProfile
+                .profilePhotoUrl
+                ? completeMediaUrl(
+                    config.assetServerUrl,
+                    r.value.createdTopicProfile.receiverProfile.profilePhotoUrl
+                  )
+                : null,
               userPermissions:
                 r.value.createdTopicProfile.authorProfile.permissions,
               peerPermissions:
