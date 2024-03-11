@@ -2,7 +2,7 @@
 
 Chatter is an instant messaging application (WhatsApp/Telegram clone) with a full-suite of features.
 
-Built with TRPC and ReactJS.
+Built with ReactJS and NodeJS.
 
 ## Features
 
