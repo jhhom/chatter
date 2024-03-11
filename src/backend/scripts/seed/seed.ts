@@ -903,7 +903,7 @@ const seedMessages = async <T1 extends string, T2 extends string>(
 };
 
 const config = {
-  DB_URL: "postgres://dbuser:dbuser@localhost/tinode_clone",
+  DB_URL: "postgres://postgres:postgres@localhost/chatter",
   JWT_KEY: "xxx-xxx",
 };
 
