@@ -12,6 +12,8 @@ const port = config.value.ASSET_SERVER_PORT;
 
 const assetPath = path.join(config.value.PROJECT_ROOT, "src/backend/assets");
 
+console.log("🔥 ASSET PATH", assetPath);
+
 // Serve static files
 app.use(express.static(assetPath));
 

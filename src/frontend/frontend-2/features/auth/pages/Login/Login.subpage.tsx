@@ -90,6 +90,17 @@ export default function LoginPage(props: { onSignupClick: () => void }) {
         )}
       </div>
 
+      <div className="mb-2 mt-2 rounded-md border bg-white px-4 py-4">
+        <p>Login credentials for demo account</p>
+        <ul className="mt-2 list-inside list-disc font-mono">
+          <li className="font-sans">Username, Password</li>
+          <li>carol, carol123</li>
+          <li>frank, frank123</li>
+          <li>eve, eve123</li>
+          <li>ken, ken123</li>
+        </ul>
+      </div>
+
       <form
         onSubmit={handleSubmit((data) => {
           loginMutation.mutate({
