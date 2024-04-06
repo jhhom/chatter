@@ -4,7 +4,7 @@ Chatter is an instant messaging application (WhatsApp/Telegram clone) with a ful
 
 Built with ReactJS and NodeJS.
 
-## Features
+## 1. Features
 
 **Feature 1 - Notification**
 
@@ -51,7 +51,41 @@ Built with ReactJS and NodeJS.
 
 **Feature 5 - Add Contact**
 
-## Development instructions
+## 2. Screenshots
+
+Sending message
+
+<img style="max-height: 640px; display: block; margin: 0 auto 48px auto;" src="/docs/media/chatter-1.png" />
+
+Group member action permissions setting
+
+<img style="max-height: 640px; display: block; margin: 0 auto 48px auto;" src="/docs/media/chatter-2-security.png" />
+
+Invite link
+
+<img style="max-height: 640px; display: block; margin: 0 auto 48px auto;" src="/docs/media/chatter-3-invite-links.png" />
+
+Add contacts
+
+<img style="max-height: 640px; display: block; margin: 0 auto 48px auto;" src="/docs/media/chatter-4-add-contact.png" />
+
+Create group
+
+<img style="max-height: 640px; display: block; margin: 0 auto 48px auto;" src="/docs/media/chatter-5-new-group.png" />
+
+Add members to group
+
+<img style="max-height: 640px; display: block; margin: 0 auto 48px auto;" src="/docs/media/chatter-6-add-members.png" />
+
+Send picture
+
+<img style="max-height: 640px; display: block; margin: 0 auto 48px auto;" src="/docs/media/chatter-7-picture.png" />
+
+Block peer
+
+<img style="max-height: 640px; display: block; margin: 0 auto 48px auto;" src="/docs/media/chatter-8-block.png" />
+
+## 3. Development instructions
 
 For local development, run:
 
@@ -59,11 +93,11 @@ For local development, run:
 2. Back-end: Run with `pnpm run dev:server` (Folder: `src/backend`)
 3. Asset server: Run with `pnpm run dev:asset` (Folder: `src/asset-server`)
 
-## To seed database
+## 4. To seed database
 
 Run `pnpm run scripts:seed-db` from the `src/backend` folder.
 
-## Configurations
+## 5. Configurations
 
 Configurations for the back-end and front-end are specified separately.
 

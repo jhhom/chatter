@@ -36,6 +36,23 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  useEffect(() => {
+    // @ts-expect-error ignore error on matomo's code
+    // eslint-disable-next-line
+    const _mtm = (window._mtm = window._mtm || []);
+
+    // eslint-disable-next-line
+    _mtm.push({ "mtm.startTime": new Date().getTime(), event: "mtm.Start" });
+    const d = document,
+      g = d.createElement("script"),
+      s = d.getElementsByTagName("script")[0];
+    g.async = true;
+    g.src = "https://matomo.joohom.dev/js/container_laAS7g6v.js";
+
+    // @ts-expect-error ignore error on matomo's code
+    s.parentNode.insertBefore(g, s);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <html lang="en">
